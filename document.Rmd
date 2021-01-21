@@ -1,12 +1,15 @@
 ---
-title: "Data Explore"
-author: "Michael Schramm"
-date: "12/18/2020"
-output: html_document
+title: "Exploring Thompsons Creek Stage Discharge Data"
+date: "`r Sys.Date()`"
+github-repo: https://github.com/mps9506/thompson-stage-discharge
+bibliography: bibliography.bib
+biblio-style: "apalike"
+link-citations: true
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE,
+                      fig.retina = 2)
 ```
 
 ## About
@@ -20,8 +23,10 @@ library(units)
 library(ggforce)
 library(hrbrthemes)
 
+update_geom_font_defaults(font_rc)
+
 theme_ms <- function(...) {
-  theme_ipsum(plot_margin = margin(10,10,10,10),
+  theme_ipsum_pub(plot_margin = margin(10,10,10,10),
               axis_title_just = "c") +
     theme(legend.position = "bottom",
           panel.background = element_rect(fill = "white", 
@@ -165,6 +170,8 @@ iqplus_df
 
 ### Pressure Transducers
 
+Plot the depth date over time for all three sites
+
 ```{r}
 ## note, that if the scale name has a space, there is a bug in ggforce
 ## need to set units_options(parse = FALSE) per:
@@ -179,6 +186,9 @@ ggplot(hobo_df) +
 ```
 
 ## IQPlus
+
+Plot the depth data drom the IQPlus from all three sites.
+
 ```{r}
 ggplot(iqplus_df) +
   geom_point(aes(Date_Time, Depth, color = Site)) +
@@ -187,6 +197,8 @@ ggplot(iqplus_df) +
   theme_ms()
 ```
 
+
+Plot the depth-discharge from all three sites as measured by the IQPlus.
 
 ```{r}
 ggplot(iqplus_df) +
