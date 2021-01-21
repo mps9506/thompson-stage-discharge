@@ -24,6 +24,7 @@ library(here)
 library(units)
 library(ggforce)
 library(hrbrthemes)
+library(lubridate)
 
 update_geom_font_defaults(font_rc)
 
@@ -153,7 +154,7 @@ iqplus_df <- tibble()
 for (i in file_paths) {
   x <- read_csv(
     i,
-    col_types = "nc______n__n________________________________________"
+    col_types = "nc______n__n______________________nn________________"
   )
   x$file <- i
   iqplus_df <- bind_rows(iqplus_df, x)
@@ -169,7 +170,9 @@ iqplus_df <- iqplus_df %>%
   dplyr::rename(Sample_Number =`Sample number`,
                 Date_Time = `Sample time`,
                 Depth = `Depth (ft)`,
-                Flow = `Flow (ft³/s)`) %>%
+                Flow = `Flow (ft³/s)`,
+                System_In_Water = `System in water (%)`,
+                System_Status = `System status (status codes)`) %>%
   dplyr::select(-c(Sample_Number, file)) %>%
   mutate(Date_Time = as.POSIXct(Date_Time,
                                 tz = "Etc/GMT-6",
@@ -184,19 +187,19 @@ iqplus_df
 ```
 
 ```
-## # A tibble: 26,174 x 4
-##    Date_Time              Depth     Flow Site 
-##    <dttm>                  [ft] [ft^3/s] <chr>
-##  1 2020-05-12 16:58:00 1.758559 17.25626 16396
-##  2 2020-05-12 17:13:00 1.867973 20.86921 16396
-##  3 2020-05-12 17:28:00 2.006131 27.27231 16396
-##  4 2020-05-12 17:43:00 2.119382 31.04828 16396
-##  5 2020-05-12 17:58:00 2.172015 33.71041 16396
-##  6 2020-05-12 18:13:00 2.228058 36.78339 16396
-##  7 2020-05-12 18:28:00 2.350440 44.18084 16396
-##  8 2020-05-12 18:43:00 2.508431 51.30917 16396
-##  9 2020-05-12 18:58:00 2.674151 60.84247 16396
-## 10 2020-05-12 19:13:00 2.809936 69.92496 16396
+## # A tibble: 26,174 x 6
+##    Date_Time              Depth     Flow System_In_Water System_Status Site 
+##    <dttm>                  [ft] [ft^3/s]           <dbl>         <dbl> <chr>
+##  1 2020-05-12 16:58:00 1.758559 17.25626             100             0 16396
+##  2 2020-05-12 17:13:00 1.867973 20.86921             100             0 16396
+##  3 2020-05-12 17:28:00 2.006131 27.27231             100             0 16396
+##  4 2020-05-12 17:43:00 2.119382 31.04828             100             0 16396
+##  5 2020-05-12 17:58:00 2.172015 33.71041             100             0 16396
+##  6 2020-05-12 18:13:00 2.228058 36.78339             100             0 16396
+##  7 2020-05-12 18:28:00 2.350440 44.18084             100             0 16396
+##  8 2020-05-12 18:43:00 2.508431 51.30917             100             0 16396
+##  9 2020-05-12 18:58:00 2.674151 60.84247             100             0 16396
+## 10 2020-05-12 19:13:00 2.809936 69.92496             100             0 16396
 ## # … with 26,164 more rows
 ```
 
@@ -261,6 +264,95 @@ ggplot(iqplus_df) +
 ```
 
 <img src="document_files/figure-html/unnamed-chunk-3-1.png" width="672" />
+
+Filter by system status codes. Keep only system status == 0
+
+
+```r
+iqplus_df %>%
+  filter(System_Status == 0) %>%
+  ggplot() +
+  geom_point(aes(Depth, Flow, color = Site)) +
+  scale_y_unit(name = "Flow", unit = "ft^3/s") +
+  facet_wrap(~Site, scales = "free") +
+  labs(title = "Stage Discharge") +
+  theme_ms()
+```
+
+```
+## Warning: Removed 1198 rows containing missing values (geom_point).
+```
+
+<img src="document_files/figure-html/unnamed-chunk-4-1.png" width="672" />
+
+Filter System in water == 100 and color by month to discern potential patterns.
+
+```r
+iqplus_df %>%
+  filter(System_Status == 0,
+         System_In_Water == 100) %>%
+  mutate(Month = lubridate::month(Date_Time, label = TRUE)) %>%
+  ggplot() +
+  geom_point(aes(Depth, Flow, color = Month), alpha = 0.5) +
+  scale_y_unit(name = "Flow", unit = "ft^3/s") +
+  facet_wrap(~Site, scales = "free") +
+  labs(title = "Stage Discharge") +
+  theme_ms()
+```
+
+<img src="document_files/figure-html/unnamed-chunk-5-1.png" width="672" />
+
+Site `16396` looks pretty good. We still have some data cleaning and sorting on the remaining two sites.
+
+
+
+Exploring `16397` further...
+
+
+```r
+iqplus_df %>%
+  filter(Site == "16397",
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Flow) >= 0) %>%
+  mutate(Month = lubridate::month(Date_Time, label = TRUE)) %>%
+  ggplot() +
+  geom_point(aes(Depth, Flow, color = Month), alpha = 0.5) +
+  scale_y_unit(name = "Flow", unit = "ft^3/s") +
+  facet_wrap(~Month, scales = "free") +
+  labs(title = "Stage Discharge") +
+  theme_ms()
+```
+
+<img src="document_files/figure-html/unnamed-chunk-6-1.png" width="672" />
+
+
+
+
+
+
+Exploring `16882` further...
+
+
+```r
+iqplus_df %>%
+  filter(Site == "16882",
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Flow) >= 0) %>%
+  mutate(Month = lubridate::month(Date_Time, label = TRUE)) %>%
+  ggplot() +
+  geom_point(aes(Depth, Flow, color = Month), alpha = 0.5) +
+  scale_y_unit(name = "Flow", unit = "ft^3/s") +
+  facet_wrap(~Month, scales = "free") +
+  labs(title = "Stage Discharge") +
+  theme_ms() +
+  theme(panel.spacing = unit(2, "points"))
+```
+
+<img src="document_files/figure-html/unnamed-chunk-7-1.png" width="672" />
+
+
 
 To do:
 
