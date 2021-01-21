@@ -26,6 +26,7 @@ library(here)
 library(units)
 library(ggforce)
 library(hrbrthemes)
+library(lubridate)
 
 update_geom_font_defaults(font_rc)
 
@@ -138,7 +139,7 @@ iqplus_df <- tibble()
 for (i in file_paths) {
   x <- read_csv(
     i,
-    col_types = "nc______n__n________________________________________"
+    col_types = "nc______n__n______________________nn________________"
   )
   x$file <- i
   iqplus_df <- bind_rows(iqplus_df, x)
@@ -154,7 +155,9 @@ iqplus_df <- iqplus_df %>%
   dplyr::rename(Sample_Number =`Sample number`,
                 Date_Time = `Sample time`,
                 Depth = `Depth (ft)`,
-                Flow = `Flow (ft³/s)`) %>%
+                Flow = `Flow (ft³/s)`,
+                System_In_Water = `System in water (%)`,
+                System_Status = `System status (status codes)`) %>%
   dplyr::select(-c(Sample_Number, file)) %>%
   mutate(Date_Time = as.POSIXct(Date_Time,
                                 tz = "Etc/GMT-6",
@@ -212,6 +215,79 @@ ggplot(iqplus_df) +
   labs(title = "Stage Discharge") +
   theme_ms()
 ```
+
+Filter by system status codes. Keep only system status == 0
+
+```{r}
+iqplus_df %>%
+  filter(System_Status == 0) %>%
+  ggplot() +
+  geom_point(aes(Depth, Flow, color = Site)) +
+  scale_y_unit(name = "Flow", unit = "ft^3/s") +
+  facet_wrap(~Site, scales = "free") +
+  labs(title = "Stage Discharge") +
+  theme_ms()
+```
+
+Filter System in water == 100 and color by month to discern potential patterns.
+```{r}
+iqplus_df %>%
+  filter(System_Status == 0,
+         System_In_Water == 100) %>%
+  mutate(Month = lubridate::month(Date_Time, label = TRUE)) %>%
+  ggplot() +
+  geom_point(aes(Depth, Flow, color = Month), alpha = 0.5) +
+  scale_y_unit(name = "Flow", unit = "ft^3/s") +
+  facet_wrap(~Site, scales = "free") +
+  labs(title = "Stage Discharge") +
+  theme_ms()
+```
+
+Site `16396` looks pretty good. We still have some data cleaning and sorting on the remaining two sites.
+
+
+
+Exploring `16397` further...
+
+```{r}
+iqplus_df %>%
+  filter(Site == "16397",
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Flow) >= 0) %>%
+  mutate(Month = lubridate::month(Date_Time, label = TRUE)) %>%
+  ggplot() +
+  geom_point(aes(Depth, Flow, color = Month), alpha = 0.5) +
+  scale_y_unit(name = "Flow", unit = "ft^3/s") +
+  facet_wrap(~Month, scales = "free") +
+  labs(title = "Stage Discharge") +
+  theme_ms()
+```
+
+
+
+
+
+
+Exploring `16882` further...
+
+```{r}
+iqplus_df %>%
+  filter(Site == "16882",
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Flow) >= 0) %>%
+  mutate(Month = lubridate::month(Date_Time, label = TRUE)) %>%
+  ggplot() +
+  geom_point(aes(Depth, Flow, color = Month), alpha = 0.5) +
+  scale_y_unit(name = "Flow", unit = "ft^3/s") +
+  facet_wrap(~Month, scales = "free") +
+  labs(title = "Stage Discharge") +
+  theme_ms() +
+  theme(panel.spacing = unit(2, "points"))
+```
+
+
 
 To do:
 
