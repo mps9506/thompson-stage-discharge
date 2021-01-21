@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Exploring Thompsons Creek Stage Discharge Data</title>
+  <meta name="description" content="Exploring Thompsons Creek Stage Discharge Data" />
+  <meta name="generator" content="bookdown 0.21 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="Exploring Thompsons Creek Stage Discharge Data" />
+  <meta property="og:type" content="book" />
+  
+  
+  
+  <meta name="github-repo" content="https://github.com/mps9506/thompson-stage-discharge" />
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Exploring Thompsons Creek Stage Discharge Data" />
+  
+  
+  
+
+
+
+<meta name="date" content="2021-01-21" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+
+
+<script src="libs/jquery-2.2.3/jquery.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+
+<script src="libs/accessible-code-block-0.0.1/empty-anchor.js"></script>
+
+
+<style type="text/css">
+code.sourceCode > span { display: inline-block; line-height: 1.25; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./">TEMPLATE</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="" data-path=""><a href="#about"><i class="fa fa-check"></i>About</a></li>
+<li class="chapter" data-level="" data-path=""><a href="#data-import"><i class="fa fa-check"></i>Data Import</a><ul>
+<li class="chapter" data-level="" data-path=""><a href="#pressure-transducers"><i class="fa fa-check"></i>Pressure Transducers</a></li>
+<li class="chapter" data-level="" data-path=""><a href="#iq-plus"><i class="fa fa-check"></i>IQ Plus</a></li>
+</ul></li>
+<li class="chapter" data-level="" data-path=""><a href="#data-explore"><i class="fa fa-check"></i>Data Explore</a><ul>
+<li class="chapter" data-level="" data-path=""><a href="#pressure-transducers-1"><i class="fa fa-check"></i>Pressure Transducers</a></li>
+</ul></li>
+<li class="chapter" data-level="" data-path=""><a href="#iqplus"><i class="fa fa-check"></i>IQPlus</a></li>
+<li class="divider"></li>
+<li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
+
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Exploring Thompsons Creek Stage Discharge Data</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="header">
+<h1 class="title">Exploring Thompsons Creek Stage Discharge Data</h1>
+<p class="date"><em>2021-01-21</em></p>
+</div>
+<div id="about" class="section level2">
+<h2>About</h2>
+<p>This document is an exploratory analysis of the pressure data and IQ data at …</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw">library</span>(readr)</span>
+<span id="cb1-2"><a href="#cb1-2"></a><span class="kw">library</span>(tibble)</span>
+<span id="cb1-3"><a href="#cb1-3"></a><span class="kw">library</span>(dplyr)</span>
+<span id="cb1-4"><a href="#cb1-4"></a><span class="kw">library</span>(ggplot2)</span>
+<span id="cb1-5"><a href="#cb1-5"></a><span class="kw">library</span>(stringr)</span>
+<span id="cb1-6"><a href="#cb1-6"></a><span class="kw">library</span>(here)</span>
+<span id="cb1-7"><a href="#cb1-7"></a><span class="kw">library</span>(units)</span>
+<span id="cb1-8"><a href="#cb1-8"></a><span class="kw">library</span>(ggforce)</span>
+<span id="cb1-9"><a href="#cb1-9"></a><span class="kw">library</span>(hrbrthemes)</span>
+<span id="cb1-10"><a href="#cb1-10"></a></span>
+<span id="cb1-11"><a href="#cb1-11"></a><span class="kw">update_geom_font_defaults</span>(font_rc)</span>
+<span id="cb1-12"><a href="#cb1-12"></a></span>
+<span id="cb1-13"><a href="#cb1-13"></a>theme_ms &lt;-<span class="st"> </span><span class="cf">function</span>(...) {</span>
+<span id="cb1-14"><a href="#cb1-14"></a>  <span class="kw">theme_ipsum_pub</span>(<span class="dt">plot_margin =</span> <span class="kw">margin</span>(<span class="dv">10</span>,<span class="dv">10</span>,<span class="dv">10</span>,<span class="dv">10</span>),</span>
+<span id="cb1-15"><a href="#cb1-15"></a>              <span class="dt">axis_title_just =</span> <span class="st">&quot;c&quot;</span>) <span class="op">+</span></span>
+<span id="cb1-16"><a href="#cb1-16"></a><span class="st">    </span><span class="kw">theme</span>(<span class="dt">legend.position =</span> <span class="st">&quot;bottom&quot;</span>,</span>
+<span id="cb1-17"><a href="#cb1-17"></a>          <span class="dt">panel.background =</span> <span class="kw">element_rect</span>(<span class="dt">fill =</span> <span class="st">&quot;white&quot;</span>, </span>
+<span id="cb1-18"><a href="#cb1-18"></a>            <span class="dt">colour =</span> <span class="ot">NA</span>), </span>
+<span id="cb1-19"><a href="#cb1-19"></a>          <span class="dt">panel.border =</span> <span class="kw">element_rect</span>(<span class="dt">fill =</span> <span class="ot">NA</span>, </span>
+<span id="cb1-20"><a href="#cb1-20"></a>            <span class="dt">colour =</span> <span class="st">&quot;grey20&quot;</span>),</span>
+<span id="cb1-21"><a href="#cb1-21"></a>          ...)</span>
+<span id="cb1-22"><a href="#cb1-22"></a>}</span></code></pre></div>
+</div>
+<div id="data-import" class="section level2">
+<h2>Data Import</h2>
+<div id="pressure-transducers" class="section level3">
+<h3>Pressure Transducers</h3>
+<p>Use <code>readr::read_csv()</code> to import data. The HOBO pressure data is pre-computed but has extra lines we need to clean up.</p>
+<ul>
+<li><p>each location has two files, March through August and August through December.</p></li>
+<li><p>ideally, I can make one dataframe that compiles all the data</p></li>
+<li><p>we can read all the files and row bind but we need to add a column indicating the site number</p></li>
+<li><p>for this deployment it looks like the daylight savings time adjustment is not applied to data. So everything between March 6 and November 1 is off 1 hour from DST. Assuming all data will be reported in observed time, it is probably easiest to convert time back to GMT, then apply R’s built in time zones to convert the times with appropriate -5 or -6 hour offsets.</p></li>
+</ul>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="co">## make a list of files to import</span></span>
+<span id="cb2-2"><a href="#cb2-2"></a>file_paths &lt;-<span class="st"> </span><span class="kw">paste0</span>(<span class="kw">here</span>(<span class="st">&quot;Data/Hobo&quot;</span>),</span>
+<span id="cb2-3"><a href="#cb2-3"></a>                     <span class="st">&quot;/&quot;</span>,</span>
+<span id="cb2-4"><a href="#cb2-4"></a>                     <span class="kw">list.files</span>(<span class="dt">path =</span> <span class="kw">here</span>(<span class="st">&quot;Data/Hobo&quot;</span>),</span>
+<span id="cb2-5"><a href="#cb2-5"></a>                                <span class="dt">pattern =</span> <span class="st">&quot;.csv&quot;</span>))</span>
+<span id="cb2-6"><a href="#cb2-6"></a></span>
+<span id="cb2-7"><a href="#cb2-7"></a><span class="co">## create a blank tibble to fill</span></span>
+<span id="cb2-8"><a href="#cb2-8"></a>hobo_df &lt;-<span class="st"> </span><span class="kw">tibble</span>()</span>
+<span id="cb2-9"><a href="#cb2-9"></a></span>
+<span id="cb2-10"><a href="#cb2-10"></a></span>
+<span id="cb2-11"><a href="#cb2-11"></a><span class="co">## loop through file paths to read each file</span></span>
+<span id="cb2-12"><a href="#cb2-12"></a><span class="cf">for</span> (i <span class="cf">in</span> file_paths) {</span>
+<span id="cb2-13"><a href="#cb2-13"></a>  x &lt;-<span class="st"> </span><span class="kw">read_csv</span>(</span>
+<span id="cb2-14"><a href="#cb2-14"></a>    i,</span>
+<span id="cb2-15"><a href="#cb2-15"></a>    <span class="dt">skip =</span> <span class="dv">2</span>,</span>
+<span id="cb2-16"><a href="#cb2-16"></a>    <span class="dt">col_names =</span> <span class="kw">c</span>(</span>
+<span id="cb2-17"><a href="#cb2-17"></a>      <span class="st">&quot;Row&quot;</span>,</span>
+<span id="cb2-18"><a href="#cb2-18"></a>      <span class="st">&quot;Date&quot;</span>,</span>
+<span id="cb2-19"><a href="#cb2-19"></a>      <span class="st">&quot;Time&quot;</span>,</span>
+<span id="cb2-20"><a href="#cb2-20"></a>      <span class="st">&quot;Abs_Pres&quot;</span>,</span>
+<span id="cb2-21"><a href="#cb2-21"></a>      <span class="st">&quot;Temp&quot;</span>,</span>
+<span id="cb2-22"><a href="#cb2-22"></a>      <span class="st">&quot;Bar_Pressure&quot;</span>,</span>
+<span id="cb2-23"><a href="#cb2-23"></a>      <span class="st">&quot;Water_Level&quot;</span>,</span>
+<span id="cb2-24"><a href="#cb2-24"></a>      <span class="st">&quot;Coupler_Detached&quot;</span>,</span>
+<span id="cb2-25"><a href="#cb2-25"></a>      <span class="st">&quot;Coupler_Attached&quot;</span>,</span>
+<span id="cb2-26"><a href="#cb2-26"></a>      <span class="st">&quot;Stopped&quot;</span>,</span>
+<span id="cb2-27"><a href="#cb2-27"></a>      <span class="st">&quot;EOF&quot;</span></span>
+<span id="cb2-28"><a href="#cb2-28"></a>    ),</span>
+<span id="cb2-29"><a href="#cb2-29"></a>    <span class="dt">col_types =</span> <span class="st">&quot;nccnnnncccc&quot;</span></span>
+<span id="cb2-30"><a href="#cb2-30"></a>  )</span>
+<span id="cb2-31"><a href="#cb2-31"></a>  x<span class="op">$</span>file &lt;-<span class="st"> </span>i</span>
+<span id="cb2-32"><a href="#cb2-32"></a>  hobo_df &lt;-<span class="st"> </span><span class="kw">bind_rows</span>(hobo_df, x)</span>
+<span id="cb2-33"><a href="#cb2-33"></a>  <span class="kw">rm</span>(x)</span>
+<span id="cb2-34"><a href="#cb2-34"></a>}</span>
+<span id="cb2-35"><a href="#cb2-35"></a></span>
+<span id="cb2-36"><a href="#cb2-36"></a><span class="co">## clean up the dataframe</span></span>
+<span id="cb2-37"><a href="#cb2-37"></a>hobo_df &lt;-<span class="st"> </span>hobo_df <span class="op">%&gt;%</span></span>
+<span id="cb2-38"><a href="#cb2-38"></a><span class="st">  </span><span class="kw">mutate</span>(</span>
+<span id="cb2-39"><a href="#cb2-39"></a>    <span class="co">## regex extracts site number from file path</span></span>
+<span id="cb2-40"><a href="#cb2-40"></a>    <span class="dt">Site =</span> <span class="kw">str_extract</span>(file, <span class="st">&quot;</span><span class="ch">\\</span><span class="st">d{1,6}&quot;</span>),</span>
+<span id="cb2-41"><a href="#cb2-41"></a>    </span>
+<span id="cb2-42"><a href="#cb2-42"></a>    <span class="co">## convert date and time columns to date/time format</span></span>
+<span id="cb2-43"><a href="#cb2-43"></a>    <span class="dt">dt =</span> <span class="kw">paste</span>(Date, Time),</span>
+<span id="cb2-44"><a href="#cb2-44"></a>    <span class="dt">Date_Time =</span> <span class="kw">as.POSIXct</span>(<span class="kw">paste</span>(Date, Time),</span>
+<span id="cb2-45"><a href="#cb2-45"></a>                           <span class="dt">tz =</span> <span class="st">&quot;Etc/GMT-6&quot;</span>,</span>
+<span id="cb2-46"><a href="#cb2-46"></a>                           <span class="dt">format =</span> <span class="st">&quot;%m/%d/%y %I:%M:%S %p&quot;</span>)) <span class="op">%&gt;%</span></span>
+<span id="cb2-47"><a href="#cb2-47"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">Site =</span> <span class="kw">as.factor</span>(Site)) <span class="op">%&gt;%</span></span>
+<span id="cb2-48"><a href="#cb2-48"></a><span class="st">  </span><span class="co">## select the columns we need to keep</span></span>
+<span id="cb2-49"><a href="#cb2-49"></a><span class="st">  </span>dplyr<span class="op">::</span><span class="kw">select</span>(Abs_Pres, Temp, Water_Level, Site, Date_Time) <span class="op">%&gt;%</span></span>
+<span id="cb2-50"><a href="#cb2-50"></a><span class="st">  </span><span class="co">## filter rows without water_level</span></span>
+<span id="cb2-51"><a href="#cb2-51"></a><span class="st">  </span>dplyr<span class="op">::</span><span class="kw">filter</span>(<span class="op">!</span><span class="kw">is.na</span>(Water_Level))</span>
+<span id="cb2-52"><a href="#cb2-52"></a>  </span>
+<span id="cb2-53"><a href="#cb2-53"></a><span class="co">## attach units to our columns</span></span>
+<span id="cb2-54"><a href="#cb2-54"></a><span class="kw">units</span>(hobo_df<span class="op">$</span>Water_Level) &lt;-<span class="st"> </span><span class="kw">as_units</span>(<span class="st">&quot;ft&quot;</span>)</span>
+<span id="cb2-55"><a href="#cb2-55"></a><span class="kw">units</span>(hobo_df<span class="op">$</span>Temp) &lt;-<span class="st"> </span><span class="kw">as_units</span>(<span class="st">&quot;°F&quot;</span>)</span>
+<span id="cb2-56"><a href="#cb2-56"></a><span class="kw">units</span>(hobo_df<span class="op">$</span>Abs_Pres) &lt;-<span class="st"> </span><span class="kw">as_units</span>(<span class="st">&quot;psi&quot;</span>)</span>
+<span id="cb2-57"><a href="#cb2-57"></a></span>
+<span id="cb2-58"><a href="#cb2-58"></a>  </span>
+<span id="cb2-59"><a href="#cb2-59"></a>hobo_df</span></code></pre></div>
+<pre><code>## # A tibble: 71,447 x 5
+##    Abs_Pres   Temp Water_Level Site  Date_Time          
+##       [psi]   [°F]        [ft] &lt;fct&gt; &lt;dttm&gt;             
+##  1  14.4270 76.006       0.392 16396 2020-03-02 15:17:19
+##  2  14.4237 75.659       0.388 16396 2020-03-02 15:32:19
+##  3  14.4272 75.312       0.399 16396 2020-03-02 15:47:19
+##  4  14.4192 74.964       0.391 16396 2020-03-02 16:02:19
+##  5  14.4165 74.791       0.379 16396 2020-03-02 16:17:19
+##  6  14.4153 74.446       0.361 16396 2020-03-02 16:32:19
+##  7  14.4172 74.271       0.364 16396 2020-03-02 16:47:19
+##  8  14.4166 74.098       0.363 16396 2020-03-02 17:02:19
+##  9  14.4207 73.926       0.372 16396 2020-03-02 17:17:19
+## 10  14.4270 73.753       0.376 16396 2020-03-02 17:32:19
+## # … with 71,437 more rows</code></pre>
+</div>
+<div id="iq-plus" class="section level3">
+<h3>IQ Plus</h3>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="co">#read_csv(here::here(&quot;Data/IQPlus/16397-2020_12_31.csv&quot;))</span></span>
+<span id="cb4-2"><a href="#cb4-2"></a></span>
+<span id="cb4-3"><a href="#cb4-3"></a><span class="co">## make a list of files to import</span></span>
+<span id="cb4-4"><a href="#cb4-4"></a>file_paths &lt;-<span class="st"> </span><span class="kw">paste0</span>(<span class="kw">here</span>(<span class="st">&quot;Data/IQPlus&quot;</span>),</span>
+<span id="cb4-5"><a href="#cb4-5"></a>                     <span class="st">&quot;/&quot;</span>,</span>
+<span id="cb4-6"><a href="#cb4-6"></a>                     <span class="kw">list.files</span>(<span class="dt">path =</span> <span class="kw">here</span>(<span class="st">&quot;Data/IQPlus&quot;</span>),</span>
+<span id="cb4-7"><a href="#cb4-7"></a>                                <span class="dt">pattern =</span> <span class="st">&quot;.csv&quot;</span>))</span>
+<span id="cb4-8"><a href="#cb4-8"></a></span>
+<span id="cb4-9"><a href="#cb4-9"></a><span class="co">## create a blank tibble to fill</span></span>
+<span id="cb4-10"><a href="#cb4-10"></a>iqplus_df &lt;-<span class="st"> </span><span class="kw">tibble</span>()</span>
+<span id="cb4-11"><a href="#cb4-11"></a></span>
+<span id="cb4-12"><a href="#cb4-12"></a><span class="co">## loop through file paths to read each file</span></span>
+<span id="cb4-13"><a href="#cb4-13"></a><span class="cf">for</span> (i <span class="cf">in</span> file_paths) {</span>
+<span id="cb4-14"><a href="#cb4-14"></a>  x &lt;-<span class="st"> </span><span class="kw">read_csv</span>(</span>
+<span id="cb4-15"><a href="#cb4-15"></a>    i,</span>
+<span id="cb4-16"><a href="#cb4-16"></a>    <span class="dt">col_types =</span> <span class="st">&quot;nc______n__n________________________________________&quot;</span></span>
+<span id="cb4-17"><a href="#cb4-17"></a>  )</span>
+<span id="cb4-18"><a href="#cb4-18"></a>  x<span class="op">$</span>file &lt;-<span class="st"> </span>i</span>
+<span id="cb4-19"><a href="#cb4-19"></a>  iqplus_df &lt;-<span class="st"> </span><span class="kw">bind_rows</span>(iqplus_df, x)</span>
+<span id="cb4-20"><a href="#cb4-20"></a>  <span class="kw">rm</span>(x)</span>
+<span id="cb4-21"><a href="#cb4-21"></a>}</span>
+<span id="cb4-22"><a href="#cb4-22"></a></span>
+<span id="cb4-23"><a href="#cb4-23"></a></span>
+<span id="cb4-24"><a href="#cb4-24"></a>iqplus_df &lt;-<span class="st"> </span>iqplus_df <span class="op">%&gt;%</span></span>
+<span id="cb4-25"><a href="#cb4-25"></a><span class="st">    </span><span class="kw">mutate</span>(</span>
+<span id="cb4-26"><a href="#cb4-26"></a>    <span class="co">## regex extracts site number from file path</span></span>
+<span id="cb4-27"><a href="#cb4-27"></a>    <span class="dt">Site =</span> <span class="kw">str_extract</span>(file, <span class="st">&quot;</span><span class="ch">\\</span><span class="st">d{1,6}&quot;</span>)) <span class="op">%&gt;%</span></span>
+<span id="cb4-28"><a href="#cb4-28"></a><span class="st">  </span><span class="co">## use `dplyr::` to specify which rename function to use, just in case</span></span>
+<span id="cb4-29"><a href="#cb4-29"></a><span class="st">  </span>dplyr<span class="op">::</span><span class="kw">rename</span>(<span class="dt">Sample_Number =</span><span class="st">`</span><span class="dt">Sample number</span><span class="st">`</span>,</span>
+<span id="cb4-30"><a href="#cb4-30"></a>                <span class="dt">Date_Time =</span> <span class="st">`</span><span class="dt">Sample time</span><span class="st">`</span>,</span>
+<span id="cb4-31"><a href="#cb4-31"></a>                <span class="dt">Depth =</span> <span class="st">`</span><span class="dt">Depth (ft)</span><span class="st">`</span>,</span>
+<span id="cb4-32"><a href="#cb4-32"></a>                <span class="dt">Flow =</span> <span class="st">`</span><span class="dt">Flow (ft³/s)</span><span class="st">`</span>) <span class="op">%&gt;%</span></span>
+<span id="cb4-33"><a href="#cb4-33"></a><span class="st">  </span>dplyr<span class="op">::</span><span class="kw">select</span>(<span class="op">-</span><span class="kw">c</span>(Sample_Number, file)) <span class="op">%&gt;%</span></span>
+<span id="cb4-34"><a href="#cb4-34"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">Date_Time =</span> <span class="kw">as.POSIXct</span>(Date_Time,</span>
+<span id="cb4-35"><a href="#cb4-35"></a>                                <span class="dt">tz =</span> <span class="st">&quot;Etc/GMT-6&quot;</span>,</span>
+<span id="cb4-36"><a href="#cb4-36"></a>                                <span class="dt">format =</span> <span class="st">&quot;%Y-%m-%d %H:%M:%S&quot;</span>))</span>
+<span id="cb4-37"><a href="#cb4-37"></a></span>
+<span id="cb4-38"><a href="#cb4-38"></a></span>
+<span id="cb4-39"><a href="#cb4-39"></a><span class="co">## attach units to our columns</span></span>
+<span id="cb4-40"><a href="#cb4-40"></a><span class="kw">units</span>(iqplus_df<span class="op">$</span>Depth) &lt;-<span class="st"> </span><span class="kw">as_units</span>(<span class="st">&quot;ft&quot;</span>)</span>
+<span id="cb4-41"><a href="#cb4-41"></a><span class="kw">units</span>(iqplus_df<span class="op">$</span>Flow) &lt;-<span class="st"> </span><span class="kw">as_units</span>(<span class="st">&quot;ft^3/s&quot;</span>)</span>
+<span id="cb4-42"><a href="#cb4-42"></a></span>
+<span id="cb4-43"><a href="#cb4-43"></a>iqplus_df</span></code></pre></div>
+<pre><code>## # A tibble: 26,174 x 4
+##    Date_Time              Depth     Flow Site 
+##    &lt;dttm&gt;                  [ft] [ft^3/s] &lt;chr&gt;
+##  1 2020-05-12 16:58:00 1.758559 17.25626 16396
+##  2 2020-05-12 17:13:00 1.867973 20.86921 16396
+##  3 2020-05-12 17:28:00 2.006131 27.27231 16396
+##  4 2020-05-12 17:43:00 2.119382 31.04828 16396
+##  5 2020-05-12 17:58:00 2.172015 33.71041 16396
+##  6 2020-05-12 18:13:00 2.228058 36.78339 16396
+##  7 2020-05-12 18:28:00 2.350440 44.18084 16396
+##  8 2020-05-12 18:43:00 2.508431 51.30917 16396
+##  9 2020-05-12 18:58:00 2.674151 60.84247 16396
+## 10 2020-05-12 19:13:00 2.809936 69.92496 16396
+## # … with 26,164 more rows</code></pre>
+</div>
+</div>
+<div id="data-explore" class="section level2">
+<h2>Data Explore</h2>
+<div id="pressure-transducers-1" class="section level3">
+<h3>Pressure Transducers</h3>
+<p>Plot the depth date over time for all three sites</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="co">## note, that if the scale name has a space, there is a bug in ggforce</span></span>
+<span id="cb6-2"><a href="#cb6-2"></a><span class="co">## need to set units_options(parse = FALSE) per:</span></span>
+<span id="cb6-3"><a href="#cb6-3"></a><span class="co">## https://github.com/thomasp85/ggforce/issues/197</span></span>
+<span id="cb6-4"><a href="#cb6-4"></a></span>
+<span id="cb6-5"><a href="#cb6-5"></a><span class="kw">ggplot</span>(hobo_df) <span class="op">+</span></span>
+<span id="cb6-6"><a href="#cb6-6"></a><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(Date_Time, Water_Level, <span class="dt">color =</span> Site)) <span class="op">+</span></span>
+<span id="cb6-7"><a href="#cb6-7"></a><span class="st">  </span><span class="kw">scale_y_unit</span>(<span class="dt">name =</span> <span class="st">&quot;Level&quot;</span>, <span class="dt">unit =</span> <span class="st">&quot;ft&quot;</span>) <span class="op">+</span></span>
+<span id="cb6-8"><a href="#cb6-8"></a><span class="st">  </span><span class="kw">scale_x_datetime</span>(<span class="dt">name =</span> <span class="st">&quot;Date/Time&quot;</span>) <span class="op">+</span></span>
+<span id="cb6-9"><a href="#cb6-9"></a><span class="st">  </span><span class="kw">labs</span>(<span class="dt">title =</span> <span class="st">&quot;15-Minute Measured Height&quot;</span>) <span class="op">+</span></span>
+<span id="cb6-10"><a href="#cb6-10"></a><span class="st">  </span><span class="kw">theme_ms</span>()</span></code></pre></div>
+<p><img src="document_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
+</div>
+</div>
+<div id="iqplus" class="section level2">
+<h2>IQPlus</h2>
+<p>Plot the depth data drom the IQPlus from all three sites.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="kw">ggplot</span>(iqplus_df) <span class="op">+</span></span>
+<span id="cb7-2"><a href="#cb7-2"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(Date_Time, Depth, <span class="dt">color =</span> Site)) <span class="op">+</span></span>
+<span id="cb7-3"><a href="#cb7-3"></a><span class="st">  </span><span class="kw">facet_wrap</span>(<span class="op">~</span>Site, <span class="dt">scales =</span> <span class="st">&quot;free&quot;</span>) <span class="op">+</span></span>
+<span id="cb7-4"><a href="#cb7-4"></a><span class="st">  </span><span class="kw">labs</span>(<span class="dt">title =</span> <span class="st">&quot;Stage Discharge&quot;</span>) <span class="op">+</span></span>
+<span id="cb7-5"><a href="#cb7-5"></a><span class="st">  </span><span class="kw">theme_ms</span>()</span></code></pre></div>
+<pre><code>## Warning: Removed 1483 rows containing missing values (geom_point).</code></pre>
+<p><img src="document_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
+<p>Plot the depth-discharge from all three sites as measured by the IQPlus.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a><span class="kw">ggplot</span>(iqplus_df) <span class="op">+</span></span>
+<span id="cb9-2"><a href="#cb9-2"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(Depth, Flow, <span class="dt">color =</span> Site)) <span class="op">+</span></span>
+<span id="cb9-3"><a href="#cb9-3"></a><span class="st">  </span><span class="kw">scale_y_unit</span>(<span class="dt">name =</span> <span class="st">&quot;Flow&quot;</span>, <span class="dt">unit =</span> <span class="st">&quot;ft^3/s&quot;</span>) <span class="op">+</span></span>
+<span id="cb9-4"><a href="#cb9-4"></a><span class="st">  </span><span class="kw">facet_wrap</span>(<span class="op">~</span>Site, <span class="dt">scales =</span> <span class="st">&quot;free&quot;</span>) <span class="op">+</span></span>
+<span id="cb9-5"><a href="#cb9-5"></a><span class="st">  </span><span class="kw">labs</span>(<span class="dt">title =</span> <span class="st">&quot;Stage Discharge&quot;</span>) <span class="op">+</span></span>
+<span id="cb9-6"><a href="#cb9-6"></a><span class="st">  </span><span class="kw">theme_ms</span>()</span></code></pre></div>
+<pre><code>## Warning: Removed 1483 rows containing missing values (geom_point).</code></pre>
+<p><img src="document_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<p>To do:</p>
+<p>[] visually compare measured depths with the IQ and the Hobos</p>
+<p>[] need to better understand the remaining columns in the IQPlus dataset to see if we can systematically clean the data</p>
+<p>[] do we need to group measurement events? ie. should the rating curve be built from certain portions of the hydrograph (need to see what the literature says)</p>
+
+</div>
+
+<center>
+  <div class="footer">
+<a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/80x15.png" /></a><br />Text and figures are licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0 International License</a> unless otherwise indicated.
+  </div>
+</center>
+            </section>
+
+          </div>
+        </div>
+      </div>
+
+
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/lunr.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": "https://github.com/mps9506/thompson-stage-discharge/edit/main/%s",
+"text": "Suggest an edit"
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": ["https://github.com/mps9506/thompson-stage-discharge/raw/main/%s"],
+"toc": {
+"collapse": "section"
+}
+});
+});
+</script>
+
+</body>
+
+</html>
