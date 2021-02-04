@@ -673,19 +673,19 @@ NLL <- function(pars, data) {
   
   ## minimize the sum of square errors per the paper
   sse <- sum((Q - preds)^2)
-  print(sse)
+  #print(sse)
   sse
   
 }
 
-par <- c(K = 15,
-         a = 1,
+par <- c(K = 1,
+         a = .5,
          n = 2,
-         x = 1)
+         x = 2000)
 
 ## limits to the parameter space
-lower <- c(-10, 0.1, 0.1, 0.1)
-upper <- c(200, 100, 100, 5000)
+lower <- c(-10, -10, -10, 0.1)
+upper <- c(200, 500, 10, 5000)
 
 optim.par <- optim(par = par,
                    fn = NLL,
