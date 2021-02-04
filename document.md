@@ -1,6 +1,6 @@
 ---
 title: "Exploring Thompsons Creek Stage Discharge Data"
-date: "2021-01-21"
+date: "2021-02-04"
 github-repo: https://github.com/mps9506/thompson-stage-discharge
 bibliography: bibliography.bib
 biblio-style: "apalike"
@@ -154,7 +154,7 @@ iqplus_df <- tibble()
 for (i in file_paths) {
   x <- read_csv(
     i,
-    col_types = "nc______n__n______________________nn________________"
+    col_types = "nc______n__n______________________nn______n_________"
   )
   x$file <- i
   iqplus_df <- bind_rows(iqplus_df, x)
@@ -172,7 +172,8 @@ iqplus_df <- iqplus_df %>%
                 Depth = `Depth (ft)`,
                 Flow = `Flow (ft³/s)`,
                 System_In_Water = `System in water (%)`,
-                System_Status = `System status (status codes)`) %>%
+                System_Status = `System status (status codes)`,
+                Index_Velocity = `Velocity (mean) (ft/s)`) %>%
   dplyr::select(-c(Sample_Number, file)) %>%
   mutate(Date_Time = as.POSIXct(Date_Time,
                                 tz = "Etc/GMT-6",
@@ -182,25 +183,27 @@ iqplus_df <- iqplus_df %>%
 ## attach units to our columns
 units(iqplus_df$Depth) <- as_units("ft")
 units(iqplus_df$Flow) <- as_units("ft^3/s")
+units(iqplus_df$Index_Velocity) <- as_units("ft/s")
 
 iqplus_df
 ```
 
 ```
-## # A tibble: 26,174 x 6
-##    Date_Time              Depth     Flow System_In_Water System_Status Site 
-##    <dttm>                  [ft] [ft^3/s]           <dbl>         <dbl> <chr>
-##  1 2020-05-12 16:58:00 1.758559 17.25626             100             0 16396
-##  2 2020-05-12 17:13:00 1.867973 20.86921             100             0 16396
-##  3 2020-05-12 17:28:00 2.006131 27.27231             100             0 16396
-##  4 2020-05-12 17:43:00 2.119382 31.04828             100             0 16396
-##  5 2020-05-12 17:58:00 2.172015 33.71041             100             0 16396
-##  6 2020-05-12 18:13:00 2.228058 36.78339             100             0 16396
-##  7 2020-05-12 18:28:00 2.350440 44.18084             100             0 16396
-##  8 2020-05-12 18:43:00 2.508431 51.30917             100             0 16396
-##  9 2020-05-12 18:58:00 2.674151 60.84247             100             0 16396
-## 10 2020-05-12 19:13:00 2.809936 69.92496             100             0 16396
-## # … with 26,164 more rows
+## # A tibble: 41,625 x 7
+##    Date_Time              Depth     Flow System_In_Water System_Status
+##    <dttm>                  [ft] [ft^3/s]           <dbl>         <dbl>
+##  1 2020-05-12 16:58:00 1.758559 17.25626             100             0
+##  2 2020-05-12 17:13:00 1.867973 20.86921             100             0
+##  3 2020-05-12 17:28:00 2.006131 27.27231             100             0
+##  4 2020-05-12 17:43:00 2.119382 31.04828             100             0
+##  5 2020-05-12 17:58:00 2.172015 33.71041             100             0
+##  6 2020-05-12 18:13:00 2.228058 36.78339             100             0
+##  7 2020-05-12 18:28:00 2.350440 44.18084             100             0
+##  8 2020-05-12 18:43:00 2.508431 51.30917             100             0
+##  9 2020-05-12 18:58:00 2.674151 60.84247             100             0
+## 10 2020-05-12 19:13:00 2.809936 69.92496             100             0
+## # … with 41,615 more rows, and 2 more variables: Index_Velocity [ft/s],
+## #   Site <chr>
 ```
 
 
@@ -233,15 +236,14 @@ Plot the depth data drom the IQPlus from all three sites.
 
 
 ```r
-ggplot(iqplus_df) +
+iqplus_df %>%
+  filter(System_Status == 0,
+         System_In_Water == 100) %>%
+  ggplot() +
   geom_point(aes(Date_Time, Depth, color = Site)) +
   facet_wrap(~Site, scales = "free") +
-  labs(title = "Stage Discharge") +
+  labs(title = "Stage") +
   theme_ms()
-```
-
-```
-## Warning: Removed 1483 rows containing missing values (geom_point).
 ```
 
 <img src="document_files/figure-html/unnamed-chunk-2-1.png" width="672" />
@@ -251,26 +253,10 @@ Plot the depth-discharge from all three sites as measured by the IQPlus.
 
 
 ```r
-ggplot(iqplus_df) +
-  geom_point(aes(Depth, Flow, color = Site)) +
-  scale_y_unit(name = "Flow", unit = "ft^3/s") +
-  facet_wrap(~Site, scales = "free") +
-  labs(title = "Stage Discharge") +
-  theme_ms()
-```
-
-```
-## Warning: Removed 1483 rows containing missing values (geom_point).
-```
-
-<img src="document_files/figure-html/unnamed-chunk-3-1.png" width="672" />
-
-Filter by system status codes. Keep only system status == 0
-
-
-```r
 iqplus_df %>%
-  filter(System_Status == 0) %>%
+  filter(System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Flow) > 0) %>%
   ggplot() +
   geom_point(aes(Depth, Flow, color = Site)) +
   scale_y_unit(name = "Flow", unit = "ft^3/s") +
@@ -279,13 +265,9 @@ iqplus_df %>%
   theme_ms()
 ```
 
-```
-## Warning: Removed 1198 rows containing missing values (geom_point).
-```
+<img src="document_files/figure-html/unnamed-chunk-3-1.png" width="672" />
 
-<img src="document_files/figure-html/unnamed-chunk-4-1.png" width="672" />
 
-Filter System in water == 100 and color by month to discern potential patterns.
 
 ```r
 iqplus_df %>%
@@ -300,7 +282,7 @@ iqplus_df %>%
   theme_ms()
 ```
 
-<img src="document_files/figure-html/unnamed-chunk-5-1.png" width="672" />
+<img src="document_files/figure-html/unnamed-chunk-4-1.png" width="672" />
 
 Site `16396` looks pretty good. We still have some data cleaning and sorting on the remaining two sites.
 
@@ -314,17 +296,19 @@ iqplus_df %>%
   filter(Site == "16397",
          System_Status == 0,
          System_In_Water == 100,
-         as.numeric(Flow) >= 0) %>%
+         #as.numeric(Depth) >= 0.75,
+         as.numeric(Flow) > 0) %>%
   mutate(Month = lubridate::month(Date_Time, label = TRUE)) %>%
   ggplot() +
   geom_point(aes(Depth, Flow, color = Month), alpha = 0.5) +
   scale_y_unit(name = "Flow", unit = "ft^3/s") +
-  facet_wrap(~Month, scales = "free") +
+  facet_wrap(~Month) +
   labs(title = "Stage Discharge") +
-  theme_ms()
+  theme_ms() +
+  theme(panel.spacing = unit(2, "points"))
 ```
 
-<img src="document_files/figure-html/unnamed-chunk-6-1.png" width="672" />
+<img src="document_files/figure-html/unnamed-chunk-5-1.png" width="672" />
 
 
 
@@ -339,19 +323,558 @@ iqplus_df %>%
   filter(Site == "16882",
          System_Status == 0,
          System_In_Water == 100,
-         as.numeric(Flow) >= 0) %>%
+         as.numeric(Flow) > 0) %>%
   mutate(Month = lubridate::month(Date_Time, label = TRUE)) %>%
   ggplot() +
   geom_point(aes(Depth, Flow, color = Month), alpha = 0.5) +
   scale_y_unit(name = "Flow", unit = "ft^3/s") +
-  facet_wrap(~Month, scales = "free") +
+  facet_wrap(~Month) +
   labs(title = "Stage Discharge") +
   theme_ms() +
   theme(panel.spacing = unit(2, "points"))
 ```
 
+<img src="document_files/figure-html/unnamed-chunk-6-1.png" width="672" />
+
+
+
+The looped rating curve in May and Dec might be a flood flow event. Discharge is typically higher on the rising stage than the falling stage.
+
+
+
+
+
+```r
+iqplus_df %>%
+  filter(Site == "16397",
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) > 0) %>%
+  filter(Date_Time <= as.POSIXct("2020-07-01")) %>%
+  ggplot() +
+  geom_point(aes(Date_Time, Flow))
+```
+
 <img src="document_files/figure-html/unnamed-chunk-7-1.png" width="672" />
 
+```r
+iqplus_df %>%
+  filter(Site == "16397",
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) > 0) %>%
+  filter(Date_Time <= as.POSIXct("2020-07-01")) %>%
+  ggplot() +
+  geom_point(aes(Date_Time, Depth))
+```
+
+<img src="document_files/figure-html/unnamed-chunk-7-2.png" width="672" />
+
+```r
+iqplus_df %>%
+  filter(Site == "16397",
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) > 0) %>%
+  filter(Date_Time <= as.POSIXct("2020-07-01")) %>%
+  ggplot() +
+  geom_point(aes(Depth, Flow))
+```
+
+<img src="document_files/figure-html/unnamed-chunk-7-3.png" width="672" />
+
+
+
+
+```r
+iqplus_df %>%
+  filter(Site == "16397",
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) > 0) %>%
+  filter(Date_Time > as.POSIXct("2020-07-01") & 
+           Date_Time < as.POSIXct("2020-09-01")) %>%
+  ggplot() +
+  geom_point(aes(Date_Time, Flow))
+```
+
+<img src="document_files/figure-html/unnamed-chunk-8-1.png" width="672" />
+
+```r
+iqplus_df %>%
+  filter(Site == "16397",
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) > 0) %>%
+  filter(Date_Time > as.POSIXct("2020-07-01") & 
+           Date_Time < as.POSIXct("2020-09-01")) %>%
+  ggplot() +
+  geom_point(aes(Date_Time, Depth))
+```
+
+<img src="document_files/figure-html/unnamed-chunk-8-2.png" width="672" />
+
+```r
+iqplus_df %>%
+  filter(Site == "16397",
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) > 0) %>%
+  filter(Date_Time > as.POSIXct("2020-07-01") & 
+           Date_Time < as.POSIXct("2020-09-01")) %>%
+  ggplot() +
+  geom_point(aes(Depth, Flow))
+```
+
+<img src="document_files/figure-html/unnamed-chunk-8-3.png" width="672" />
+
+
+
+```r
+iqplus_df %>%
+  filter(Site == "16397",
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) > 0) %>%
+  filter(Date_Time > as.POSIXct("2020-09-01") & 
+           Date_Time < as.POSIXct("2020-10-15")) %>%
+  ggplot() +
+  geom_point(aes(Date_Time, Flow))
+```
+
+<img src="document_files/figure-html/unnamed-chunk-9-1.png" width="672" />
+
+```r
+iqplus_df %>%
+  filter(Site == "16397",
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) > 0) %>%
+  filter(Date_Time > as.POSIXct("2020-09-01") & 
+           Date_Time < as.POSIXct("2020-10-15")) %>%
+  ggplot() +
+  geom_point(aes(Date_Time, Depth))
+```
+
+<img src="document_files/figure-html/unnamed-chunk-9-2.png" width="672" />
+
+```r
+iqplus_df %>%
+  filter(Site == "16397",
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) > 0) %>%
+  filter(Date_Time > as.POSIXct("2020-09-01") & 
+           Date_Time < as.POSIXct("2020-10-15")) %>%
+  ggplot() +
+  geom_point(aes(Depth, Flow))
+```
+
+<img src="document_files/figure-html/unnamed-chunk-9-3.png" width="672" />
+
+
+
+
+```r
+iqplus_df %>%
+  filter(Site == "16397",
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) > 0) %>%
+  filter(Date_Time > as.POSIXct("2020-10-15") & 
+           Date_Time < as.POSIXct("2020-11-25")) %>%
+  ggplot() +
+  geom_point(aes(Date_Time, Flow))
+```
+
+<img src="document_files/figure-html/unnamed-chunk-10-1.png" width="672" />
+
+```r
+iqplus_df %>%
+  filter(Site == "16397",
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) > 0) %>%
+  filter(Date_Time > as.POSIXct("2020-10-15") & 
+           Date_Time < as.POSIXct("2020-11-25")) %>%
+  ggplot() +
+  geom_point(aes(Date_Time, Depth))
+```
+
+<img src="document_files/figure-html/unnamed-chunk-10-2.png" width="672" />
+
+```r
+iqplus_df %>%
+  filter(Site == "16397",
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) > 0) %>%
+  filter(Date_Time > as.POSIXct("2020-10-15") & 
+           Date_Time < as.POSIXct("2020-11-25")) %>%
+  ggplot() +
+  geom_point(aes(Depth, Flow))
+```
+
+<img src="document_files/figure-html/unnamed-chunk-10-3.png" width="672" />
+
+
+
+```r
+iqplus_df %>%
+  filter(Site == "16397",
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) > 0) %>%
+  filter(Date_Time > as.POSIXct("2020-11-25") & 
+           Date_Time < as.POSIXct("2020-12-15")) %>%
+  ggplot() +
+  geom_point(aes(Date_Time, Flow))
+```
+
+<img src="document_files/figure-html/unnamed-chunk-11-1.png" width="672" />
+
+```r
+iqplus_df %>%
+  filter(Site == "16397",
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) > 0) %>%
+  filter(Date_Time > as.POSIXct("2020-11-25") & 
+           Date_Time < as.POSIXct("2020-12-15")) %>%
+  ggplot() +
+  geom_point(aes(Date_Time, Depth))
+```
+
+<img src="document_files/figure-html/unnamed-chunk-11-2.png" width="672" />
+
+```r
+iqplus_df %>%
+  filter(Site == "16397",
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) > 0) %>%
+  filter(Date_Time > as.POSIXct("2020-11-25") & 
+           Date_Time < as.POSIXct("2020-12-15")) %>%
+  ggplot() +
+  geom_point(aes(Depth, Flow))
+```
+
+<img src="document_files/figure-html/unnamed-chunk-11-3.png" width="672" />
+
+
+
+
+```r
+iqplus_df %>%
+  filter(Site == "16397",
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) > 0) %>%
+  filter(Date_Time > as.POSIXct("2020-12-15") & 
+           Date_Time < as.POSIXct("2020-12-31")) %>%
+  ggplot() +
+  geom_point(aes(Date_Time, Flow))
+```
+
+<img src="document_files/figure-html/unnamed-chunk-12-1.png" width="672" />
+
+```r
+iqplus_df %>%
+  filter(Site == "16397",
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) > 0) %>%
+  filter(Date_Time > as.POSIXct("2020-12-15") & 
+           Date_Time < as.POSIXct("2020-12-31")) %>%
+  ggplot() +
+  geom_point(aes(Date_Time, Depth))
+```
+
+<img src="document_files/figure-html/unnamed-chunk-12-2.png" width="672" />
+
+```r
+iqplus_df %>%
+  filter(Site == "16397",
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) > 0) %>%
+  filter(Date_Time > as.POSIXct("2020-12-15") & 
+           Date_Time < as.POSIXct("2020-12-31")) %>%
+  ggplot() +
+  geom_point(aes(Depth, Flow))
+```
+
+<img src="document_files/figure-html/unnamed-chunk-12-3.png" width="672" />
+
+
+
+```r
+iqplus_df %>%
+  filter(Site == "16397",
+         #System_Status == 0,
+         #System_In_Water == 100,
+         #as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) >= 0) %>%
+  filter(Date_Time > as.POSIXct("2021-01-01")) %>%
+  ggplot() +
+  geom_point(aes(Date_Time, Flow))
+```
+
+<img src="document_files/figure-html/unnamed-chunk-13-1.png" width="672" />
+
+```r
+iqplus_df %>%
+  filter(Site == "16397",
+         #System_Status == 0,
+         #System_In_Water == 100,
+         #as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) >= 0) %>%
+  filter(Date_Time > as.POSIXct("2021-01-01")) %>%
+  ggplot() +
+  geom_point(aes(Date_Time, Depth))
+```
+
+<img src="document_files/figure-html/unnamed-chunk-13-2.png" width="672" />
+
+```r
+iqplus_df %>%
+  filter(Site == "16397",
+         #System_Status == 0,
+         #System_In_Water == 100,
+         #as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) >= 0) %>%
+  filter(Date_Time > as.POSIXct("2021-01-01")) %>%
+  ggplot() +
+  geom_point(aes(Depth, Flow))
+```
+
+<img src="document_files/figure-html/unnamed-chunk-13-3.png" width="672" />
+
+
+
+##16396
+
+
+```r
+iqplus_df %>%
+  filter(Site == "16396",
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) >= 0) %>%
+    filter(Date_Time > as.POSIXct("2020-12-01") & 
+           Date_Time < as.POSIXct("2020-12-31")) %>%
+  ggplot() +
+  geom_point(aes(Date_Time, Flow))
+```
+
+<img src="document_files/figure-html/unnamed-chunk-14-1.png" width="672" />
+
+```r
+iqplus_df %>%
+  filter(Site == "16396",
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) >= 0) %>%
+    filter(Date_Time > as.POSIXct("2020-12-01") & 
+           Date_Time < as.POSIXct("2020-12-31")) %>%
+  ggplot() +
+  geom_point(aes(Date_Time, Depth))
+```
+
+<img src="document_files/figure-html/unnamed-chunk-14-2.png" width="672" />
+
+```r
+iqplus_df %>%
+  filter(Site == "16396",
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) >= 0) %>%
+   filter(Date_Time > as.POSIXct("2020-12-01") & 
+           Date_Time < as.POSIXct("2020-12-31")) %>%
+  ggplot() +
+  geom_point(aes(Depth, Flow, color = Date_Time)) +
+  scale_y_unit(trans = "log10")
+```
+
+<img src="document_files/figure-html/unnamed-chunk-14-3.png" width="672" />
+
+
+```r
+iqplus_df %>%
+  filter(Site == "16396",
+         #System_Status == 0,
+         #System_In_Water == 100,
+         #as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) >= 0) %>%
+  filter(Date_Time > as.POSIXct("2021-01-01")) %>%
+  ggplot() +
+  geom_point(aes(Date_Time, Flow))
+```
+
+<img src="document_files/figure-html/unnamed-chunk-15-1.png" width="672" />
+
+```r
+iqplus_df %>%
+  filter(Site == "16396",
+         #System_Status == 0,
+         #System_In_Water == 100,
+         #as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) >= 0) %>%
+  filter(Date_Time > as.POSIXct("2021-01-01")) %>%
+  ggplot() +
+  geom_point(aes(Date_Time, Depth))
+```
+
+<img src="document_files/figure-html/unnamed-chunk-15-2.png" width="672" />
+
+```r
+iqplus_df %>%
+  filter(Site == "16396",
+         #System_Status == 0,
+         #System_In_Water == 100,
+         #as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) >= 0) %>%
+  filter(Date_Time > as.POSIXct("2021-01-01")) %>%
+  ggplot() +
+  geom_point(aes(Depth, Flow, color = Date_Time))
+```
+
+<img src="document_files/figure-html/unnamed-chunk-15-3.png" width="672" />
+
+Can we model this hysteresis?
+
+
+Zakwan 2018:
+$$
+Q = K(h-a)^n\times\sqrt{1 + x\frac{\partial h}{\partial t}}
+$$
+
+- $Q$ is discharge
+
+- $h$ is gage height
+
+- $\frac{\partial h}{\partial t}}$ is the derivative of gage height with respect to time.
+
+Solve for K, a, n, x by minimizing sum of square error (SSE).
+
+$$
+SSE = \sum\limits_{i=1}^N[X-Y]^2
+$$
+
+
+```r
+iqplus_df %>%
+  filter(Site == "16396",
+         #System_Status == 0,
+         #System_In_Water == 100,
+         #as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) >= 0) %>%
+  filter(Date_Time > as.POSIXct("2021-01-01")) -> df_16396
+
+
+NLL <- function(pars, data) {
+  Depth = as.numeric(data$Depth)
+  fDepth = diff(Depth)
+  #print(paste("fd=",fDepth[1]))
+  Time = as.numeric(data$Date_Time)
+  fTime = diff(Time)
+  #print(paste("ft=", fTime[1]))
+  Depth = Depth[2:length(Depth)]
+  #print(paste("H=",Depth[1]))
+  K = pars[1]
+  a = pars[2]
+  n = pars[3]
+  x = pars[4]
+
+  
+  preds <- (K*(Depth - a)^n) * sqrt(1 + x * (fDepth/fTime))
+  #print(preds[1:5])
+  Q = as.numeric(data$Flow)
+  Q = Q[2:length(Q)]
+  
+  ## minimize the sum of square errors per the paper
+  sse <- sum((Q - preds)^2)
+  #print(sse)
+  sse
+  
+}
+
+par <- c(K = 1,
+         a = .5,
+         n = 2,
+         x = 2000)
+
+## limits to the parameter space
+lower <- c(-10, -10, -10, 0.1)
+upper <- c(200, 500, 10, 5000)
+
+optim.par <- optim(par = par,
+                   fn = NLL,
+                   data = df_16396,
+                   lower = lower,
+                   upper = upper,
+                   method = "L-BFGS-B")
+```
+
+
+```r
+K <- optim.par$par[1]
+a <- optim.par$par[2]
+n <- optim.par$par[3]
+x <- optim.par$par[4]
+
+df_16396 %>%
+  mutate(predicted = (K*(as.numeric(Depth) - a)^n) * sqrt(1 + x * (c(NA, diff(as.numeric(Depth)))/c(NA,diff(as.numeric(Date_Time)))))) %>%
+  ggplot() +
+  geom_point(aes(as.numeric(Depth), as.numeric(Flow), color = "measured"), alpha = 0.5) +
+  geom_point(aes(as.numeric(Depth), as.numeric(predicted), color = "predicted"), alpha = 0.2) +
+  scale_y_log10()
+```
+
+```
+## Warning: Removed 1 rows containing missing values (geom_point).
+```
+
+<img src="document_files/figure-html/unnamed-chunk-17-1.png" width="672" />
+
+```r
+df_16396 %>%
+  mutate(predicted = (K*(as.numeric(Depth) - a)^n) * sqrt(1 + x * (c(NA, diff(as.numeric(Depth)))/c(NA,diff(as.numeric(Date_Time)))))) %>%
+  ggplot() +
+  geom_point(aes(predicted, as.numeric(Flow)), color = "dodgerblue", alpha = 0.5) +
+  scale_x_log10() + scale_y_log10()
+```
+
+```
+## Warning: Removed 1 rows containing missing values (geom_point).
+```
+
+<img src="document_files/figure-html/unnamed-chunk-17-2.png" width="672" />
+
+So this appears to fit pretty well. In order to incorporate the first derivative function of stream height we will need to (1) split the data set into each sampling period; (2) calculate the derivatives in each dataset; (3) remove rows with NA (basically first record in each sampling event); (4) combine desired datasets based on shape or sample the datasets; (4) refit the function above to one or more datasets.
+
+Can probably split datasets and use purrr to do this? 
 
 
 To do:
