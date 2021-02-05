@@ -1,6 +1,6 @@
 ---
 title: "Exploring Thompsons Creek Stage Discharge Data"
-date: "2021-02-04"
+date: "2021-02-05"
 github-repo: https://github.com/mps9506/thompson-stage-discharge
 bibliography: bibliography.bib
 biblio-style: "apalike"
@@ -25,6 +25,8 @@ library(units)
 library(ggforce)
 library(hrbrthemes)
 library(lubridate)
+library(purrr)
+
 
 update_geom_font_defaults(font_rc)
 
@@ -774,7 +776,8 @@ $$
 
 - $h$ is gage height
 
-- $\frac{\partial h}{\partial t}}$ is the derivative of gage height with respect to time.
+- $\frac{\partial h}{\partial t}}$ is the partial first order derivative approximated using finite differences. This can be considered the slope or instantaneous rate of change for the function between gage height and time which is estimated using measured stream height values.
+
 
 Solve for K, a, n, x by minimizing sum of square error (SSE).
 
@@ -784,53 +787,71 @@ $$
 
 
 ```r
+exponent <- function(x, pow) {
+  (abs(x)^pow)*sign(x)
+}
+
 iqplus_df %>%
   filter(Site == "16396",
          #System_Status == 0,
          #System_In_Water == 100,
          #as.numeric(Depth) >= 0.26, ## minimum operating depth
          as.numeric(Flow) >= 0) %>%
-  filter(Date_Time > as.POSIXct("2021-01-01")) -> df_16396
+  filter(Date_Time > as.POSIXct("2021-01-01")) %>%
+  mutate(J = c(as.numeric(Depth)[1], diff(as.numeric(Depth)))/ c(as.numeric(Date_Time)[1], diff(Date_Time))) -> df_16396
+df_16396
+```
 
+```
+## # A tibble: 1,258 x 8
+##    Date_Time              Depth     Flow System_In_Water System_Status
+##    <dttm>                  [ft] [ft^3/s]           <dbl>         <dbl>
+##  1 2021-01-01 06:13:00 3.327133 89.89115             100             0
+##  2 2021-01-01 06:28:00 3.278842 88.63221             100             0
+##  3 2021-01-01 06:43:00 3.231056 84.23793             100             0
+##  4 2021-01-01 06:58:00 3.187967 80.72598             100             0
+##  5 2021-01-01 07:13:00 3.148007 76.48571             100             0
+##  6 2021-01-01 07:28:00 3.106684 78.26200             100             0
+##  7 2021-01-01 07:43:00 3.068813 81.35063             100             0
+##  8 2021-01-01 07:58:00 3.034464 78.35657             100             0
+##  9 2021-01-01 08:13:00 3.000094 79.96565             100             0
+## 10 2021-01-01 08:28:00 2.966982 77.21645             100             0
+## # … with 1,248 more rows, and 3 more variables: Index_Velocity [ft/s],
+## #   Site <chr>, J <dbl>
+```
 
-NLL <- function(pars, data) {
+```r
+SSE <- function(pars, data) {
   Depth = as.numeric(data$Depth)
-  fDepth = diff(Depth)
-  #print(paste("fd=",fDepth[1]))
-  Time = as.numeric(data$Date_Time)
-  fTime = diff(Time)
-  #print(paste("ft=", fTime[1]))
-  Depth = Depth[2:length(Depth)]
-  #print(paste("H=",Depth[1]))
+  J = data$J
   K = pars[1]
   a = pars[2]
   n = pars[3]
   x = pars[4]
 
-  
-  preds <- (K*(Depth - a)^n) * sqrt(1 + x * (fDepth/fTime))
-  #print(preds[1:5])
+  preds <- (K*exponent(x = Depth - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))
+
   Q = as.numeric(data$Flow)
-  Q = Q[2:length(Q)]
-  
+
+
   ## minimize the sum of square errors per the paper
   sse <- sum((Q - preds)^2)
   #print(sse)
   sse
-  
+
 }
 
-par <- c(K = 1,
-         a = .5,
+par <- c(K = 5,
+         a = 5,
          n = 2,
          x = 2000)
 
 ## limits to the parameter space
-lower <- c(-10, -10, -10, 0.1)
-upper <- c(200, 500, 10, 5000)
+lower <- c(0.1, 0.1, 0.1, 0.1)
+upper <- c(200, Inf, 10, 5000)
 
 optim.par <- optim(par = par,
-                   fn = NLL,
+                   fn = SSE,
                    data = df_16396,
                    lower = lower,
                    upper = upper,
@@ -845,7 +866,106 @@ n <- optim.par$par[3]
 x <- optim.par$par[4]
 
 df_16396 %>%
-  mutate(predicted = (K*(as.numeric(Depth) - a)^n) * sqrt(1 + x * (c(NA, diff(as.numeric(Depth)))/c(NA,diff(as.numeric(Date_Time)))))) %>%
+  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) %>%
+  ggplot() +
+  geom_point(aes(as.numeric(Depth), as.numeric(Flow), color = "measured"), alpha = 0.5) +
+  geom_point(aes(as.numeric(Depth), as.numeric(predicted), color = "predicted"), alpha = 0.2) +
+  scale_y_log10()
+```
+
+<img src="document_files/figure-html/unnamed-chunk-17-1.png" width="672" />
+
+```r
+df_16396 %>%
+  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) %>%
+  ggplot() +
+  geom_point(aes(predicted, as.numeric(Flow)), color = "dodgerblue", alpha = 0.5) +
+  scale_x_log10() + scale_y_log10()
+```
+
+<img src="document_files/figure-html/unnamed-chunk-17-2.png" width="672" />
+
+So this appears to fit pretty well. In order to incorporate the first derivative of stream height function we will need to (1) split the data set into each sampling period; (2) calculate the derivatives in each dataset; (3) remove rows with NA (basically first record in each sampling event); (4) combine desired datasets based on shape or sample the datasets; (4) refit the function above to one or more datasets.
+
+Can probably split datasets and use purrr to do this? 
+
+
+```r
+iqplus_df %>%
+  filter(Site == "16396",
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) >= 0) %>%
+  arrange(Date_Time) %>%
+  mutate(time_last = c(0, diff(Date_Time))) %>%
+  group_split(cumsum(time_last > 8*60*60)) %>% ## it seems like diff sometimes returns seconds sometimes return minutes.
+  ## remove events where max flow did not go over 10 cfs
+  keep(~ max(as.numeric(.x$Flow)) > 10) %>%
+  map(~select(.x, Date_Time, Depth, Flow)) %>%
+  map(~mutate(.x, 
+              diff_time = c(.x$Date_Time[1], diff(.x$Date_Time)),
+              diff_depth = c(.x$Depth[1], diff(.x$Depth)))) %>%
+  imap(~mutate(.x, event = as.character(.y))) %>%
+  bind_rows() %>%
+  filter(!is.na(diff_depth)) %>%
+  mutate(J = as.numeric(diff_depth)/as.numeric(diff_time) ) -> df_16396
+```
+
+
+
+```r
+exponent <- function(x, pow) {
+  (abs(x)^pow)*sign(x)
+}
+SSE <- function(pars, data) {
+  Depth = as.numeric(data$Depth)
+  J = data$J
+  K = pars[1]
+  a = pars[2]
+  n = pars[3]
+  x = pars[4]
+
+  
+  preds <- (K*exponent(x = Depth - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))
+  #print(preds)
+  Q = as.numeric(data$Flow)
+  
+  ## minimize the sum of square errors per the paper
+  sse <- sum((Q - preds)^2, na.rm = TRUE)
+  #print(sse)
+  sse
+}
+
+par <- c(K = 5,
+         a = 5,
+         n = 2,
+         x = 2000)
+
+## limits to the parameter space
+lower <- c(0.1, 0.1, 0.1, 0.1)
+upper <- c(200, Inf, 10, 5000)
+
+optim.par <- optim(par = par,
+                   fn = SSE,
+                   data = df_16396,
+                   lower = lower,
+                   upper = upper,
+                   method = "L-BFGS-B")
+
+
+K <- optim.par$par[[1]]
+a <- optim.par$par[[2]]
+n <- optim.par$par[[3]]
+x <- optim.par$par[[4]]
+```
+
+
+
+
+```r
+df_16396 %>%
+  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) %>%
   ggplot() +
   geom_point(aes(as.numeric(Depth), as.numeric(Flow), color = "measured"), alpha = 0.5) +
   geom_point(aes(as.numeric(Depth), as.numeric(predicted), color = "predicted"), alpha = 0.2) +
@@ -856,31 +976,20 @@ df_16396 %>%
 ## Warning: Removed 1 rows containing missing values (geom_point).
 ```
 
-<img src="document_files/figure-html/unnamed-chunk-17-1.png" width="672" />
+<img src="document_files/figure-html/unnamed-chunk-20-1.png" width="672" />
 
 ```r
 df_16396 %>%
-  mutate(predicted = (K*(as.numeric(Depth) - a)^n) * sqrt(1 + x * (c(NA, diff(as.numeric(Depth)))/c(NA,diff(as.numeric(Date_Time)))))) %>%
+  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) %>%
   ggplot() +
-  geom_point(aes(predicted, as.numeric(Flow)), color = "dodgerblue", alpha = 0.5) +
-  scale_x_log10() + scale_y_log10()
+  geom_point(aes(as.numeric(Flow), as.numeric(predicted), color = "measured"), alpha = 0.5) +
+  scale_y_log10() + scale_x_log10()
 ```
 
 ```
 ## Warning: Removed 1 rows containing missing values (geom_point).
 ```
 
-<img src="document_files/figure-html/unnamed-chunk-17-2.png" width="672" />
-
-So this appears to fit pretty well. In order to incorporate the first derivative function of stream height we will need to (1) split the data set into each sampling period; (2) calculate the derivatives in each dataset; (3) remove rows with NA (basically first record in each sampling event); (4) combine desired datasets based on shape or sample the datasets; (4) refit the function above to one or more datasets.
-
-Can probably split datasets and use purrr to do this? 
+<img src="document_files/figure-html/unnamed-chunk-20-2.png" width="672" />
 
 
-To do:
-
-[] visually compare measured depths with the IQ and the Hobos
-
-[] need to better understand the remaining columns in the IQPlus dataset to see if we can systematically clean the data
-
-[] do we need to group measurement events? ie. should the rating curve be built from certain portions of the hydrograph (need to see what the literature says)
