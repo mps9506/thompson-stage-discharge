@@ -1,6 +1,6 @@
 ---
 title: "Exploring Thompsons Creek Stage Discharge Data"
-date: "2021-02-05"
+date: "2021-02-11"
 github-repo: https://github.com/mps9506/thompson-stage-discharge
 bibliography: bibliography.bib
 biblio-style: "apalike"
@@ -26,6 +26,7 @@ library(ggforce)
 library(hrbrthemes)
 library(lubridate)
 library(purrr)
+library(hydroGOF)
 
 
 update_geom_font_defaults(font_rc)
@@ -631,10 +632,10 @@ iqplus_df %>%
 ```r
 iqplus_df %>%
   filter(Site == "16397",
-         #System_Status == 0,
-         #System_In_Water == 100,
-         #as.numeric(Depth) >= 0.26, ## minimum operating depth
-         as.numeric(Flow) >= 0) %>%
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) > 0) %>%
   filter(Date_Time > as.POSIXct("2021-01-01")) %>%
   ggplot() +
   geom_point(aes(Date_Time, Flow))
@@ -645,10 +646,10 @@ iqplus_df %>%
 ```r
 iqplus_df %>%
   filter(Site == "16397",
-         #System_Status == 0,
-         #System_In_Water == 100,
-         #as.numeric(Depth) >= 0.26, ## minimum operating depth
-         as.numeric(Flow) >= 0) %>%
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) > 0) %>%
   filter(Date_Time > as.POSIXct("2021-01-01")) %>%
   ggplot() +
   geom_point(aes(Date_Time, Depth))
@@ -659,10 +660,10 @@ iqplus_df %>%
 ```r
 iqplus_df %>%
   filter(Site == "16397",
-         #System_Status == 0,
-         #System_In_Water == 100,
-         #as.numeric(Depth) >= 0.26, ## minimum operating depth
-         as.numeric(Flow) >= 0) %>%
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) > 0) %>%
   filter(Date_Time > as.POSIXct("2021-01-01")) %>%
   ggplot() +
   geom_point(aes(Depth, Flow))
@@ -764,10 +765,8 @@ iqplus_df %>%
 
 <img src="document_files/figure-html/unnamed-chunk-15-3.png" width="672" />
 
-Can we model this hysteresis?
+The Jones Formula can be used to estimate the hysteresis or unstready flow depicted in the rating curve. A reduced formula described by @petersen-overleir_modelling_2006 and @zakwan_spreadsheet-based_2018 is used here.
 
-
-Zakwan 2018:
 $$
 Q = K(h-a)^n\times\sqrt{1 + x\frac{\partial h}{\partial t}}
 $$
@@ -786,108 +785,10 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
 $$
 
 
-```r
-exponent <- function(x, pow) {
-  (abs(x)^pow)*sign(x)
-}
 
-iqplus_df %>%
-  filter(Site == "16396",
-         #System_Status == 0,
-         #System_In_Water == 100,
-         #as.numeric(Depth) >= 0.26, ## minimum operating depth
-         as.numeric(Flow) >= 0) %>%
-  filter(Date_Time > as.POSIXct("2021-01-01")) %>%
-  mutate(J = c(as.numeric(Depth)[1], diff(as.numeric(Depth)))/ c(as.numeric(Date_Time)[1], diff(Date_Time))) -> df_16396
-df_16396
-```
-
-```
-## # A tibble: 1,258 x 8
-##    Date_Time              Depth     Flow System_In_Water System_Status
-##    <dttm>                  [ft] [ft^3/s]           <dbl>         <dbl>
-##  1 2021-01-01 06:13:00 3.327133 89.89115             100             0
-##  2 2021-01-01 06:28:00 3.278842 88.63221             100             0
-##  3 2021-01-01 06:43:00 3.231056 84.23793             100             0
-##  4 2021-01-01 06:58:00 3.187967 80.72598             100             0
-##  5 2021-01-01 07:13:00 3.148007 76.48571             100             0
-##  6 2021-01-01 07:28:00 3.106684 78.26200             100             0
-##  7 2021-01-01 07:43:00 3.068813 81.35063             100             0
-##  8 2021-01-01 07:58:00 3.034464 78.35657             100             0
-##  9 2021-01-01 08:13:00 3.000094 79.96565             100             0
-## 10 2021-01-01 08:28:00 2.966982 77.21645             100             0
-## # … with 1,248 more rows, and 3 more variables: Index_Velocity [ft/s],
-## #   Site <chr>, J <dbl>
-```
-
-```r
-SSE <- function(pars, data) {
-  Depth = as.numeric(data$Depth)
-  J = data$J
-  K = pars[1]
-  a = pars[2]
-  n = pars[3]
-  x = pars[4]
-
-  preds <- (K*exponent(x = Depth - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))
-
-  Q = as.numeric(data$Flow)
+In order to incorporate the first derivative of stream height function we will need to (1) split the data set into each sampling period; (2) calculate the derivatives in each dataset; (3) remove rows with NA (basically first record in each sampling event); (4) combine desired datasets based on shape or sample the datasets; (4) refit the function above to one or more datasets.
 
 
-  ## minimize the sum of square errors per the paper
-  sse <- sum((Q - preds)^2)
-  #print(sse)
-  sse
-
-}
-
-par <- c(K = 5,
-         a = 5,
-         n = 2,
-         x = 2000)
-
-## limits to the parameter space
-lower <- c(0.1, 0.1, 0.1, 0.1)
-upper <- c(200, Inf, 10, 5000)
-
-optim.par <- optim(par = par,
-                   fn = SSE,
-                   data = df_16396,
-                   lower = lower,
-                   upper = upper,
-                   method = "L-BFGS-B")
-```
-
-
-```r
-K <- optim.par$par[1]
-a <- optim.par$par[2]
-n <- optim.par$par[3]
-x <- optim.par$par[4]
-
-df_16396 %>%
-  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) %>%
-  ggplot() +
-  geom_point(aes(as.numeric(Depth), as.numeric(Flow), color = "measured"), alpha = 0.5) +
-  geom_point(aes(as.numeric(Depth), as.numeric(predicted), color = "predicted"), alpha = 0.2) +
-  scale_y_log10()
-```
-
-<img src="document_files/figure-html/unnamed-chunk-17-1.png" width="672" />
-
-```r
-df_16396 %>%
-  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) %>%
-  ggplot() +
-  geom_point(aes(predicted, as.numeric(Flow)), color = "dodgerblue", alpha = 0.5) +
-  scale_x_log10() + scale_y_log10()
-```
-
-<img src="document_files/figure-html/unnamed-chunk-17-2.png" width="672" />
-
-So this appears to fit pretty well. In order to incorporate the first derivative of stream height function we will need to (1) split the data set into each sampling period; (2) calculate the derivatives in each dataset; (3) remove rows with NA (basically first record in each sampling event); (4) combine desired datasets based on shape or sample the datasets; (4) refit the function above to one or more datasets.
-
-Can probably split datasets and use purrr to do this? 
 
 
 ```r
@@ -898,18 +799,20 @@ iqplus_df %>%
          as.numeric(Depth) >= 0.26, ## minimum operating depth
          as.numeric(Flow) >= 0) %>%
   arrange(Date_Time) %>%
-  mutate(time_last = c(0, diff(Date_Time))) %>%
-  group_split(cumsum(time_last > 8*60*60)) %>% ## it seems like diff sometimes returns seconds sometimes return minutes.
+  mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
+         diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours"))) %>%
+  group_split(cumsum(diff_time > 8)) %>%
   ## remove events where max flow did not go over 10 cfs
   keep(~ max(as.numeric(.x$Flow)) > 10) %>%
   map(~select(.x, Date_Time, Depth, Flow)) %>%
-  map(~mutate(.x, 
-              diff_time = c(.x$Date_Time[1], diff(.x$Date_Time)),
-              diff_depth = c(.x$Depth[1], diff(.x$Depth)))) %>%
+  map(~mutate(.x,
+              time_lag = lag(Date_Time, default = Date_Time[1]),
+              diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours")),
+              diff_depth = c(0, diff(.x$Depth)))) %>%
   imap(~mutate(.x, event = as.character(.y))) %>%
   bind_rows() %>%
   filter(!is.na(diff_depth)) %>%
-  mutate(J = as.numeric(diff_depth)/as.numeric(diff_time) ) -> df_16396
+  mutate(J = as.numeric(diff_depth)/as.numeric(diff_time)) -> df_16396
 ```
 
 
@@ -969,27 +872,335 @@ df_16396 %>%
   ggplot() +
   geom_point(aes(as.numeric(Depth), as.numeric(Flow), color = "measured"), alpha = 0.5) +
   geom_point(aes(as.numeric(Depth), as.numeric(predicted), color = "predicted"), alpha = 0.2) +
-  scale_y_log10()
+  scale_y_log10() +
+  theme_ms()
 ```
 
 ```
-## Warning: Removed 1 rows containing missing values (geom_point).
+## Warning: Removed 8 rows containing missing values (geom_point).
 ```
 
-<img src="document_files/figure-html/unnamed-chunk-20-1.png" width="672" />
+<img src="document_files/figure-html/unnamed-chunk-18-1.png" width="672" />
 
 ```r
 df_16396 %>%
   mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) %>%
   ggplot() +
   geom_point(aes(as.numeric(Flow), as.numeric(predicted), color = "measured"), alpha = 0.5) +
-  scale_y_log10() + scale_x_log10()
+  geom_abline(slope = 1) +
+  scale_y_log10() + scale_x_log10() +
+  theme_ms()
 ```
 
 ```
-## Warning: Removed 1 rows containing missing values (geom_point).
+## Warning: Removed 8 rows containing missing values (geom_point).
 ```
 
-<img src="document_files/figure-html/unnamed-chunk-20-2.png" width="672" />
+<img src="document_files/figure-html/unnamed-chunk-18-2.png" width="672" />
 
+
+```r
+df_16396 %>%
+  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) -> df_16396
+
+df_16396_results <- tibble(Site = "16396",
+       K = K,
+       a = a,
+       n = n,
+       x = x,
+       NSE = hydroGOF::NSE(df_16396$predicted, as.numeric(df_16396$Flow)),
+       RMSE = hydroGOF::rmse(df_16396$predicted, as.numeric(df_16396$Flow)))
+df_16396_results
+```
+
+```
+## # A tibble: 1 x 7
+##   Site      K     a     n     x   NSE  RMSE
+##   <chr> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
+## 1 16396  29.8  1.02  1.60 0.507 0.978  11.4
+```
+
+
+## Site 16397
+
+This site was pooled from August through November 2020. It appears we can use the standard power function [@venetis1970note]:
+$$
+Q = K(H-H_0)^z
+$$
+
+
+
+
+```r
+iqplus_df %>%
+  filter(Site == "16397",
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Depth) >= 1, ## minimum operating depth
+         as.numeric(Flow) > 0) %>%
+  filter(Date_Time > as.POSIXct("2020-11-01")) %>%
+  arrange(Date_Time) %>%
+  mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
+         diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours"))) %>%
+  group_split(cumsum(diff_time > 8)) %>%
+  ## remove events where max flow did not go over 10 cfs
+  keep(~ max(as.numeric(.x$Flow)) > 10) %>%
+  map(~select(.x, Date_Time, Depth, Flow)) %>%
+  map(~mutate(.x,
+              time_lag = lag(Date_Time, default = Date_Time[1]),
+              diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours")),
+              diff_depth = c(0, diff(.x$Depth)))) %>%
+  imap(~mutate(.x, event = as.character(.y))) %>%
+  bind_rows() %>%
+  filter(!is.na(diff_depth)) %>%
+  mutate(J = as.numeric(diff_depth)/as.numeric(diff_time)) -> df_16397
+
+
+
+SSE <- function(pars, data) {
+  Depth = as.numeric(data$Depth)
+  K = pars[1]
+  H_0 = pars[2]
+  Z = pars[3]
+
+  
+  preds <- K*(as.numeric(Depth) - H_0)^Z
+  #print(preds)
+  Q = as.numeric(data$Flow)
+  
+  ## minimize the sum of square errors per the paper
+  sse <- sum((Q - preds)^2, na.rm = TRUE)
+  #print(sse)
+  sse
+}
+
+par <- c(K = 1,
+         H_0 = .001,
+         Z = 2)
+
+## limits to the parameter space
+lower <- c(0.001, 0, 0.1)
+upper <- c(Inf, 0.26, Inf)
+
+optim.par <- optim(par = par,
+                   fn = SSE,
+                   data = df_16397,
+                   lower = lower,
+                   upper = upper,
+                   method = "L-BFGS-B")
+
+optim.par
+```
+
+```
+## $par
+##         K       H_0         Z 
+## 0.0413059 0.2600000 3.9838570 
+## 
+## $value
+## [1] 194.8157
+## 
+## $counts
+## function gradient 
+##       97       97 
+## 
+## $convergence
+## [1] 0
+## 
+## $message
+## [1] "CONVERGENCE: REL_REDUCTION_OF_F <= FACTR*EPSMCH"
+```
+
+```r
+K <- optim.par$par[[1]]
+H_0 <- optim.par$par[[2]]
+Z <- optim.par$par[[3]]
+```
+
+
+
+```r
+df_16397 %>%
+  mutate(predicted = K*(as.numeric(Depth) - H_0)^Z) %>%
+  ggplot() +
+  geom_point(aes(as.numeric(Depth), as.numeric(Flow), color = "measured"), alpha = 0.5) +
+  geom_point(aes(as.numeric(Depth), as.numeric(predicted), color = "predicted"), alpha = 0.2) +
+  #scale_y_log10() +
+  theme_ms()
+```
+
+<img src="document_files/figure-html/unnamed-chunk-21-1.png" width="672" />
+
+```r
+df_16397 %>%
+  mutate(predicted = K*(as.numeric(Depth) - H_0)^Z) %>%
+  ggplot() +
+  geom_point(aes(as.numeric(Flow), as.numeric(predicted), color = "measured"), alpha = 0.5) +
+  geom_abline(slope = 1) +
+  #scale_y_log10() + scale_x_log10() +
+  theme_ms()
+```
+
+<img src="document_files/figure-html/unnamed-chunk-21-2.png" width="672" />
+
+
+
+```r
+df_16397 %>%
+  mutate(predicted = K*(as.numeric(Depth) - H_0)^Z) -> df_16397
+
+df_16397_results <- tibble(Site = "16397",
+       K = K,
+       H_0 = H_0,
+       Z = Z,
+       NSE = hydroGOF::NSE(df_16397$predicted, as.numeric(df_16397$Flow)),
+       RMSE = hydroGOF::rmse(df_16397$predicted, as.numeric(df_16397$Flow)))
+df_16397_results
+```
+
+```
+## # A tibble: 1 x 6
+##   Site       K   H_0     Z   NSE  RMSE
+##   <chr>  <dbl> <dbl> <dbl> <dbl> <dbl>
+## 1 16397 0.0413  0.26  3.98 0.930  2.98
+```
+
+
+## site 16882
+
+
+```r
+iqplus_df %>%
+  filter(Site == "16882",
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) > 0) %>%
+  ## remove outliers identified in box plots under 1 foot depth
+  filter(as.numeric(Depth) < 1 & as.numeric(Flow) < 8 |
+           as.numeric(Depth) > 1) %>% 
+  arrange(Date_Time) %>%
+  mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
+         diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours"))) %>%
+  group_split(cumsum(diff_time > 8)) %>%
+  ## remove events where max flow did not go over 10 cfs
+  keep(~ max(as.numeric(.x$Flow)) > 10) %>%
+  map(~select(.x, Date_Time, Depth, Flow)) %>%
+  map(~mutate(.x,
+              time_lag = lag(Date_Time, default = Date_Time[1]),
+              diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours")),
+              diff_depth = c(0, diff(.x$Depth)))) %>%
+  imap(~mutate(.x, event = as.character(.y))) %>%
+  bind_rows() %>%
+  filter(!is.na(diff_depth)) %>%
+  mutate(J = as.numeric(diff_depth)/as.numeric(diff_time)) -> df_16882
+
+df_16882 %>%
+  filter(Date_Time > as.POSIXct("2020-11-01")) %>%
+  ggplot() +
+  geom_point(aes(Depth, Flow))
+```
+
+<img src="document_files/figure-html/unnamed-chunk-23-1.png" width="672" />
+
+```r
+df_16882 %>%
+  filter(Date_Time > as.POSIXct("2020-05-01") &
+           Date_Time < as.POSIXct("2020-06-01")) %>%
+  ggplot() +
+  geom_point(aes(Depth, Flow))
+```
+
+<img src="document_files/figure-html/unnamed-chunk-23-2.png" width="672" />
+
+```r
+df_16882 %>%
+  filter(Date_Time > as.POSIXct("2020-10-01") &
+           Date_Time < as.POSIXct("2020-11-01")) %>%
+  ggplot() +
+  geom_point(aes(Depth, Flow))
+```
+
+<img src="document_files/figure-html/unnamed-chunk-23-3.png" width="672" />
+
+
+
+```r
+SSE <- function(pars, data) {
+  Depth = as.numeric(data$Depth)
+  J = data$J
+  K = pars[1]
+  a = pars[2]
+  n = pars[3]
+  x = pars[4]
+
+  
+  preds <- (K*exponent(x = Depth - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))
+  #print(preds)
+  Q = as.numeric(data$Flow)
+  
+  ## minimize the sum of square errors per the paper
+  sse <- sum((Q - preds)^2, na.rm = TRUE)
+  #print(sse)
+  sse
+}
+
+par <- c(K = 5,
+         a = 5,
+         n = 2,
+         x = 2000)
+
+## limits to the parameter space
+lower <- c(0.1, 0.1, 0.1, 0.1)
+upper <- c(200, Inf, 10, 5000)
+
+optim.par <- optim(par = par,
+                   fn = SSE,
+                   data = df_16882 %>%
+  filter(Date_Time > as.POSIXct("2020-11-01") & !is.infinite(J)),
+                   lower = lower,
+                   upper = upper,
+                   method = "L-BFGS-B")
+
+
+K <- optim.par$par[[1]]
+a <- optim.par$par[[2]]
+n <- optim.par$par[[3]]
+x <- optim.par$par[[4]]
+```
+
+
+```r
+df_16882 %>%
+  filter(Date_Time > as.POSIXct("2020-11-01") & !is.infinite(J)) %>%
+  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) %>%
+  ggplot() +
+  geom_point(aes(as.numeric(Depth), as.numeric(Flow), color = "measured"), alpha = 0.5) +
+  geom_point(aes(as.numeric(Depth), as.numeric(predicted), color = "predicted"), alpha = 0.2) +
+  #scale_y_log10() +
+  theme_ms()
+```
+
+```
+## Warning: Removed 3228 rows containing missing values (geom_point).
+```
+
+<img src="document_files/figure-html/unnamed-chunk-25-1.png" width="672" />
+
+```r
+df_16882 %>%
+  filter(Date_Time > as.POSIXct("2020-11-01") & !is.infinite(J)) %>%
+  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) %>%
+  ggplot() +
+  geom_point(aes(as.numeric(Flow), as.numeric(predicted), color = "measured"), alpha = 0.5) +
+  geom_abline(slope = 1) +
+  #scale_y_log10() + scale_x_log10() +
+  theme_ms()
+```
+
+```
+## Warning: Removed 3228 rows containing missing values (geom_point).
+```
+
+<img src="document_files/figure-html/unnamed-chunk-25-2.png" width="672" />
 
