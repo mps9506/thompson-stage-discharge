@@ -926,11 +926,11 @@ iqplus_df %>%
   filter(Site == "16882",
          System_Status == 0,
          System_In_Water == 100,
-         as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Depth) >= .26, ## minimum operating depth
          as.numeric(Flow) > 0) %>%
   ## remove outliers identified in box plots under 1 foot depth
-  filter(as.numeric(Depth) < 1 & as.numeric(Flow) < 8 |
-           as.numeric(Depth) > 1) %>% 
+  filter(as.numeric(Depth) < 1 & as.numeric(Flow) < 4.3 |
+           as.numeric(Depth) > 1) %>%
   arrange(Date_Time) %>%
   mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
          diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours"))) %>%
@@ -995,11 +995,88 @@ SSE <- function(pars, data) {
 par <- c(K = 5,
          a = 5,
          n = 2,
-         x = 2000)
+         x = 5000)
 
 ## limits to the parameter space
-lower <- c(0.1, 0.1, 0.1, 0.1)
-upper <- c(200, Inf, 10, 5000)
+lower <- c(0.1, 0.00001, 0.00001, -10)
+upper <- c(200, 10, 10, 10)
+
+optim.par <- optim(par = par,
+                   fn = SSE,
+                   data = df_16882 %>%
+  filter(Date_Time > as.POSIXct("2020-05-01") &
+           Date_Time < as.POSIXct("2020-06-01") & !is.infinite(J) |
+           Date_Time > as.POSIXct("2020-10-01") &
+           Date_Time < as.POSIXct("2020-11-01") & !is.infinite(J)),
+                   lower = lower,
+                   upper = upper,
+                   method = "L-BFGS-B")
+
+
+K <- optim.par$par[[1]]
+a <- optim.par$par[[2]]
+n <- optim.par$par[[3]]
+x <- optim.par$par[[4]]
+
+optim.par
+```
+
+```{r}
+df_16882 %>%
+  filter(Date_Time > as.POSIXct("2020-05-01") &
+           Date_Time < as.POSIXct("2020-06-01") & !is.infinite(J) |
+           Date_Time > as.POSIXct("2020-10-01") &
+           Date_Time < as.POSIXct("2020-11-01") & !is.infinite(J)) %>%
+  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) %>%
+  ggplot() +
+  geom_point(aes(as.numeric(Depth), as.numeric(Flow), color = "measured"), alpha = 0.5) +
+  geom_point(aes(as.numeric(Depth), as.numeric(predicted), color = "predicted"), alpha = 0.2) +
+  #scale_y_log10() +
+  theme_ms()
+
+df_16882 %>%
+  filter(Date_Time > as.POSIXct("2020-05-01") &
+           Date_Time < as.POSIXct("2020-06-01") & !is.infinite(J) |
+           Date_Time > as.POSIXct("2020-10-01") &
+           Date_Time < as.POSIXct("2020-11-01") & !is.infinite(J)) %>%
+  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) %>%
+  ggplot() +
+  geom_point(aes(as.numeric(Flow), as.numeric(predicted), color = "measured"), alpha = 0.5) +
+  geom_abline(slope = 1) +
+  #scale_y_log10() + scale_x_log10() +
+  theme_ms()
+```
+
+```{r}
+df_16882 %>%
+  filter(Date_Time > as.POSIXct("2020-05-01") &
+           Date_Time < as.POSIXct("2020-06-01") & !is.infinite(J) |
+           Date_Time > as.POSIXct("2020-10-01") &
+           Date_Time < as.POSIXct("2020-11-01") & !is.infinite(J)) %>%
+  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) -> df_16882_spring
+
+df_16882_spring_results <- tibble(Site = "16882:Spring",
+       K = K,
+       a = a,
+       n = n,
+       x = x,
+       NSE = hydroGOF::NSE(df_16882_spring$predicted, as.numeric(df_16882_spring$Flow)),
+       RMSE = hydroGOF::rmse(df_16882_spring$predicted, as.numeric(df_16882_spring$Flow)))
+df_16882_spring_results
+```
+
+
+
+```{r}
+
+par <- c(K = 1,
+         a = 5,
+         n = 2,
+         x = 50)
+
+## limits to the parameter space
+lower <- c(.00001, 0, 0.00001, -10)
+upper <- c(200, 10, 10, 100)
 
 optim.par <- optim(par = par,
                    fn = SSE,
@@ -1015,7 +1092,7 @@ a <- optim.par$par[[2]]
 n <- optim.par$par[[3]]
 x <- optim.par$par[[4]]
 
-
+optim.par
 ```
 
 ```{r}
@@ -1038,3 +1115,18 @@ df_16882 %>%
   theme_ms()
 ```
 
+
+```{r}
+df_16882 %>%
+  filter(Date_Time > as.POSIXct("2020-11-01") & !is.infinite(J)) %>%
+  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) -> df_16882_winter
+
+df_16882_winter_results <- tibble(Site = "16882:Winter",
+       K = K,
+       a = a,
+       n = n,
+       x = x,
+       NSE = hydroGOF::NSE(df_16882_winter$predicted, as.numeric(df_16882_winter$Flow)),
+       RMSE = hydroGOF::rmse(df_16882_winter$predicted, as.numeric(df_16882_winter$Flow)))
+df_16882_winter_results
+```
