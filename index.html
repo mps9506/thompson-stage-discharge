@@ -847,215 +847,387 @@ Q = K(H-H_0)^z
 <span id="cb47-2"><a href="#cb47-2"></a><span class="st">  </span><span class="kw">filter</span>(Site <span class="op">==</span><span class="st"> &quot;16397&quot;</span>,</span>
 <span id="cb47-3"><a href="#cb47-3"></a>         System_Status <span class="op">==</span><span class="st"> </span><span class="dv">0</span>,</span>
 <span id="cb47-4"><a href="#cb47-4"></a>         System_In_Water <span class="op">==</span><span class="st"> </span><span class="dv">100</span>,</span>
-<span id="cb47-5"><a href="#cb47-5"></a>         <span class="kw">as.numeric</span>(Depth) <span class="op">&gt;=</span><span class="st"> </span><span class="dv">1</span>, <span class="co">## minimum operating depth</span></span>
+<span id="cb47-5"><a href="#cb47-5"></a>         <span class="kw">as.numeric</span>(Depth) <span class="op">&gt;=</span><span class="st"> </span><span class="fl">0.26</span>, <span class="co">## minimum operating depth</span></span>
 <span id="cb47-6"><a href="#cb47-6"></a>         <span class="kw">as.numeric</span>(Flow) <span class="op">&gt;</span><span class="st"> </span><span class="dv">0</span>) <span class="op">%&gt;%</span></span>
-<span id="cb47-7"><a href="#cb47-7"></a><span class="st">  </span><span class="kw">filter</span>(Date_Time <span class="op">&gt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-11-01&quot;</span>)) <span class="op">%&gt;%</span></span>
-<span id="cb47-8"><a href="#cb47-8"></a><span class="st">  </span><span class="kw">arrange</span>(Date_Time) <span class="op">%&gt;%</span></span>
-<span id="cb47-9"><a href="#cb47-9"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">time_lag =</span> <span class="kw">lag</span>(Date_Time, <span class="dt">default =</span> Date_Time[<span class="dv">1</span>]),</span>
-<span id="cb47-10"><a href="#cb47-10"></a>         <span class="dt">diff_time =</span> <span class="kw">as.numeric</span>(<span class="kw">difftime</span>(Date_Time, time_lag, <span class="dt">units =</span> <span class="st">&quot;hours&quot;</span>))) <span class="op">%&gt;%</span></span>
-<span id="cb47-11"><a href="#cb47-11"></a><span class="st">  </span><span class="kw">group_split</span>(<span class="kw">cumsum</span>(diff_time <span class="op">&gt;</span><span class="st"> </span><span class="dv">8</span>)) <span class="op">%&gt;%</span></span>
-<span id="cb47-12"><a href="#cb47-12"></a><span class="st">  </span><span class="co">## remove events where max flow did not go over 10 cfs</span></span>
-<span id="cb47-13"><a href="#cb47-13"></a><span class="st">  </span><span class="kw">keep</span>(<span class="op">~</span><span class="st"> </span><span class="kw">max</span>(<span class="kw">as.numeric</span>(.x<span class="op">$</span>Flow)) <span class="op">&gt;</span><span class="st"> </span><span class="dv">10</span>) <span class="op">%&gt;%</span></span>
-<span id="cb47-14"><a href="#cb47-14"></a><span class="st">  </span><span class="kw">map</span>(<span class="op">~</span><span class="kw">select</span>(.x, Date_Time, Depth, Flow)) <span class="op">%&gt;%</span></span>
-<span id="cb47-15"><a href="#cb47-15"></a><span class="st">  </span><span class="kw">map</span>(<span class="op">~</span><span class="kw">mutate</span>(.x,</span>
-<span id="cb47-16"><a href="#cb47-16"></a>              <span class="dt">time_lag =</span> <span class="kw">lag</span>(Date_Time, <span class="dt">default =</span> Date_Time[<span class="dv">1</span>]),</span>
-<span id="cb47-17"><a href="#cb47-17"></a>              <span class="dt">diff_time =</span> <span class="kw">as.numeric</span>(<span class="kw">difftime</span>(Date_Time, time_lag, <span class="dt">units =</span> <span class="st">&quot;hours&quot;</span>)),</span>
-<span id="cb47-18"><a href="#cb47-18"></a>              <span class="dt">diff_depth =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="kw">diff</span>(.x<span class="op">$</span>Depth)))) <span class="op">%&gt;%</span></span>
-<span id="cb47-19"><a href="#cb47-19"></a><span class="st">  </span><span class="kw">imap</span>(<span class="op">~</span><span class="kw">mutate</span>(.x, <span class="dt">event =</span> <span class="kw">as.character</span>(.y))) <span class="op">%&gt;%</span></span>
-<span id="cb47-20"><a href="#cb47-20"></a><span class="st">  </span><span class="kw">bind_rows</span>() <span class="op">%&gt;%</span></span>
-<span id="cb47-21"><a href="#cb47-21"></a><span class="st">  </span><span class="kw">filter</span>(<span class="op">!</span><span class="kw">is.na</span>(diff_depth)) <span class="op">%&gt;%</span></span>
-<span id="cb47-22"><a href="#cb47-22"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">J =</span> <span class="kw">as.numeric</span>(diff_depth)<span class="op">/</span><span class="kw">as.numeric</span>(diff_time)) -&gt;<span class="st"> </span>df_<span class="dv">16397</span></span>
-<span id="cb47-23"><a href="#cb47-23"></a></span>
-<span id="cb47-24"><a href="#cb47-24"></a></span>
-<span id="cb47-25"><a href="#cb47-25"></a></span>
-<span id="cb47-26"><a href="#cb47-26"></a>SSE &lt;-<span class="st"> </span><span class="cf">function</span>(pars, data) {</span>
-<span id="cb47-27"><a href="#cb47-27"></a>  Depth =<span class="st"> </span><span class="kw">as.numeric</span>(data<span class="op">$</span>Depth)</span>
-<span id="cb47-28"><a href="#cb47-28"></a>  K =<span class="st"> </span>pars[<span class="dv">1</span>]</span>
-<span id="cb47-29"><a href="#cb47-29"></a>  H_<span class="dv">0</span> =<span class="st"> </span>pars[<span class="dv">2</span>]</span>
-<span id="cb47-30"><a href="#cb47-30"></a>  Z =<span class="st"> </span>pars[<span class="dv">3</span>]</span>
-<span id="cb47-31"><a href="#cb47-31"></a></span>
-<span id="cb47-32"><a href="#cb47-32"></a>  </span>
-<span id="cb47-33"><a href="#cb47-33"></a>  preds &lt;-<span class="st"> </span>K<span class="op">*</span>(<span class="kw">as.numeric</span>(Depth) <span class="op">-</span><span class="st"> </span>H_<span class="dv">0</span>)<span class="op">^</span>Z</span>
-<span id="cb47-34"><a href="#cb47-34"></a>  <span class="co">#print(preds)</span></span>
-<span id="cb47-35"><a href="#cb47-35"></a>  Q =<span class="st"> </span><span class="kw">as.numeric</span>(data<span class="op">$</span>Flow)</span>
-<span id="cb47-36"><a href="#cb47-36"></a>  </span>
-<span id="cb47-37"><a href="#cb47-37"></a>  <span class="co">## minimize the sum of square errors per the paper</span></span>
-<span id="cb47-38"><a href="#cb47-38"></a>  sse &lt;-<span class="st"> </span><span class="kw">sum</span>((Q <span class="op">-</span><span class="st"> </span>preds)<span class="op">^</span><span class="dv">2</span>, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>)</span>
-<span id="cb47-39"><a href="#cb47-39"></a>  <span class="co">#print(sse)</span></span>
-<span id="cb47-40"><a href="#cb47-40"></a>  sse</span>
-<span id="cb47-41"><a href="#cb47-41"></a>}</span>
-<span id="cb47-42"><a href="#cb47-42"></a></span>
-<span id="cb47-43"><a href="#cb47-43"></a>par &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dt">K =</span> <span class="dv">1</span>,</span>
-<span id="cb47-44"><a href="#cb47-44"></a>         <span class="dt">H_0 =</span> <span class="fl">.001</span>,</span>
-<span id="cb47-45"><a href="#cb47-45"></a>         <span class="dt">Z =</span> <span class="dv">2</span>)</span>
-<span id="cb47-46"><a href="#cb47-46"></a></span>
-<span id="cb47-47"><a href="#cb47-47"></a><span class="co">## limits to the parameter space</span></span>
-<span id="cb47-48"><a href="#cb47-48"></a>lower &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="fl">0.001</span>, <span class="dv">0</span>, <span class="fl">0.1</span>)</span>
-<span id="cb47-49"><a href="#cb47-49"></a>upper &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="ot">Inf</span>, <span class="fl">0.26</span>, <span class="ot">Inf</span>)</span>
-<span id="cb47-50"><a href="#cb47-50"></a></span>
-<span id="cb47-51"><a href="#cb47-51"></a>optim.par &lt;-<span class="st"> </span><span class="kw">optim</span>(<span class="dt">par =</span> par,</span>
-<span id="cb47-52"><a href="#cb47-52"></a>                   <span class="dt">fn =</span> SSE,</span>
-<span id="cb47-53"><a href="#cb47-53"></a>                   <span class="dt">data =</span> df_<span class="dv">16397</span>,</span>
-<span id="cb47-54"><a href="#cb47-54"></a>                   <span class="dt">lower =</span> lower,</span>
-<span id="cb47-55"><a href="#cb47-55"></a>                   <span class="dt">upper =</span> upper,</span>
-<span id="cb47-56"><a href="#cb47-56"></a>                   <span class="dt">method =</span> <span class="st">&quot;L-BFGS-B&quot;</span>)</span>
-<span id="cb47-57"><a href="#cb47-57"></a></span>
-<span id="cb47-58"><a href="#cb47-58"></a>optim.par</span></code></pre></div>
+<span id="cb47-7"><a href="#cb47-7"></a><span class="st">  </span><span class="kw">filter</span>(Date_Time <span class="op">&gt;=</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-12-15&quot;</span>) <span class="op">&amp;</span><span class="st"> </span></span>
+<span id="cb47-8"><a href="#cb47-8"></a><span class="st">           </span>Date_Time <span class="op">&gt;=</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-12-31&quot;</span>) <span class="op">&amp;</span></span>
+<span id="cb47-9"><a href="#cb47-9"></a><span class="st">           </span><span class="kw">as.numeric</span>(Depth) <span class="op">&gt;</span><span class="st"> </span><span class="fl">1.5</span> <span class="op">|</span></span>
+<span id="cb47-10"><a href="#cb47-10"></a><span class="st">           </span>Date_Time <span class="op">&gt;=</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-01-05&quot;</span>) <span class="op">&amp;</span></span>
+<span id="cb47-11"><a href="#cb47-11"></a><span class="st">           </span><span class="kw">as.numeric</span>(Depth) <span class="op">&gt;</span><span class="st"> </span><span class="dv">2</span>) <span class="op">%&gt;%</span></span>
+<span id="cb47-12"><a href="#cb47-12"></a><span class="st">  </span><span class="co"># filter(as.numeric(Depth) &lt; 2 &amp; as.numeric(Flow) &lt; 4.3 | # low flow outliers filtered based on boxplots</span></span>
+<span id="cb47-13"><a href="#cb47-13"></a><span class="st">  </span><span class="co">#          as.numeric(Depth) &gt;= 2) %&gt;%</span></span>
+<span id="cb47-14"><a href="#cb47-14"></a><span class="st">  </span><span class="kw">arrange</span>(Date_Time) <span class="op">%&gt;%</span></span>
+<span id="cb47-15"><a href="#cb47-15"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">time_lag =</span> <span class="kw">lag</span>(Date_Time, <span class="dt">default =</span> Date_Time[<span class="dv">1</span>]),</span>
+<span id="cb47-16"><a href="#cb47-16"></a>         <span class="dt">diff_time =</span> <span class="kw">as.numeric</span>(<span class="kw">difftime</span>(Date_Time, time_lag, <span class="dt">units =</span> <span class="st">&quot;hours&quot;</span>))) <span class="op">%&gt;%</span></span>
+<span id="cb47-17"><a href="#cb47-17"></a><span class="st">  </span><span class="kw">group_split</span>(<span class="kw">cumsum</span>(diff_time <span class="op">&gt;</span><span class="st"> </span><span class="dv">8</span>)) <span class="op">%&gt;%</span></span>
+<span id="cb47-18"><a href="#cb47-18"></a><span class="st">  </span><span class="co">## remove events where max flow did not go over 10 cfs</span></span>
+<span id="cb47-19"><a href="#cb47-19"></a><span class="st">  </span><span class="co">## keep(~ max(as.numeric(.x$Flow)) &gt; 10) %&gt;%</span></span>
+<span id="cb47-20"><a href="#cb47-20"></a><span class="st">  </span><span class="kw">map</span>(<span class="op">~</span><span class="kw">select</span>(.x, Date_Time, Depth, Flow)) <span class="op">%&gt;%</span></span>
+<span id="cb47-21"><a href="#cb47-21"></a><span class="st">  </span><span class="kw">map</span>(<span class="op">~</span><span class="kw">mutate</span>(.x,</span>
+<span id="cb47-22"><a href="#cb47-22"></a>              <span class="dt">time_lag =</span> <span class="kw">lag</span>(Date_Time, <span class="dt">default =</span> Date_Time[<span class="dv">1</span>]),</span>
+<span id="cb47-23"><a href="#cb47-23"></a>              <span class="dt">diff_time =</span> <span class="kw">as.numeric</span>(<span class="kw">difftime</span>(Date_Time, time_lag, <span class="dt">units =</span> <span class="st">&quot;hours&quot;</span>)),</span>
+<span id="cb47-24"><a href="#cb47-24"></a>              <span class="dt">diff_depth =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="kw">diff</span>(.x<span class="op">$</span>Depth)))) <span class="op">%&gt;%</span></span>
+<span id="cb47-25"><a href="#cb47-25"></a><span class="st">  </span><span class="kw">imap</span>(<span class="op">~</span><span class="kw">mutate</span>(.x, <span class="dt">event =</span> <span class="kw">as.character</span>(.y))) <span class="op">%&gt;%</span></span>
+<span id="cb47-26"><a href="#cb47-26"></a><span class="st">  </span><span class="kw">bind_rows</span>() <span class="op">%&gt;%</span></span>
+<span id="cb47-27"><a href="#cb47-27"></a><span class="st">  </span><span class="kw">filter</span>(<span class="op">!</span><span class="kw">is.na</span>(diff_depth)) <span class="op">%&gt;%</span></span>
+<span id="cb47-28"><a href="#cb47-28"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">J =</span> <span class="kw">as.numeric</span>(diff_depth)<span class="op">/</span><span class="kw">as.numeric</span>(diff_time)) -&gt;<span class="st"> </span>df_<span class="dv">16397</span></span>
+<span id="cb47-29"><a href="#cb47-29"></a></span>
+<span id="cb47-30"><a href="#cb47-30"></a>df_<span class="dv">16397</span> <span class="op">%&gt;%</span></span>
+<span id="cb47-31"><a href="#cb47-31"></a><span class="st">  </span><span class="kw">filter</span>(<span class="kw">as.numeric</span>(Depth) <span class="op">&lt;</span><span class="st"> </span><span class="dv">2</span>) <span class="op">%&gt;%</span></span>
+<span id="cb47-32"><a href="#cb47-32"></a><span class="st">  </span><span class="kw">ggplot</span>() <span class="op">+</span></span>
+<span id="cb47-33"><a href="#cb47-33"></a><span class="st">  </span><span class="kw">geom_boxplot</span>(<span class="kw">aes</span>(<span class="dt">y =</span> Flow))</span></code></pre></div>
+<p><img src="document_files/figure-html/unnamed-chunk-20-1.png" width="672" /></p>
+<div class="sourceCode" id="cb48"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1"></a><span class="co"># SSE &lt;- function(pars, data) {</span></span>
+<span id="cb48-2"><a href="#cb48-2"></a><span class="co">#   Depth = as.numeric(data$Depth)</span></span>
+<span id="cb48-3"><a href="#cb48-3"></a><span class="co">#   J = data$J</span></span>
+<span id="cb48-4"><a href="#cb48-4"></a><span class="co">#   K = pars[1]</span></span>
+<span id="cb48-5"><a href="#cb48-5"></a><span class="co">#   a = pars[2]</span></span>
+<span id="cb48-6"><a href="#cb48-6"></a><span class="co">#   n = pars[3]</span></span>
+<span id="cb48-7"><a href="#cb48-7"></a><span class="co">#   x = pars[4]</span></span>
+<span id="cb48-8"><a href="#cb48-8"></a><span class="co"># </span></span>
+<span id="cb48-9"><a href="#cb48-9"></a><span class="co">#   </span></span>
+<span id="cb48-10"><a href="#cb48-10"></a><span class="co">#   preds &lt;- (K*exponent(x = Depth - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))</span></span>
+<span id="cb48-11"><a href="#cb48-11"></a><span class="co">#   #print(preds)</span></span>
+<span id="cb48-12"><a href="#cb48-12"></a><span class="co">#   Q = as.numeric(data$Flow)</span></span>
+<span id="cb48-13"><a href="#cb48-13"></a><span class="co">#   </span></span>
+<span id="cb48-14"><a href="#cb48-14"></a><span class="co">#   ## minimize the sum of square errors per the paper</span></span>
+<span id="cb48-15"><a href="#cb48-15"></a><span class="co">#   sse &lt;- sum((Q - preds)^2, na.rm = TRUE)</span></span>
+<span id="cb48-16"><a href="#cb48-16"></a><span class="co">#   #print(sse)</span></span>
+<span id="cb48-17"><a href="#cb48-17"></a><span class="co">#   sse</span></span>
+<span id="cb48-18"><a href="#cb48-18"></a><span class="co"># }</span></span>
+<span id="cb48-19"><a href="#cb48-19"></a><span class="co"># </span></span>
+<span id="cb48-20"><a href="#cb48-20"></a><span class="co"># par &lt;- c(K = 5,</span></span>
+<span id="cb48-21"><a href="#cb48-21"></a><span class="co">#          a = 5,</span></span>
+<span id="cb48-22"><a href="#cb48-22"></a><span class="co">#          n = 2,</span></span>
+<span id="cb48-23"><a href="#cb48-23"></a><span class="co">#          x = 2000)</span></span>
+<span id="cb48-24"><a href="#cb48-24"></a><span class="co"># </span></span>
+<span id="cb48-25"><a href="#cb48-25"></a><span class="co"># ## limits to the parameter space</span></span>
+<span id="cb48-26"><a href="#cb48-26"></a><span class="co"># lower &lt;- c(0.1, 0.1, 0.1, 0.1)</span></span>
+<span id="cb48-27"><a href="#cb48-27"></a><span class="co"># upper &lt;- c(200, Inf, 10, 5000)</span></span>
+<span id="cb48-28"><a href="#cb48-28"></a><span class="co"># </span></span>
+<span id="cb48-29"><a href="#cb48-29"></a><span class="co"># optim.par &lt;- optim(par = par,</span></span>
+<span id="cb48-30"><a href="#cb48-30"></a><span class="co">#                    fn = SSE,</span></span>
+<span id="cb48-31"><a href="#cb48-31"></a><span class="co">#                    data = df_16397 %&gt;% filter(!is.infinite(J)),</span></span>
+<span id="cb48-32"><a href="#cb48-32"></a><span class="co">#                    lower = lower,</span></span>
+<span id="cb48-33"><a href="#cb48-33"></a><span class="co">#                    upper = upper,</span></span>
+<span id="cb48-34"><a href="#cb48-34"></a><span class="co">#                    method = &quot;L-BFGS-B&quot;)</span></span>
+<span id="cb48-35"><a href="#cb48-35"></a><span class="co"># </span></span>
+<span id="cb48-36"><a href="#cb48-36"></a><span class="co"># </span></span>
+<span id="cb48-37"><a href="#cb48-37"></a><span class="co"># K &lt;- optim.par$par[[1]]</span></span>
+<span id="cb48-38"><a href="#cb48-38"></a><span class="co"># a &lt;- optim.par$par[[2]]</span></span>
+<span id="cb48-39"><a href="#cb48-39"></a><span class="co"># n &lt;- optim.par$par[[3]]</span></span>
+<span id="cb48-40"><a href="#cb48-40"></a><span class="co"># x &lt;- optim.par$par[[4]]</span></span>
+<span id="cb48-41"><a href="#cb48-41"></a></span>
+<span id="cb48-42"><a href="#cb48-42"></a>SSE &lt;-<span class="st"> </span><span class="cf">function</span>(pars, data) {</span>
+<span id="cb48-43"><a href="#cb48-43"></a>  Depth =<span class="st"> </span><span class="kw">as.numeric</span>(data<span class="op">$</span>Depth)</span>
+<span id="cb48-44"><a href="#cb48-44"></a>  K =<span class="st"> </span>pars[<span class="dv">1</span>]</span>
+<span id="cb48-45"><a href="#cb48-45"></a>  H_<span class="dv">0</span> =<span class="st"> </span>pars[<span class="dv">2</span>]</span>
+<span id="cb48-46"><a href="#cb48-46"></a>  Z =<span class="st"> </span>pars[<span class="dv">3</span>]</span>
+<span id="cb48-47"><a href="#cb48-47"></a></span>
+<span id="cb48-48"><a href="#cb48-48"></a></span>
+<span id="cb48-49"><a href="#cb48-49"></a>  preds &lt;-<span class="st"> </span>K<span class="op">*</span>(<span class="kw">as.numeric</span>(Depth) <span class="op">-</span><span class="st"> </span>H_<span class="dv">0</span>)<span class="op">^</span>Z</span>
+<span id="cb48-50"><a href="#cb48-50"></a>  <span class="co">#print(preds)</span></span>
+<span id="cb48-51"><a href="#cb48-51"></a>  Q =<span class="st"> </span><span class="kw">as.numeric</span>(data<span class="op">$</span>Flow)</span>
+<span id="cb48-52"><a href="#cb48-52"></a></span>
+<span id="cb48-53"><a href="#cb48-53"></a>  <span class="co">## minimize the sum of square errors per the paper</span></span>
+<span id="cb48-54"><a href="#cb48-54"></a>  sse &lt;-<span class="st"> </span><span class="kw">sum</span>((Q <span class="op">-</span><span class="st"> </span>preds)<span class="op">^</span><span class="dv">2</span>, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>)</span>
+<span id="cb48-55"><a href="#cb48-55"></a>  <span class="co">#print(sse)</span></span>
+<span id="cb48-56"><a href="#cb48-56"></a>  sse</span>
+<span id="cb48-57"><a href="#cb48-57"></a>}</span>
+<span id="cb48-58"><a href="#cb48-58"></a></span>
+<span id="cb48-59"><a href="#cb48-59"></a>par &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dt">K =</span> <span class="dv">1</span>,</span>
+<span id="cb48-60"><a href="#cb48-60"></a>         <span class="dt">H_0 =</span> <span class="fl">.001</span>,</span>
+<span id="cb48-61"><a href="#cb48-61"></a>         <span class="dt">Z =</span> <span class="dv">2</span>)</span>
+<span id="cb48-62"><a href="#cb48-62"></a></span>
+<span id="cb48-63"><a href="#cb48-63"></a><span class="co">## limits to the parameter space</span></span>
+<span id="cb48-64"><a href="#cb48-64"></a>lower &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="op">-</span><span class="ot">Inf</span>, <span class="dv">-5</span>, <span class="fl">0.001</span>)</span>
+<span id="cb48-65"><a href="#cb48-65"></a>upper &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="ot">Inf</span>, <span class="dv">5</span>, <span class="ot">Inf</span>)</span>
+<span id="cb48-66"><a href="#cb48-66"></a></span>
+<span id="cb48-67"><a href="#cb48-67"></a>optim.par &lt;-<span class="st"> </span><span class="kw">optim</span>(<span class="dt">par =</span> par,</span>
+<span id="cb48-68"><a href="#cb48-68"></a>                   <span class="dt">fn =</span> SSE,</span>
+<span id="cb48-69"><a href="#cb48-69"></a>                   <span class="dt">data =</span> df_<span class="dv">16397</span>,</span>
+<span id="cb48-70"><a href="#cb48-70"></a>                   <span class="dt">lower =</span> lower,</span>
+<span id="cb48-71"><a href="#cb48-71"></a>                   <span class="dt">upper =</span> upper,</span>
+<span id="cb48-72"><a href="#cb48-72"></a>                   <span class="dt">method =</span> <span class="st">&quot;L-BFGS-B&quot;</span>)</span>
+<span id="cb48-73"><a href="#cb48-73"></a></span>
+<span id="cb48-74"><a href="#cb48-74"></a>optim.par</span></code></pre></div>
 <pre><code>## $par
-##         K       H_0         Z 
-## 0.0413059 0.2600000 3.9838570 
+##            K          H_0            Z 
+##  0.004524273 -2.870003103  4.148212545 
 ## 
 ## $value
-## [1] 194.8157
+## [1] 302.7499
 ## 
 ## $counts
 ## function gradient 
-##       97       97 
+##      156      156 
+## 
+## $convergence
+## [1] 1
+## 
+## $message
+## [1] &quot;NEW_X&quot;</code></pre>
+<div class="sourceCode" id="cb50"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1"></a>K &lt;-<span class="st"> </span>optim.par<span class="op">$</span>par[[<span class="dv">1</span>]]</span>
+<span id="cb50-2"><a href="#cb50-2"></a>H_<span class="dv">0</span> &lt;-<span class="st"> </span>optim.par<span class="op">$</span>par[[<span class="dv">2</span>]]</span>
+<span id="cb50-3"><a href="#cb50-3"></a>Z &lt;-<span class="st"> </span>optim.par<span class="op">$</span>par[[<span class="dv">3</span>]]</span></code></pre></div>
+<div class="sourceCode" id="cb51"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1"></a>df_<span class="dv">16397</span> <span class="op">%&gt;%</span></span>
+<span id="cb51-2"><a href="#cb51-2"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">predicted =</span> K<span class="op">*</span>(<span class="kw">as.numeric</span>(Depth) <span class="op">-</span><span class="st"> </span>H_<span class="dv">0</span>)<span class="op">^</span>Z) <span class="op">%&gt;%</span></span>
+<span id="cb51-3"><a href="#cb51-3"></a><span class="st">  </span><span class="kw">ggplot</span>() <span class="op">+</span></span>
+<span id="cb51-4"><a href="#cb51-4"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Depth), <span class="kw">as.numeric</span>(Flow), <span class="dt">color =</span> <span class="st">&quot;measured&quot;</span>), <span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
+<span id="cb51-5"><a href="#cb51-5"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Depth), <span class="kw">as.numeric</span>(predicted), <span class="dt">color =</span> <span class="st">&quot;predicted&quot;</span>), <span class="dt">alpha =</span> <span class="fl">0.2</span>) <span class="op">+</span></span>
+<span id="cb51-6"><a href="#cb51-6"></a><span class="st">  </span><span class="kw">scale_y_log10</span>() <span class="op">+</span></span>
+<span id="cb51-7"><a href="#cb51-7"></a><span class="st">  </span><span class="kw">theme_ms</span>()</span></code></pre></div>
+<p><img src="document_files/figure-html/unnamed-chunk-21-1.png" width="672" /></p>
+<div class="sourceCode" id="cb52"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1"></a>df_<span class="dv">16397</span> <span class="op">%&gt;%</span></span>
+<span id="cb52-2"><a href="#cb52-2"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">predicted =</span> K<span class="op">*</span>(<span class="kw">as.numeric</span>(Depth) <span class="op">-</span><span class="st"> </span>H_<span class="dv">0</span>)<span class="op">^</span>Z) <span class="op">%&gt;%</span></span>
+<span id="cb52-3"><a href="#cb52-3"></a><span class="st">  </span><span class="kw">ggplot</span>() <span class="op">+</span></span>
+<span id="cb52-4"><a href="#cb52-4"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Flow), <span class="kw">as.numeric</span>(predicted), <span class="dt">color =</span> <span class="st">&quot;measured&quot;</span>), <span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
+<span id="cb52-5"><a href="#cb52-5"></a><span class="st">  </span><span class="kw">geom_abline</span>(<span class="dt">slope =</span> <span class="dv">1</span>) <span class="op">+</span></span>
+<span id="cb52-6"><a href="#cb52-6"></a><span class="st">  </span><span class="co">#scale_y_log10() + scale_x_log10() +</span></span>
+<span id="cb52-7"><a href="#cb52-7"></a><span class="st">  </span><span class="kw">theme_ms</span>()</span></code></pre></div>
+<p><img src="document_files/figure-html/unnamed-chunk-21-2.png" width="672" /></p>
+<div class="sourceCode" id="cb53"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1"></a>df_<span class="dv">16397</span> <span class="op">%&gt;%</span></span>
+<span id="cb53-2"><a href="#cb53-2"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">predicted =</span> K<span class="op">*</span>(<span class="kw">as.numeric</span>(Depth) <span class="op">-</span><span class="st"> </span>H_<span class="dv">0</span>)<span class="op">^</span>Z) -&gt;<span class="st"> </span>df_<span class="dv">16397</span></span>
+<span id="cb53-3"><a href="#cb53-3"></a></span>
+<span id="cb53-4"><a href="#cb53-4"></a>df_<span class="dv">16397</span>_results &lt;-<span class="st"> </span><span class="kw">tibble</span>(<span class="dt">Site =</span> <span class="st">&quot;16397&quot;</span>,</span>
+<span id="cb53-5"><a href="#cb53-5"></a>       <span class="dt">K =</span> K,</span>
+<span id="cb53-6"><a href="#cb53-6"></a>       <span class="dt">H_0 =</span> H_<span class="dv">0</span>,</span>
+<span id="cb53-7"><a href="#cb53-7"></a>       <span class="dt">Z =</span> Z,</span>
+<span id="cb53-8"><a href="#cb53-8"></a>       <span class="dt">NSE =</span> hydroGOF<span class="op">::</span><span class="kw">NSE</span>(df_<span class="dv">16397</span><span class="op">$</span>predicted, <span class="kw">as.numeric</span>(df_<span class="dv">16397</span><span class="op">$</span>Flow)),</span>
+<span id="cb53-9"><a href="#cb53-9"></a>       <span class="dt">RMSE =</span> hydroGOF<span class="op">::</span><span class="kw">rmse</span>(df_<span class="dv">16397</span><span class="op">$</span>predicted, <span class="kw">as.numeric</span>(df_<span class="dv">16397</span><span class="op">$</span>Flow)))</span>
+<span id="cb53-10"><a href="#cb53-10"></a>df_<span class="dv">16397</span>_results</span></code></pre></div>
+<pre><code>## # A tibble: 1 x 6
+##   Site        K   H_0     Z   NSE  RMSE
+##   &lt;chr&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 16397 0.00452 -2.87  4.15 0.969  2.13</code></pre>
+</div>
+<div id="site-16882" class="section level2">
+<h2>site 16882</h2>
+<div class="sourceCode" id="cb55"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1"></a>iqplus_df <span class="op">%&gt;%</span></span>
+<span id="cb55-2"><a href="#cb55-2"></a><span class="st">  </span><span class="kw">filter</span>(Site <span class="op">==</span><span class="st"> &quot;16882&quot;</span>,</span>
+<span id="cb55-3"><a href="#cb55-3"></a>         System_Status <span class="op">==</span><span class="st"> </span><span class="dv">0</span>,</span>
+<span id="cb55-4"><a href="#cb55-4"></a>         System_In_Water <span class="op">==</span><span class="st"> </span><span class="dv">100</span>,</span>
+<span id="cb55-5"><a href="#cb55-5"></a>         <span class="kw">as.numeric</span>(Depth) <span class="op">&gt;=</span><span class="st"> </span><span class="fl">.26</span>, <span class="co">## minimum operating depth</span></span>
+<span id="cb55-6"><a href="#cb55-6"></a>         <span class="kw">as.numeric</span>(Flow) <span class="op">&gt;</span><span class="st"> </span><span class="dv">0</span>) <span class="op">%&gt;%</span></span>
+<span id="cb55-7"><a href="#cb55-7"></a><span class="st">  </span><span class="co">## remove outliers identified in box plots under 1 foot depth</span></span>
+<span id="cb55-8"><a href="#cb55-8"></a><span class="st">  </span><span class="kw">filter</span>(<span class="kw">as.numeric</span>(Depth) <span class="op">&lt;</span><span class="st"> </span><span class="dv">1</span> <span class="op">&amp;</span><span class="st"> </span><span class="kw">as.numeric</span>(Flow) <span class="op">&lt;</span><span class="st"> </span><span class="fl">4.3</span> <span class="op">|</span></span>
+<span id="cb55-9"><a href="#cb55-9"></a><span class="st">           </span><span class="kw">as.numeric</span>(Depth) <span class="op">&gt;</span><span class="st"> </span><span class="dv">1</span>) <span class="op">%&gt;%</span></span>
+<span id="cb55-10"><a href="#cb55-10"></a><span class="st">  </span><span class="kw">arrange</span>(Date_Time) <span class="op">%&gt;%</span></span>
+<span id="cb55-11"><a href="#cb55-11"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">time_lag =</span> <span class="kw">lag</span>(Date_Time, <span class="dt">default =</span> Date_Time[<span class="dv">1</span>]),</span>
+<span id="cb55-12"><a href="#cb55-12"></a>         <span class="dt">diff_time =</span> <span class="kw">as.numeric</span>(<span class="kw">difftime</span>(Date_Time, time_lag, <span class="dt">units =</span> <span class="st">&quot;hours&quot;</span>))) <span class="op">%&gt;%</span></span>
+<span id="cb55-13"><a href="#cb55-13"></a><span class="st">  </span><span class="kw">group_split</span>(<span class="kw">cumsum</span>(diff_time <span class="op">&gt;</span><span class="st"> </span><span class="dv">8</span>)) <span class="op">%&gt;%</span></span>
+<span id="cb55-14"><a href="#cb55-14"></a><span class="st">  </span><span class="co">## remove events where max flow did not go over 10 cfs</span></span>
+<span id="cb55-15"><a href="#cb55-15"></a><span class="st">  </span><span class="kw">keep</span>(<span class="op">~</span><span class="st"> </span><span class="kw">max</span>(<span class="kw">as.numeric</span>(.x<span class="op">$</span>Flow)) <span class="op">&gt;</span><span class="st"> </span><span class="dv">10</span>) <span class="op">%&gt;%</span></span>
+<span id="cb55-16"><a href="#cb55-16"></a><span class="st">  </span><span class="kw">map</span>(<span class="op">~</span><span class="kw">select</span>(.x, Date_Time, Depth, Flow)) <span class="op">%&gt;%</span></span>
+<span id="cb55-17"><a href="#cb55-17"></a><span class="st">  </span><span class="kw">map</span>(<span class="op">~</span><span class="kw">mutate</span>(.x,</span>
+<span id="cb55-18"><a href="#cb55-18"></a>              <span class="dt">time_lag =</span> <span class="kw">lag</span>(Date_Time, <span class="dt">default =</span> Date_Time[<span class="dv">1</span>]),</span>
+<span id="cb55-19"><a href="#cb55-19"></a>              <span class="dt">diff_time =</span> <span class="kw">as.numeric</span>(<span class="kw">difftime</span>(Date_Time, time_lag, <span class="dt">units =</span> <span class="st">&quot;hours&quot;</span>)),</span>
+<span id="cb55-20"><a href="#cb55-20"></a>              <span class="dt">diff_depth =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="kw">diff</span>(.x<span class="op">$</span>Depth)))) <span class="op">%&gt;%</span></span>
+<span id="cb55-21"><a href="#cb55-21"></a><span class="st">  </span><span class="kw">imap</span>(<span class="op">~</span><span class="kw">mutate</span>(.x, <span class="dt">event =</span> <span class="kw">as.character</span>(.y))) <span class="op">%&gt;%</span></span>
+<span id="cb55-22"><a href="#cb55-22"></a><span class="st">  </span><span class="kw">bind_rows</span>() <span class="op">%&gt;%</span></span>
+<span id="cb55-23"><a href="#cb55-23"></a><span class="st">  </span><span class="kw">filter</span>(<span class="op">!</span><span class="kw">is.na</span>(diff_depth)) <span class="op">%&gt;%</span></span>
+<span id="cb55-24"><a href="#cb55-24"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">J =</span> <span class="kw">as.numeric</span>(diff_depth)<span class="op">/</span><span class="kw">as.numeric</span>(diff_time)) -&gt;<span class="st"> </span>df_<span class="dv">16882</span></span>
+<span id="cb55-25"><a href="#cb55-25"></a></span>
+<span id="cb55-26"><a href="#cb55-26"></a>df_<span class="dv">16882</span> <span class="op">%&gt;%</span></span>
+<span id="cb55-27"><a href="#cb55-27"></a><span class="st">  </span><span class="kw">filter</span>(Date_Time <span class="op">&gt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-11-01&quot;</span>)) <span class="op">%&gt;%</span></span>
+<span id="cb55-28"><a href="#cb55-28"></a><span class="st">  </span><span class="kw">ggplot</span>() <span class="op">+</span></span>
+<span id="cb55-29"><a href="#cb55-29"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(Depth, Flow))</span></code></pre></div>
+<p><img src="document_files/figure-html/unnamed-chunk-23-1.png" width="672" /></p>
+<div class="sourceCode" id="cb56"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1"></a>df_<span class="dv">16882</span> <span class="op">%&gt;%</span></span>
+<span id="cb56-2"><a href="#cb56-2"></a><span class="st">  </span><span class="kw">filter</span>(Date_Time <span class="op">&gt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-05-01&quot;</span>) <span class="op">&amp;</span></span>
+<span id="cb56-3"><a href="#cb56-3"></a><span class="st">           </span>Date_Time <span class="op">&lt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-06-01&quot;</span>)) <span class="op">%&gt;%</span></span>
+<span id="cb56-4"><a href="#cb56-4"></a><span class="st">  </span><span class="kw">ggplot</span>() <span class="op">+</span></span>
+<span id="cb56-5"><a href="#cb56-5"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(Depth, Flow))</span></code></pre></div>
+<p><img src="document_files/figure-html/unnamed-chunk-23-2.png" width="672" /></p>
+<div class="sourceCode" id="cb57"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1"></a>df_<span class="dv">16882</span> <span class="op">%&gt;%</span></span>
+<span id="cb57-2"><a href="#cb57-2"></a><span class="st">  </span><span class="kw">filter</span>(Date_Time <span class="op">&gt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-10-01&quot;</span>) <span class="op">&amp;</span></span>
+<span id="cb57-3"><a href="#cb57-3"></a><span class="st">           </span>Date_Time <span class="op">&lt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-11-01&quot;</span>)) <span class="op">%&gt;%</span></span>
+<span id="cb57-4"><a href="#cb57-4"></a><span class="st">  </span><span class="kw">ggplot</span>() <span class="op">+</span></span>
+<span id="cb57-5"><a href="#cb57-5"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(Depth, Flow))</span></code></pre></div>
+<p><img src="document_files/figure-html/unnamed-chunk-23-3.png" width="672" /></p>
+<div class="sourceCode" id="cb58"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1"></a>SSE &lt;-<span class="st"> </span><span class="cf">function</span>(pars, data) {</span>
+<span id="cb58-2"><a href="#cb58-2"></a>  Depth =<span class="st"> </span><span class="kw">as.numeric</span>(data<span class="op">$</span>Depth)</span>
+<span id="cb58-3"><a href="#cb58-3"></a>  J =<span class="st"> </span>data<span class="op">$</span>J</span>
+<span id="cb58-4"><a href="#cb58-4"></a>  K =<span class="st"> </span>pars[<span class="dv">1</span>]</span>
+<span id="cb58-5"><a href="#cb58-5"></a>  a =<span class="st"> </span>pars[<span class="dv">2</span>]</span>
+<span id="cb58-6"><a href="#cb58-6"></a>  n =<span class="st"> </span>pars[<span class="dv">3</span>]</span>
+<span id="cb58-7"><a href="#cb58-7"></a>  x =<span class="st"> </span>pars[<span class="dv">4</span>]</span>
+<span id="cb58-8"><a href="#cb58-8"></a></span>
+<span id="cb58-9"><a href="#cb58-9"></a>  </span>
+<span id="cb58-10"><a href="#cb58-10"></a>  preds &lt;-<span class="st"> </span>(K<span class="op">*</span><span class="kw">exponent</span>(<span class="dt">x =</span> Depth <span class="op">-</span><span class="st"> </span>a, <span class="dt">pow =</span> n)) <span class="op">*</span><span class="st"> </span><span class="kw">exponent</span>(<span class="dt">x =</span> (<span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x <span class="op">*</span><span class="st"> </span>J), <span class="dt">pow =</span> (<span class="dv">1</span><span class="op">/</span><span class="dv">2</span>))</span>
+<span id="cb58-11"><a href="#cb58-11"></a>  <span class="co">#print(preds)</span></span>
+<span id="cb58-12"><a href="#cb58-12"></a>  Q =<span class="st"> </span><span class="kw">as.numeric</span>(data<span class="op">$</span>Flow)</span>
+<span id="cb58-13"><a href="#cb58-13"></a>  </span>
+<span id="cb58-14"><a href="#cb58-14"></a>  <span class="co">## minimize the sum of square errors per the paper</span></span>
+<span id="cb58-15"><a href="#cb58-15"></a>  sse &lt;-<span class="st"> </span><span class="kw">sum</span>((Q <span class="op">-</span><span class="st"> </span>preds)<span class="op">^</span><span class="dv">2</span>, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>)</span>
+<span id="cb58-16"><a href="#cb58-16"></a>  <span class="co">#print(sse)</span></span>
+<span id="cb58-17"><a href="#cb58-17"></a>  sse</span>
+<span id="cb58-18"><a href="#cb58-18"></a>}</span>
+<span id="cb58-19"><a href="#cb58-19"></a></span>
+<span id="cb58-20"><a href="#cb58-20"></a>par &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dt">K =</span> <span class="dv">5</span>,</span>
+<span id="cb58-21"><a href="#cb58-21"></a>         <span class="dt">a =</span> <span class="dv">5</span>,</span>
+<span id="cb58-22"><a href="#cb58-22"></a>         <span class="dt">n =</span> <span class="dv">2</span>,</span>
+<span id="cb58-23"><a href="#cb58-23"></a>         <span class="dt">x =</span> <span class="dv">5000</span>)</span>
+<span id="cb58-24"><a href="#cb58-24"></a></span>
+<span id="cb58-25"><a href="#cb58-25"></a><span class="co">## limits to the parameter space</span></span>
+<span id="cb58-26"><a href="#cb58-26"></a>lower &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="fl">0.1</span>, <span class="fl">0.00001</span>, <span class="fl">0.00001</span>, <span class="dv">-10</span>)</span>
+<span id="cb58-27"><a href="#cb58-27"></a>upper &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dv">200</span>, <span class="dv">10</span>, <span class="dv">10</span>, <span class="dv">10</span>)</span>
+<span id="cb58-28"><a href="#cb58-28"></a></span>
+<span id="cb58-29"><a href="#cb58-29"></a>optim.par &lt;-<span class="st"> </span><span class="kw">optim</span>(<span class="dt">par =</span> par,</span>
+<span id="cb58-30"><a href="#cb58-30"></a>                   <span class="dt">fn =</span> SSE,</span>
+<span id="cb58-31"><a href="#cb58-31"></a>                   <span class="dt">data =</span> df_<span class="dv">16882</span> <span class="op">%&gt;%</span></span>
+<span id="cb58-32"><a href="#cb58-32"></a><span class="st">  </span><span class="kw">filter</span>(Date_Time <span class="op">&gt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-05-01&quot;</span>) <span class="op">&amp;</span></span>
+<span id="cb58-33"><a href="#cb58-33"></a><span class="st">           </span>Date_Time <span class="op">&lt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-06-01&quot;</span>) <span class="op">&amp;</span><span class="st"> </span><span class="op">!</span><span class="kw">is.infinite</span>(J) <span class="op">|</span></span>
+<span id="cb58-34"><a href="#cb58-34"></a><span class="st">           </span>Date_Time <span class="op">&gt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-10-01&quot;</span>) <span class="op">&amp;</span></span>
+<span id="cb58-35"><a href="#cb58-35"></a><span class="st">           </span>Date_Time <span class="op">&lt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-11-01&quot;</span>) <span class="op">&amp;</span><span class="st"> </span><span class="op">!</span><span class="kw">is.infinite</span>(J)),</span>
+<span id="cb58-36"><a href="#cb58-36"></a>                   <span class="dt">lower =</span> lower,</span>
+<span id="cb58-37"><a href="#cb58-37"></a>                   <span class="dt">upper =</span> upper,</span>
+<span id="cb58-38"><a href="#cb58-38"></a>                   <span class="dt">method =</span> <span class="st">&quot;L-BFGS-B&quot;</span>)</span>
+<span id="cb58-39"><a href="#cb58-39"></a></span>
+<span id="cb58-40"><a href="#cb58-40"></a></span>
+<span id="cb58-41"><a href="#cb58-41"></a>K &lt;-<span class="st"> </span>optim.par<span class="op">$</span>par[[<span class="dv">1</span>]]</span>
+<span id="cb58-42"><a href="#cb58-42"></a>a &lt;-<span class="st"> </span>optim.par<span class="op">$</span>par[[<span class="dv">2</span>]]</span>
+<span id="cb58-43"><a href="#cb58-43"></a>n &lt;-<span class="st"> </span>optim.par<span class="op">$</span>par[[<span class="dv">3</span>]]</span>
+<span id="cb58-44"><a href="#cb58-44"></a>x &lt;-<span class="st"> </span>optim.par<span class="op">$</span>par[[<span class="dv">4</span>]]</span>
+<span id="cb58-45"><a href="#cb58-45"></a></span>
+<span id="cb58-46"><a href="#cb58-46"></a>optim.par</span></code></pre></div>
+<pre><code>## $par
+##          K          a          n          x 
+## 36.2213653  0.6481563  1.1401725 -0.5659189 
+## 
+## $value
+## [1] 6069.676
+## 
+## $counts
+## function gradient 
+##       74       74 
 ## 
 ## $convergence
 ## [1] 0
 ## 
 ## $message
 ## [1] &quot;CONVERGENCE: REL_REDUCTION_OF_F &lt;= FACTR*EPSMCH&quot;</code></pre>
-<div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1"></a>K &lt;-<span class="st"> </span>optim.par<span class="op">$</span>par[[<span class="dv">1</span>]]</span>
-<span id="cb49-2"><a href="#cb49-2"></a>H_<span class="dv">0</span> &lt;-<span class="st"> </span>optim.par<span class="op">$</span>par[[<span class="dv">2</span>]]</span>
-<span id="cb49-3"><a href="#cb49-3"></a>Z &lt;-<span class="st"> </span>optim.par<span class="op">$</span>par[[<span class="dv">3</span>]]</span></code></pre></div>
-<div class="sourceCode" id="cb50"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1"></a>df_<span class="dv">16397</span> <span class="op">%&gt;%</span></span>
-<span id="cb50-2"><a href="#cb50-2"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">predicted =</span> K<span class="op">*</span>(<span class="kw">as.numeric</span>(Depth) <span class="op">-</span><span class="st"> </span>H_<span class="dv">0</span>)<span class="op">^</span>Z) <span class="op">%&gt;%</span></span>
-<span id="cb50-3"><a href="#cb50-3"></a><span class="st">  </span><span class="kw">ggplot</span>() <span class="op">+</span></span>
-<span id="cb50-4"><a href="#cb50-4"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Depth), <span class="kw">as.numeric</span>(Flow), <span class="dt">color =</span> <span class="st">&quot;measured&quot;</span>), <span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
-<span id="cb50-5"><a href="#cb50-5"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Depth), <span class="kw">as.numeric</span>(predicted), <span class="dt">color =</span> <span class="st">&quot;predicted&quot;</span>), <span class="dt">alpha =</span> <span class="fl">0.2</span>) <span class="op">+</span></span>
-<span id="cb50-6"><a href="#cb50-6"></a><span class="st">  </span><span class="co">#scale_y_log10() +</span></span>
-<span id="cb50-7"><a href="#cb50-7"></a><span class="st">  </span><span class="kw">theme_ms</span>()</span></code></pre></div>
-<p><img src="document_files/figure-html/unnamed-chunk-21-1.png" width="672" /></p>
-<div class="sourceCode" id="cb51"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1"></a>df_<span class="dv">16397</span> <span class="op">%&gt;%</span></span>
-<span id="cb51-2"><a href="#cb51-2"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">predicted =</span> K<span class="op">*</span>(<span class="kw">as.numeric</span>(Depth) <span class="op">-</span><span class="st"> </span>H_<span class="dv">0</span>)<span class="op">^</span>Z) <span class="op">%&gt;%</span></span>
-<span id="cb51-3"><a href="#cb51-3"></a><span class="st">  </span><span class="kw">ggplot</span>() <span class="op">+</span></span>
-<span id="cb51-4"><a href="#cb51-4"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Flow), <span class="kw">as.numeric</span>(predicted), <span class="dt">color =</span> <span class="st">&quot;measured&quot;</span>), <span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
-<span id="cb51-5"><a href="#cb51-5"></a><span class="st">  </span><span class="kw">geom_abline</span>(<span class="dt">slope =</span> <span class="dv">1</span>) <span class="op">+</span></span>
-<span id="cb51-6"><a href="#cb51-6"></a><span class="st">  </span><span class="co">#scale_y_log10() + scale_x_log10() +</span></span>
-<span id="cb51-7"><a href="#cb51-7"></a><span class="st">  </span><span class="kw">theme_ms</span>()</span></code></pre></div>
-<p><img src="document_files/figure-html/unnamed-chunk-21-2.png" width="672" /></p>
-<div class="sourceCode" id="cb52"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1"></a>df_<span class="dv">16397</span> <span class="op">%&gt;%</span></span>
-<span id="cb52-2"><a href="#cb52-2"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">predicted =</span> K<span class="op">*</span>(<span class="kw">as.numeric</span>(Depth) <span class="op">-</span><span class="st"> </span>H_<span class="dv">0</span>)<span class="op">^</span>Z) -&gt;<span class="st"> </span>df_<span class="dv">16397</span></span>
-<span id="cb52-3"><a href="#cb52-3"></a></span>
-<span id="cb52-4"><a href="#cb52-4"></a>df_<span class="dv">16397</span>_results &lt;-<span class="st"> </span><span class="kw">tibble</span>(<span class="dt">Site =</span> <span class="st">&quot;16397&quot;</span>,</span>
-<span id="cb52-5"><a href="#cb52-5"></a>       <span class="dt">K =</span> K,</span>
-<span id="cb52-6"><a href="#cb52-6"></a>       <span class="dt">H_0 =</span> H_<span class="dv">0</span>,</span>
-<span id="cb52-7"><a href="#cb52-7"></a>       <span class="dt">Z =</span> Z,</span>
-<span id="cb52-8"><a href="#cb52-8"></a>       <span class="dt">NSE =</span> hydroGOF<span class="op">::</span><span class="kw">NSE</span>(df_<span class="dv">16397</span><span class="op">$</span>predicted, <span class="kw">as.numeric</span>(df_<span class="dv">16397</span><span class="op">$</span>Flow)),</span>
-<span id="cb52-9"><a href="#cb52-9"></a>       <span class="dt">RMSE =</span> hydroGOF<span class="op">::</span><span class="kw">rmse</span>(df_<span class="dv">16397</span><span class="op">$</span>predicted, <span class="kw">as.numeric</span>(df_<span class="dv">16397</span><span class="op">$</span>Flow)))</span>
-<span id="cb52-10"><a href="#cb52-10"></a>df_<span class="dv">16397</span>_results</span></code></pre></div>
-<pre><code>## # A tibble: 1 x 6
-##   Site       K   H_0     Z   NSE  RMSE
-##   &lt;chr&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
-## 1 16397 0.0413  0.26  3.98 0.930  2.98</code></pre>
-</div>
-<div id="site-16882" class="section level2">
-<h2>site 16882</h2>
-<div class="sourceCode" id="cb54"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1"></a>iqplus_df <span class="op">%&gt;%</span></span>
-<span id="cb54-2"><a href="#cb54-2"></a><span class="st">  </span><span class="kw">filter</span>(Site <span class="op">==</span><span class="st"> &quot;16882&quot;</span>,</span>
-<span id="cb54-3"><a href="#cb54-3"></a>         System_Status <span class="op">==</span><span class="st"> </span><span class="dv">0</span>,</span>
-<span id="cb54-4"><a href="#cb54-4"></a>         System_In_Water <span class="op">==</span><span class="st"> </span><span class="dv">100</span>,</span>
-<span id="cb54-5"><a href="#cb54-5"></a>         <span class="kw">as.numeric</span>(Depth) <span class="op">&gt;=</span><span class="st"> </span><span class="fl">0.26</span>, <span class="co">## minimum operating depth</span></span>
-<span id="cb54-6"><a href="#cb54-6"></a>         <span class="kw">as.numeric</span>(Flow) <span class="op">&gt;</span><span class="st"> </span><span class="dv">0</span>) <span class="op">%&gt;%</span></span>
-<span id="cb54-7"><a href="#cb54-7"></a><span class="st">  </span><span class="co">## remove outliers identified in box plots under 1 foot depth</span></span>
-<span id="cb54-8"><a href="#cb54-8"></a><span class="st">  </span><span class="kw">filter</span>(<span class="kw">as.numeric</span>(Depth) <span class="op">&lt;</span><span class="st"> </span><span class="dv">1</span> <span class="op">&amp;</span><span class="st"> </span><span class="kw">as.numeric</span>(Flow) <span class="op">&lt;</span><span class="st"> </span><span class="dv">8</span> <span class="op">|</span></span>
-<span id="cb54-9"><a href="#cb54-9"></a><span class="st">           </span><span class="kw">as.numeric</span>(Depth) <span class="op">&gt;</span><span class="st"> </span><span class="dv">1</span>) <span class="op">%&gt;%</span><span class="st"> </span></span>
-<span id="cb54-10"><a href="#cb54-10"></a><span class="st">  </span><span class="kw">arrange</span>(Date_Time) <span class="op">%&gt;%</span></span>
-<span id="cb54-11"><a href="#cb54-11"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">time_lag =</span> <span class="kw">lag</span>(Date_Time, <span class="dt">default =</span> Date_Time[<span class="dv">1</span>]),</span>
-<span id="cb54-12"><a href="#cb54-12"></a>         <span class="dt">diff_time =</span> <span class="kw">as.numeric</span>(<span class="kw">difftime</span>(Date_Time, time_lag, <span class="dt">units =</span> <span class="st">&quot;hours&quot;</span>))) <span class="op">%&gt;%</span></span>
-<span id="cb54-13"><a href="#cb54-13"></a><span class="st">  </span><span class="kw">group_split</span>(<span class="kw">cumsum</span>(diff_time <span class="op">&gt;</span><span class="st"> </span><span class="dv">8</span>)) <span class="op">%&gt;%</span></span>
-<span id="cb54-14"><a href="#cb54-14"></a><span class="st">  </span><span class="co">## remove events where max flow did not go over 10 cfs</span></span>
-<span id="cb54-15"><a href="#cb54-15"></a><span class="st">  </span><span class="kw">keep</span>(<span class="op">~</span><span class="st"> </span><span class="kw">max</span>(<span class="kw">as.numeric</span>(.x<span class="op">$</span>Flow)) <span class="op">&gt;</span><span class="st"> </span><span class="dv">10</span>) <span class="op">%&gt;%</span></span>
-<span id="cb54-16"><a href="#cb54-16"></a><span class="st">  </span><span class="kw">map</span>(<span class="op">~</span><span class="kw">select</span>(.x, Date_Time, Depth, Flow)) <span class="op">%&gt;%</span></span>
-<span id="cb54-17"><a href="#cb54-17"></a><span class="st">  </span><span class="kw">map</span>(<span class="op">~</span><span class="kw">mutate</span>(.x,</span>
-<span id="cb54-18"><a href="#cb54-18"></a>              <span class="dt">time_lag =</span> <span class="kw">lag</span>(Date_Time, <span class="dt">default =</span> Date_Time[<span class="dv">1</span>]),</span>
-<span id="cb54-19"><a href="#cb54-19"></a>              <span class="dt">diff_time =</span> <span class="kw">as.numeric</span>(<span class="kw">difftime</span>(Date_Time, time_lag, <span class="dt">units =</span> <span class="st">&quot;hours&quot;</span>)),</span>
-<span id="cb54-20"><a href="#cb54-20"></a>              <span class="dt">diff_depth =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="kw">diff</span>(.x<span class="op">$</span>Depth)))) <span class="op">%&gt;%</span></span>
-<span id="cb54-21"><a href="#cb54-21"></a><span class="st">  </span><span class="kw">imap</span>(<span class="op">~</span><span class="kw">mutate</span>(.x, <span class="dt">event =</span> <span class="kw">as.character</span>(.y))) <span class="op">%&gt;%</span></span>
-<span id="cb54-22"><a href="#cb54-22"></a><span class="st">  </span><span class="kw">bind_rows</span>() <span class="op">%&gt;%</span></span>
-<span id="cb54-23"><a href="#cb54-23"></a><span class="st">  </span><span class="kw">filter</span>(<span class="op">!</span><span class="kw">is.na</span>(diff_depth)) <span class="op">%&gt;%</span></span>
-<span id="cb54-24"><a href="#cb54-24"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">J =</span> <span class="kw">as.numeric</span>(diff_depth)<span class="op">/</span><span class="kw">as.numeric</span>(diff_time)) -&gt;<span class="st"> </span>df_<span class="dv">16882</span></span>
-<span id="cb54-25"><a href="#cb54-25"></a></span>
-<span id="cb54-26"><a href="#cb54-26"></a>df_<span class="dv">16882</span> <span class="op">%&gt;%</span></span>
-<span id="cb54-27"><a href="#cb54-27"></a><span class="st">  </span><span class="kw">filter</span>(Date_Time <span class="op">&gt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-11-01&quot;</span>)) <span class="op">%&gt;%</span></span>
-<span id="cb54-28"><a href="#cb54-28"></a><span class="st">  </span><span class="kw">ggplot</span>() <span class="op">+</span></span>
-<span id="cb54-29"><a href="#cb54-29"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(Depth, Flow))</span></code></pre></div>
-<p><img src="document_files/figure-html/unnamed-chunk-23-1.png" width="672" /></p>
-<div class="sourceCode" id="cb55"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1"></a>df_<span class="dv">16882</span> <span class="op">%&gt;%</span></span>
-<span id="cb55-2"><a href="#cb55-2"></a><span class="st">  </span><span class="kw">filter</span>(Date_Time <span class="op">&gt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-05-01&quot;</span>) <span class="op">&amp;</span></span>
-<span id="cb55-3"><a href="#cb55-3"></a><span class="st">           </span>Date_Time <span class="op">&lt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-06-01&quot;</span>)) <span class="op">%&gt;%</span></span>
-<span id="cb55-4"><a href="#cb55-4"></a><span class="st">  </span><span class="kw">ggplot</span>() <span class="op">+</span></span>
-<span id="cb55-5"><a href="#cb55-5"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(Depth, Flow))</span></code></pre></div>
-<p><img src="document_files/figure-html/unnamed-chunk-23-2.png" width="672" /></p>
-<div class="sourceCode" id="cb56"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1"></a>df_<span class="dv">16882</span> <span class="op">%&gt;%</span></span>
-<span id="cb56-2"><a href="#cb56-2"></a><span class="st">  </span><span class="kw">filter</span>(Date_Time <span class="op">&gt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-10-01&quot;</span>) <span class="op">&amp;</span></span>
-<span id="cb56-3"><a href="#cb56-3"></a><span class="st">           </span>Date_Time <span class="op">&lt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-11-01&quot;</span>)) <span class="op">%&gt;%</span></span>
-<span id="cb56-4"><a href="#cb56-4"></a><span class="st">  </span><span class="kw">ggplot</span>() <span class="op">+</span></span>
-<span id="cb56-5"><a href="#cb56-5"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(Depth, Flow))</span></code></pre></div>
-<p><img src="document_files/figure-html/unnamed-chunk-23-3.png" width="672" /></p>
-<div class="sourceCode" id="cb57"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1"></a>SSE &lt;-<span class="st"> </span><span class="cf">function</span>(pars, data) {</span>
-<span id="cb57-2"><a href="#cb57-2"></a>  Depth =<span class="st"> </span><span class="kw">as.numeric</span>(data<span class="op">$</span>Depth)</span>
-<span id="cb57-3"><a href="#cb57-3"></a>  J =<span class="st"> </span>data<span class="op">$</span>J</span>
-<span id="cb57-4"><a href="#cb57-4"></a>  K =<span class="st"> </span>pars[<span class="dv">1</span>]</span>
-<span id="cb57-5"><a href="#cb57-5"></a>  a =<span class="st"> </span>pars[<span class="dv">2</span>]</span>
-<span id="cb57-6"><a href="#cb57-6"></a>  n =<span class="st"> </span>pars[<span class="dv">3</span>]</span>
-<span id="cb57-7"><a href="#cb57-7"></a>  x =<span class="st"> </span>pars[<span class="dv">4</span>]</span>
-<span id="cb57-8"><a href="#cb57-8"></a></span>
-<span id="cb57-9"><a href="#cb57-9"></a>  </span>
-<span id="cb57-10"><a href="#cb57-10"></a>  preds &lt;-<span class="st"> </span>(K<span class="op">*</span><span class="kw">exponent</span>(<span class="dt">x =</span> Depth <span class="op">-</span><span class="st"> </span>a, <span class="dt">pow =</span> n)) <span class="op">*</span><span class="st"> </span><span class="kw">exponent</span>(<span class="dt">x =</span> (<span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x <span class="op">*</span><span class="st"> </span>J), <span class="dt">pow =</span> (<span class="dv">1</span><span class="op">/</span><span class="dv">2</span>))</span>
-<span id="cb57-11"><a href="#cb57-11"></a>  <span class="co">#print(preds)</span></span>
-<span id="cb57-12"><a href="#cb57-12"></a>  Q =<span class="st"> </span><span class="kw">as.numeric</span>(data<span class="op">$</span>Flow)</span>
-<span id="cb57-13"><a href="#cb57-13"></a>  </span>
-<span id="cb57-14"><a href="#cb57-14"></a>  <span class="co">## minimize the sum of square errors per the paper</span></span>
-<span id="cb57-15"><a href="#cb57-15"></a>  sse &lt;-<span class="st"> </span><span class="kw">sum</span>((Q <span class="op">-</span><span class="st"> </span>preds)<span class="op">^</span><span class="dv">2</span>, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>)</span>
-<span id="cb57-16"><a href="#cb57-16"></a>  <span class="co">#print(sse)</span></span>
-<span id="cb57-17"><a href="#cb57-17"></a>  sse</span>
-<span id="cb57-18"><a href="#cb57-18"></a>}</span>
-<span id="cb57-19"><a href="#cb57-19"></a></span>
-<span id="cb57-20"><a href="#cb57-20"></a>par &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dt">K =</span> <span class="dv">5</span>,</span>
-<span id="cb57-21"><a href="#cb57-21"></a>         <span class="dt">a =</span> <span class="dv">5</span>,</span>
-<span id="cb57-22"><a href="#cb57-22"></a>         <span class="dt">n =</span> <span class="dv">2</span>,</span>
-<span id="cb57-23"><a href="#cb57-23"></a>         <span class="dt">x =</span> <span class="dv">2000</span>)</span>
-<span id="cb57-24"><a href="#cb57-24"></a></span>
-<span id="cb57-25"><a href="#cb57-25"></a><span class="co">## limits to the parameter space</span></span>
-<span id="cb57-26"><a href="#cb57-26"></a>lower &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="fl">0.1</span>, <span class="fl">0.1</span>, <span class="fl">0.1</span>, <span class="fl">0.1</span>)</span>
-<span id="cb57-27"><a href="#cb57-27"></a>upper &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dv">200</span>, <span class="ot">Inf</span>, <span class="dv">10</span>, <span class="dv">5000</span>)</span>
-<span id="cb57-28"><a href="#cb57-28"></a></span>
-<span id="cb57-29"><a href="#cb57-29"></a>optim.par &lt;-<span class="st"> </span><span class="kw">optim</span>(<span class="dt">par =</span> par,</span>
-<span id="cb57-30"><a href="#cb57-30"></a>                   <span class="dt">fn =</span> SSE,</span>
-<span id="cb57-31"><a href="#cb57-31"></a>                   <span class="dt">data =</span> df_<span class="dv">16882</span> <span class="op">%&gt;%</span></span>
-<span id="cb57-32"><a href="#cb57-32"></a><span class="st">  </span><span class="kw">filter</span>(Date_Time <span class="op">&gt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-11-01&quot;</span>) <span class="op">&amp;</span><span class="st"> </span><span class="op">!</span><span class="kw">is.infinite</span>(J)),</span>
-<span id="cb57-33"><a href="#cb57-33"></a>                   <span class="dt">lower =</span> lower,</span>
-<span id="cb57-34"><a href="#cb57-34"></a>                   <span class="dt">upper =</span> upper,</span>
-<span id="cb57-35"><a href="#cb57-35"></a>                   <span class="dt">method =</span> <span class="st">&quot;L-BFGS-B&quot;</span>)</span>
-<span id="cb57-36"><a href="#cb57-36"></a></span>
-<span id="cb57-37"><a href="#cb57-37"></a></span>
-<span id="cb57-38"><a href="#cb57-38"></a>K &lt;-<span class="st"> </span>optim.par<span class="op">$</span>par[[<span class="dv">1</span>]]</span>
-<span id="cb57-39"><a href="#cb57-39"></a>a &lt;-<span class="st"> </span>optim.par<span class="op">$</span>par[[<span class="dv">2</span>]]</span>
-<span id="cb57-40"><a href="#cb57-40"></a>n &lt;-<span class="st"> </span>optim.par<span class="op">$</span>par[[<span class="dv">3</span>]]</span>
-<span id="cb57-41"><a href="#cb57-41"></a>x &lt;-<span class="st"> </span>optim.par<span class="op">$</span>par[[<span class="dv">4</span>]]</span></code></pre></div>
-<div class="sourceCode" id="cb58"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1"></a>df_<span class="dv">16882</span> <span class="op">%&gt;%</span></span>
-<span id="cb58-2"><a href="#cb58-2"></a><span class="st">  </span><span class="kw">filter</span>(Date_Time <span class="op">&gt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-11-01&quot;</span>) <span class="op">&amp;</span><span class="st"> </span><span class="op">!</span><span class="kw">is.infinite</span>(J)) <span class="op">%&gt;%</span></span>
-<span id="cb58-3"><a href="#cb58-3"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">predicted =</span> (K<span class="op">*</span><span class="kw">exponent</span>(<span class="dt">x =</span> <span class="kw">as.numeric</span>(Depth) <span class="op">-</span><span class="st"> </span>a, <span class="dt">pow =</span> n)) <span class="op">*</span><span class="st"> </span><span class="kw">exponent</span>(<span class="dt">x =</span> (<span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x <span class="op">*</span><span class="st"> </span>J), <span class="dt">pow =</span> (<span class="dv">1</span><span class="op">/</span><span class="dv">2</span>))) <span class="op">%&gt;%</span></span>
-<span id="cb58-4"><a href="#cb58-4"></a><span class="st">  </span><span class="kw">ggplot</span>() <span class="op">+</span></span>
-<span id="cb58-5"><a href="#cb58-5"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Depth), <span class="kw">as.numeric</span>(Flow), <span class="dt">color =</span> <span class="st">&quot;measured&quot;</span>), <span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
-<span id="cb58-6"><a href="#cb58-6"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Depth), <span class="kw">as.numeric</span>(predicted), <span class="dt">color =</span> <span class="st">&quot;predicted&quot;</span>), <span class="dt">alpha =</span> <span class="fl">0.2</span>) <span class="op">+</span></span>
-<span id="cb58-7"><a href="#cb58-7"></a><span class="st">  </span><span class="co">#scale_y_log10() +</span></span>
-<span id="cb58-8"><a href="#cb58-8"></a><span class="st">  </span><span class="kw">theme_ms</span>()</span></code></pre></div>
-<pre><code>## Warning: Removed 3228 rows containing missing values (geom_point).</code></pre>
-<p><img src="document_files/figure-html/unnamed-chunk-25-1.png" width="672" /></p>
 <div class="sourceCode" id="cb60"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1"></a>df_<span class="dv">16882</span> <span class="op">%&gt;%</span></span>
-<span id="cb60-2"><a href="#cb60-2"></a><span class="st">  </span><span class="kw">filter</span>(Date_Time <span class="op">&gt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-11-01&quot;</span>) <span class="op">&amp;</span><span class="st"> </span><span class="op">!</span><span class="kw">is.infinite</span>(J)) <span class="op">%&gt;%</span></span>
-<span id="cb60-3"><a href="#cb60-3"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">predicted =</span> (K<span class="op">*</span><span class="kw">exponent</span>(<span class="dt">x =</span> <span class="kw">as.numeric</span>(Depth) <span class="op">-</span><span class="st"> </span>a, <span class="dt">pow =</span> n)) <span class="op">*</span><span class="st"> </span><span class="kw">exponent</span>(<span class="dt">x =</span> (<span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x <span class="op">*</span><span class="st"> </span>J), <span class="dt">pow =</span> (<span class="dv">1</span><span class="op">/</span><span class="dv">2</span>))) <span class="op">%&gt;%</span></span>
-<span id="cb60-4"><a href="#cb60-4"></a><span class="st">  </span><span class="kw">ggplot</span>() <span class="op">+</span></span>
-<span id="cb60-5"><a href="#cb60-5"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Flow), <span class="kw">as.numeric</span>(predicted), <span class="dt">color =</span> <span class="st">&quot;measured&quot;</span>), <span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
-<span id="cb60-6"><a href="#cb60-6"></a><span class="st">  </span><span class="kw">geom_abline</span>(<span class="dt">slope =</span> <span class="dv">1</span>) <span class="op">+</span></span>
-<span id="cb60-7"><a href="#cb60-7"></a><span class="st">  </span><span class="co">#scale_y_log10() + scale_x_log10() +</span></span>
-<span id="cb60-8"><a href="#cb60-8"></a><span class="st">  </span><span class="kw">theme_ms</span>()</span></code></pre></div>
-<pre><code>## Warning: Removed 3228 rows containing missing values (geom_point).</code></pre>
+<span id="cb60-2"><a href="#cb60-2"></a><span class="st">  </span><span class="kw">filter</span>(Date_Time <span class="op">&gt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-05-01&quot;</span>) <span class="op">&amp;</span></span>
+<span id="cb60-3"><a href="#cb60-3"></a><span class="st">           </span>Date_Time <span class="op">&lt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-06-01&quot;</span>) <span class="op">&amp;</span><span class="st"> </span><span class="op">!</span><span class="kw">is.infinite</span>(J) <span class="op">|</span></span>
+<span id="cb60-4"><a href="#cb60-4"></a><span class="st">           </span>Date_Time <span class="op">&gt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-10-01&quot;</span>) <span class="op">&amp;</span></span>
+<span id="cb60-5"><a href="#cb60-5"></a><span class="st">           </span>Date_Time <span class="op">&lt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-11-01&quot;</span>) <span class="op">&amp;</span><span class="st"> </span><span class="op">!</span><span class="kw">is.infinite</span>(J)) <span class="op">%&gt;%</span></span>
+<span id="cb60-6"><a href="#cb60-6"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">predicted =</span> (K<span class="op">*</span><span class="kw">exponent</span>(<span class="dt">x =</span> <span class="kw">as.numeric</span>(Depth) <span class="op">-</span><span class="st"> </span>a, <span class="dt">pow =</span> n)) <span class="op">*</span><span class="st"> </span><span class="kw">exponent</span>(<span class="dt">x =</span> (<span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x <span class="op">*</span><span class="st"> </span>J), <span class="dt">pow =</span> (<span class="dv">1</span><span class="op">/</span><span class="dv">2</span>))) <span class="op">%&gt;%</span></span>
+<span id="cb60-7"><a href="#cb60-7"></a><span class="st">  </span><span class="kw">ggplot</span>() <span class="op">+</span></span>
+<span id="cb60-8"><a href="#cb60-8"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Depth), <span class="kw">as.numeric</span>(Flow), <span class="dt">color =</span> <span class="st">&quot;measured&quot;</span>), <span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
+<span id="cb60-9"><a href="#cb60-9"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Depth), <span class="kw">as.numeric</span>(predicted), <span class="dt">color =</span> <span class="st">&quot;predicted&quot;</span>), <span class="dt">alpha =</span> <span class="fl">0.2</span>) <span class="op">+</span></span>
+<span id="cb60-10"><a href="#cb60-10"></a><span class="st">  </span><span class="co">#scale_y_log10() +</span></span>
+<span id="cb60-11"><a href="#cb60-11"></a><span class="st">  </span><span class="kw">theme_ms</span>()</span></code></pre></div>
+<pre><code>## Warning: Removed 1 rows containing missing values (geom_point).</code></pre>
+<p><img src="document_files/figure-html/unnamed-chunk-25-1.png" width="672" /></p>
+<div class="sourceCode" id="cb62"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1"></a>df_<span class="dv">16882</span> <span class="op">%&gt;%</span></span>
+<span id="cb62-2"><a href="#cb62-2"></a><span class="st">  </span><span class="kw">filter</span>(Date_Time <span class="op">&gt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-05-01&quot;</span>) <span class="op">&amp;</span></span>
+<span id="cb62-3"><a href="#cb62-3"></a><span class="st">           </span>Date_Time <span class="op">&lt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-06-01&quot;</span>) <span class="op">&amp;</span><span class="st"> </span><span class="op">!</span><span class="kw">is.infinite</span>(J) <span class="op">|</span></span>
+<span id="cb62-4"><a href="#cb62-4"></a><span class="st">           </span>Date_Time <span class="op">&gt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-10-01&quot;</span>) <span class="op">&amp;</span></span>
+<span id="cb62-5"><a href="#cb62-5"></a><span class="st">           </span>Date_Time <span class="op">&lt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-11-01&quot;</span>) <span class="op">&amp;</span><span class="st"> </span><span class="op">!</span><span class="kw">is.infinite</span>(J)) <span class="op">%&gt;%</span></span>
+<span id="cb62-6"><a href="#cb62-6"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">predicted =</span> (K<span class="op">*</span><span class="kw">exponent</span>(<span class="dt">x =</span> <span class="kw">as.numeric</span>(Depth) <span class="op">-</span><span class="st"> </span>a, <span class="dt">pow =</span> n)) <span class="op">*</span><span class="st"> </span><span class="kw">exponent</span>(<span class="dt">x =</span> (<span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x <span class="op">*</span><span class="st"> </span>J), <span class="dt">pow =</span> (<span class="dv">1</span><span class="op">/</span><span class="dv">2</span>))) <span class="op">%&gt;%</span></span>
+<span id="cb62-7"><a href="#cb62-7"></a><span class="st">  </span><span class="kw">ggplot</span>() <span class="op">+</span></span>
+<span id="cb62-8"><a href="#cb62-8"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Flow), <span class="kw">as.numeric</span>(predicted), <span class="dt">color =</span> <span class="st">&quot;measured&quot;</span>), <span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
+<span id="cb62-9"><a href="#cb62-9"></a><span class="st">  </span><span class="kw">geom_abline</span>(<span class="dt">slope =</span> <span class="dv">1</span>) <span class="op">+</span></span>
+<span id="cb62-10"><a href="#cb62-10"></a><span class="st">  </span><span class="co">#scale_y_log10() + scale_x_log10() +</span></span>
+<span id="cb62-11"><a href="#cb62-11"></a><span class="st">  </span><span class="kw">theme_ms</span>()</span></code></pre></div>
+<pre><code>## Warning: Removed 1 rows containing missing values (geom_point).</code></pre>
 <p><img src="document_files/figure-html/unnamed-chunk-25-2.png" width="672" /></p>
+<div class="sourceCode" id="cb64"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1"></a>df_<span class="dv">16882</span> <span class="op">%&gt;%</span></span>
+<span id="cb64-2"><a href="#cb64-2"></a><span class="st">  </span><span class="kw">filter</span>(Date_Time <span class="op">&gt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-05-01&quot;</span>) <span class="op">&amp;</span></span>
+<span id="cb64-3"><a href="#cb64-3"></a><span class="st">           </span>Date_Time <span class="op">&lt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-06-01&quot;</span>) <span class="op">&amp;</span><span class="st"> </span><span class="op">!</span><span class="kw">is.infinite</span>(J) <span class="op">|</span></span>
+<span id="cb64-4"><a href="#cb64-4"></a><span class="st">           </span>Date_Time <span class="op">&gt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-10-01&quot;</span>) <span class="op">&amp;</span></span>
+<span id="cb64-5"><a href="#cb64-5"></a><span class="st">           </span>Date_Time <span class="op">&lt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-11-01&quot;</span>) <span class="op">&amp;</span><span class="st"> </span><span class="op">!</span><span class="kw">is.infinite</span>(J)) <span class="op">%&gt;%</span></span>
+<span id="cb64-6"><a href="#cb64-6"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">predicted =</span> (K<span class="op">*</span><span class="kw">exponent</span>(<span class="dt">x =</span> <span class="kw">as.numeric</span>(Depth) <span class="op">-</span><span class="st"> </span>a, <span class="dt">pow =</span> n)) <span class="op">*</span><span class="st"> </span><span class="kw">exponent</span>(<span class="dt">x =</span> (<span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x <span class="op">*</span><span class="st"> </span>J), <span class="dt">pow =</span> (<span class="dv">1</span><span class="op">/</span><span class="dv">2</span>))) -&gt;<span class="st"> </span>df_<span class="dv">16882</span>_spring</span>
+<span id="cb64-7"><a href="#cb64-7"></a></span>
+<span id="cb64-8"><a href="#cb64-8"></a>df_<span class="dv">16882</span>_spring_results &lt;-<span class="st"> </span><span class="kw">tibble</span>(<span class="dt">Site =</span> <span class="st">&quot;16882:Spring&quot;</span>,</span>
+<span id="cb64-9"><a href="#cb64-9"></a>       <span class="dt">K =</span> K,</span>
+<span id="cb64-10"><a href="#cb64-10"></a>       <span class="dt">a =</span> a,</span>
+<span id="cb64-11"><a href="#cb64-11"></a>       <span class="dt">n =</span> n,</span>
+<span id="cb64-12"><a href="#cb64-12"></a>       <span class="dt">x =</span> x,</span>
+<span id="cb64-13"><a href="#cb64-13"></a>       <span class="dt">NSE =</span> hydroGOF<span class="op">::</span><span class="kw">NSE</span>(df_<span class="dv">16882</span>_spring<span class="op">$</span>predicted, <span class="kw">as.numeric</span>(df_<span class="dv">16882</span>_spring<span class="op">$</span>Flow)),</span>
+<span id="cb64-14"><a href="#cb64-14"></a>       <span class="dt">RMSE =</span> hydroGOF<span class="op">::</span><span class="kw">rmse</span>(df_<span class="dv">16882</span>_spring<span class="op">$</span>predicted, <span class="kw">as.numeric</span>(df_<span class="dv">16882</span>_spring<span class="op">$</span>Flow)))</span>
+<span id="cb64-15"><a href="#cb64-15"></a>df_<span class="dv">16882</span>_spring_results</span></code></pre></div>
+<pre><code>## # A tibble: 1 x 7
+##   Site             K     a     n      x   NSE  RMSE
+##   &lt;chr&gt;        &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 16882:Spring  36.2 0.648  1.14 -0.566 0.963  1.75</code></pre>
+<div class="sourceCode" id="cb66"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1"></a>par &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dt">K =</span> <span class="dv">1</span>,</span>
+<span id="cb66-2"><a href="#cb66-2"></a>         <span class="dt">a =</span> <span class="dv">5</span>,</span>
+<span id="cb66-3"><a href="#cb66-3"></a>         <span class="dt">n =</span> <span class="dv">2</span>,</span>
+<span id="cb66-4"><a href="#cb66-4"></a>         <span class="dt">x =</span> <span class="dv">50</span>)</span>
+<span id="cb66-5"><a href="#cb66-5"></a></span>
+<span id="cb66-6"><a href="#cb66-6"></a><span class="co">## limits to the parameter space</span></span>
+<span id="cb66-7"><a href="#cb66-7"></a>lower &lt;-<span class="st"> </span><span class="kw">c</span>(.<span class="dv">00001</span>, <span class="dv">0</span>, <span class="fl">0.00001</span>, <span class="dv">-10</span>)</span>
+<span id="cb66-8"><a href="#cb66-8"></a>upper &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dv">200</span>, <span class="dv">10</span>, <span class="dv">10</span>, <span class="dv">100</span>)</span>
+<span id="cb66-9"><a href="#cb66-9"></a></span>
+<span id="cb66-10"><a href="#cb66-10"></a>optim.par &lt;-<span class="st"> </span><span class="kw">optim</span>(<span class="dt">par =</span> par,</span>
+<span id="cb66-11"><a href="#cb66-11"></a>                   <span class="dt">fn =</span> SSE,</span>
+<span id="cb66-12"><a href="#cb66-12"></a>                   <span class="dt">data =</span> df_<span class="dv">16882</span> <span class="op">%&gt;%</span></span>
+<span id="cb66-13"><a href="#cb66-13"></a><span class="st">  </span><span class="kw">filter</span>(Date_Time <span class="op">&gt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-11-01&quot;</span>) <span class="op">&amp;</span><span class="st"> </span><span class="op">!</span><span class="kw">is.infinite</span>(J)),</span>
+<span id="cb66-14"><a href="#cb66-14"></a>                   <span class="dt">lower =</span> lower,</span>
+<span id="cb66-15"><a href="#cb66-15"></a>                   <span class="dt">upper =</span> upper,</span>
+<span id="cb66-16"><a href="#cb66-16"></a>                   <span class="dt">method =</span> <span class="st">&quot;L-BFGS-B&quot;</span>)</span>
+<span id="cb66-17"><a href="#cb66-17"></a></span>
+<span id="cb66-18"><a href="#cb66-18"></a></span>
+<span id="cb66-19"><a href="#cb66-19"></a>K &lt;-<span class="st"> </span>optim.par<span class="op">$</span>par[[<span class="dv">1</span>]]</span>
+<span id="cb66-20"><a href="#cb66-20"></a>a &lt;-<span class="st"> </span>optim.par<span class="op">$</span>par[[<span class="dv">2</span>]]</span>
+<span id="cb66-21"><a href="#cb66-21"></a>n &lt;-<span class="st"> </span>optim.par<span class="op">$</span>par[[<span class="dv">3</span>]]</span>
+<span id="cb66-22"><a href="#cb66-22"></a>x &lt;-<span class="st"> </span>optim.par<span class="op">$</span>par[[<span class="dv">4</span>]]</span>
+<span id="cb66-23"><a href="#cb66-23"></a></span>
+<span id="cb66-24"><a href="#cb66-24"></a>optim.par</span></code></pre></div>
+<pre><code>## $par
+##         K         a         n         x 
+## 8.0785577 0.8679692 2.3945289 1.6137518 
+## 
+## $value
+## [1] 5574.524
+## 
+## $counts
+## function gradient 
+##      116      116 
+## 
+## $convergence
+## [1] 0
+## 
+## $message
+## [1] &quot;CONVERGENCE: REL_REDUCTION_OF_F &lt;= FACTR*EPSMCH&quot;</code></pre>
+<div class="sourceCode" id="cb68"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1"></a>df_<span class="dv">16882</span> <span class="op">%&gt;%</span></span>
+<span id="cb68-2"><a href="#cb68-2"></a><span class="st">  </span><span class="kw">filter</span>(Date_Time <span class="op">&gt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-11-01&quot;</span>) <span class="op">&amp;</span><span class="st"> </span><span class="op">!</span><span class="kw">is.infinite</span>(J)) <span class="op">%&gt;%</span></span>
+<span id="cb68-3"><a href="#cb68-3"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">predicted =</span> (K<span class="op">*</span><span class="kw">exponent</span>(<span class="dt">x =</span> <span class="kw">as.numeric</span>(Depth) <span class="op">-</span><span class="st"> </span>a, <span class="dt">pow =</span> n)) <span class="op">*</span><span class="st"> </span><span class="kw">exponent</span>(<span class="dt">x =</span> (<span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x <span class="op">*</span><span class="st"> </span>J), <span class="dt">pow =</span> (<span class="dv">1</span><span class="op">/</span><span class="dv">2</span>))) <span class="op">%&gt;%</span></span>
+<span id="cb68-4"><a href="#cb68-4"></a><span class="st">  </span><span class="kw">ggplot</span>() <span class="op">+</span></span>
+<span id="cb68-5"><a href="#cb68-5"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Depth), <span class="kw">as.numeric</span>(Flow), <span class="dt">color =</span> <span class="st">&quot;measured&quot;</span>), <span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
+<span id="cb68-6"><a href="#cb68-6"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Depth), <span class="kw">as.numeric</span>(predicted), <span class="dt">color =</span> <span class="st">&quot;predicted&quot;</span>), <span class="dt">alpha =</span> <span class="fl">0.2</span>) <span class="op">+</span></span>
+<span id="cb68-7"><a href="#cb68-7"></a><span class="st">  </span><span class="co">#scale_y_log10() +</span></span>
+<span id="cb68-8"><a href="#cb68-8"></a><span class="st">  </span><span class="kw">theme_ms</span>()</span></code></pre></div>
+<pre><code>## Warning: Removed 1 rows containing missing values (geom_point).</code></pre>
+<p><img src="document_files/figure-html/unnamed-chunk-28-1.png" width="672" /></p>
+<div class="sourceCode" id="cb70"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1"></a>df_<span class="dv">16882</span> <span class="op">%&gt;%</span></span>
+<span id="cb70-2"><a href="#cb70-2"></a><span class="st">  </span><span class="kw">filter</span>(Date_Time <span class="op">&gt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-11-01&quot;</span>) <span class="op">&amp;</span><span class="st"> </span><span class="op">!</span><span class="kw">is.infinite</span>(J)) <span class="op">%&gt;%</span></span>
+<span id="cb70-3"><a href="#cb70-3"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">predicted =</span> (K<span class="op">*</span><span class="kw">exponent</span>(<span class="dt">x =</span> <span class="kw">as.numeric</span>(Depth) <span class="op">-</span><span class="st"> </span>a, <span class="dt">pow =</span> n)) <span class="op">*</span><span class="st"> </span><span class="kw">exponent</span>(<span class="dt">x =</span> (<span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x <span class="op">*</span><span class="st"> </span>J), <span class="dt">pow =</span> (<span class="dv">1</span><span class="op">/</span><span class="dv">2</span>))) <span class="op">%&gt;%</span></span>
+<span id="cb70-4"><a href="#cb70-4"></a><span class="st">  </span><span class="kw">ggplot</span>() <span class="op">+</span></span>
+<span id="cb70-5"><a href="#cb70-5"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Flow), <span class="kw">as.numeric</span>(predicted), <span class="dt">color =</span> <span class="st">&quot;measured&quot;</span>), <span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
+<span id="cb70-6"><a href="#cb70-6"></a><span class="st">  </span><span class="kw">geom_abline</span>(<span class="dt">slope =</span> <span class="dv">1</span>) <span class="op">+</span></span>
+<span id="cb70-7"><a href="#cb70-7"></a><span class="st">  </span><span class="co">#scale_y_log10() + scale_x_log10() +</span></span>
+<span id="cb70-8"><a href="#cb70-8"></a><span class="st">  </span><span class="kw">theme_ms</span>()</span></code></pre></div>
+<pre><code>## Warning: Removed 1 rows containing missing values (geom_point).</code></pre>
+<p><img src="document_files/figure-html/unnamed-chunk-28-2.png" width="672" /></p>
+<div class="sourceCode" id="cb72"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1"></a>df_<span class="dv">16882</span> <span class="op">%&gt;%</span></span>
+<span id="cb72-2"><a href="#cb72-2"></a><span class="st">  </span><span class="kw">filter</span>(Date_Time <span class="op">&gt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-11-01&quot;</span>) <span class="op">&amp;</span><span class="st"> </span><span class="op">!</span><span class="kw">is.infinite</span>(J)) <span class="op">%&gt;%</span></span>
+<span id="cb72-3"><a href="#cb72-3"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">predicted =</span> (K<span class="op">*</span><span class="kw">exponent</span>(<span class="dt">x =</span> <span class="kw">as.numeric</span>(Depth) <span class="op">-</span><span class="st"> </span>a, <span class="dt">pow =</span> n)) <span class="op">*</span><span class="st"> </span><span class="kw">exponent</span>(<span class="dt">x =</span> (<span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x <span class="op">*</span><span class="st"> </span>J), <span class="dt">pow =</span> (<span class="dv">1</span><span class="op">/</span><span class="dv">2</span>))) -&gt;<span class="st"> </span>df_<span class="dv">16882</span>_winter</span>
+<span id="cb72-4"><a href="#cb72-4"></a></span>
+<span id="cb72-5"><a href="#cb72-5"></a>df_<span class="dv">16882</span>_winter_results &lt;-<span class="st"> </span><span class="kw">tibble</span>(<span class="dt">Site =</span> <span class="st">&quot;16882:Winter&quot;</span>,</span>
+<span id="cb72-6"><a href="#cb72-6"></a>       <span class="dt">K =</span> K,</span>
+<span id="cb72-7"><a href="#cb72-7"></a>       <span class="dt">a =</span> a,</span>
+<span id="cb72-8"><a href="#cb72-8"></a>       <span class="dt">n =</span> n,</span>
+<span id="cb72-9"><a href="#cb72-9"></a>       <span class="dt">x =</span> x,</span>
+<span id="cb72-10"><a href="#cb72-10"></a>       <span class="dt">NSE =</span> hydroGOF<span class="op">::</span><span class="kw">NSE</span>(df_<span class="dv">16882</span>_winter<span class="op">$</span>predicted, <span class="kw">as.numeric</span>(df_<span class="dv">16882</span>_winter<span class="op">$</span>Flow)),</span>
+<span id="cb72-11"><a href="#cb72-11"></a>       <span class="dt">RMSE =</span> hydroGOF<span class="op">::</span><span class="kw">rmse</span>(df_<span class="dv">16882</span>_winter<span class="op">$</span>predicted, <span class="kw">as.numeric</span>(df_<span class="dv">16882</span>_winter<span class="op">$</span>Flow)))</span>
+<span id="cb72-12"><a href="#cb72-12"></a>df_<span class="dv">16882</span>_winter_results</span></code></pre></div>
+<pre><code>## # A tibble: 1 x 7
+##   Site             K     a     n     x   NSE  RMSE
+##   &lt;chr&gt;        &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 16882:Winter  8.08 0.868  2.39  1.61 0.946  9.48</code></pre>
 
 <div id="refs" class="references">
 <div id="ref-petersen-overleir_modelling_2006">

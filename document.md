@@ -936,15 +936,21 @@ iqplus_df %>%
   filter(Site == "16397",
          System_Status == 0,
          System_In_Water == 100,
-         as.numeric(Depth) >= 1, ## minimum operating depth
+         as.numeric(Depth) >= 0.26, ## minimum operating depth
          as.numeric(Flow) > 0) %>%
-  filter(Date_Time > as.POSIXct("2020-11-01")) %>%
+  filter(Date_Time >= as.POSIXct("2020-12-15") & 
+           Date_Time >= as.POSIXct("2020-12-31") &
+           as.numeric(Depth) > 1.5 |
+           Date_Time >= as.POSIXct("2020-01-05") &
+           as.numeric(Depth) > 2) %>%
+  # filter(as.numeric(Depth) < 2 & as.numeric(Flow) < 4.3 | # low flow outliers filtered based on boxplots
+  #          as.numeric(Depth) >= 2) %>%
   arrange(Date_Time) %>%
   mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
          diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours"))) %>%
   group_split(cumsum(diff_time > 8)) %>%
   ## remove events where max flow did not go over 10 cfs
-  keep(~ max(as.numeric(.x$Flow)) > 10) %>%
+  ## keep(~ max(as.numeric(.x$Flow)) > 10) %>%
   map(~select(.x, Date_Time, Depth, Flow)) %>%
   map(~mutate(.x,
               time_lag = lag(Date_Time, default = Date_Time[1]),
@@ -955,7 +961,55 @@ iqplus_df %>%
   filter(!is.na(diff_depth)) %>%
   mutate(J = as.numeric(diff_depth)/as.numeric(diff_time)) -> df_16397
 
+df_16397 %>%
+  filter(as.numeric(Depth) < 2) %>%
+  ggplot() +
+  geom_boxplot(aes(y = Flow))
+```
 
+<img src="document_files/figure-html/unnamed-chunk-20-1.png" width="672" />
+
+```r
+# SSE <- function(pars, data) {
+#   Depth = as.numeric(data$Depth)
+#   J = data$J
+#   K = pars[1]
+#   a = pars[2]
+#   n = pars[3]
+#   x = pars[4]
+# 
+#   
+#   preds <- (K*exponent(x = Depth - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))
+#   #print(preds)
+#   Q = as.numeric(data$Flow)
+#   
+#   ## minimize the sum of square errors per the paper
+#   sse <- sum((Q - preds)^2, na.rm = TRUE)
+#   #print(sse)
+#   sse
+# }
+# 
+# par <- c(K = 5,
+#          a = 5,
+#          n = 2,
+#          x = 2000)
+# 
+# ## limits to the parameter space
+# lower <- c(0.1, 0.1, 0.1, 0.1)
+# upper <- c(200, Inf, 10, 5000)
+# 
+# optim.par <- optim(par = par,
+#                    fn = SSE,
+#                    data = df_16397 %>% filter(!is.infinite(J)),
+#                    lower = lower,
+#                    upper = upper,
+#                    method = "L-BFGS-B")
+# 
+# 
+# K <- optim.par$par[[1]]
+# a <- optim.par$par[[2]]
+# n <- optim.par$par[[3]]
+# x <- optim.par$par[[4]]
 
 SSE <- function(pars, data) {
   Depth = as.numeric(data$Depth)
@@ -963,11 +1017,11 @@ SSE <- function(pars, data) {
   H_0 = pars[2]
   Z = pars[3]
 
-  
+
   preds <- K*(as.numeric(Depth) - H_0)^Z
   #print(preds)
   Q = as.numeric(data$Flow)
-  
+
   ## minimize the sum of square errors per the paper
   sse <- sum((Q - preds)^2, na.rm = TRUE)
   #print(sse)
@@ -979,8 +1033,8 @@ par <- c(K = 1,
          Z = 2)
 
 ## limits to the parameter space
-lower <- c(0.001, 0, 0.1)
-upper <- c(Inf, 0.26, Inf)
+lower <- c(-Inf, -5, 0.001)
+upper <- c(Inf, 5, Inf)
 
 optim.par <- optim(par = par,
                    fn = SSE,
@@ -994,21 +1048,21 @@ optim.par
 
 ```
 ## $par
-##         K       H_0         Z 
-## 0.0413059 0.2600000 3.9838570 
+##            K          H_0            Z 
+##  0.004524273 -2.870003103  4.148212545 
 ## 
 ## $value
-## [1] 194.8157
+## [1] 302.7499
 ## 
 ## $counts
 ## function gradient 
-##       97       97 
+##      156      156 
 ## 
 ## $convergence
-## [1] 0
+## [1] 1
 ## 
 ## $message
-## [1] "CONVERGENCE: REL_REDUCTION_OF_F <= FACTR*EPSMCH"
+## [1] "NEW_X"
 ```
 
 ```r
@@ -1025,7 +1079,7 @@ df_16397 %>%
   ggplot() +
   geom_point(aes(as.numeric(Depth), as.numeric(Flow), color = "measured"), alpha = 0.5) +
   geom_point(aes(as.numeric(Depth), as.numeric(predicted), color = "predicted"), alpha = 0.2) +
-  #scale_y_log10() +
+  scale_y_log10() +
   theme_ms()
 ```
 
@@ -1060,9 +1114,9 @@ df_16397_results
 
 ```
 ## # A tibble: 1 x 6
-##   Site       K   H_0     Z   NSE  RMSE
-##   <chr>  <dbl> <dbl> <dbl> <dbl> <dbl>
-## 1 16397 0.0413  0.26  3.98 0.930  2.98
+##   Site        K   H_0     Z   NSE  RMSE
+##   <chr>   <dbl> <dbl> <dbl> <dbl> <dbl>
+## 1 16397 0.00452 -2.87  4.15 0.969  2.13
 ```
 
 
@@ -1074,11 +1128,11 @@ iqplus_df %>%
   filter(Site == "16882",
          System_Status == 0,
          System_In_Water == 100,
-         as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Depth) >= .26, ## minimum operating depth
          as.numeric(Flow) > 0) %>%
   ## remove outliers identified in box plots under 1 foot depth
-  filter(as.numeric(Depth) < 1 & as.numeric(Flow) < 8 |
-           as.numeric(Depth) > 1) %>% 
+  filter(as.numeric(Depth) < 1 & as.numeric(Flow) < 4.3 |
+           as.numeric(Depth) > 1) %>%
   arrange(Date_Time) %>%
   mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
          diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours"))) %>%
@@ -1148,11 +1202,130 @@ SSE <- function(pars, data) {
 par <- c(K = 5,
          a = 5,
          n = 2,
-         x = 2000)
+         x = 5000)
 
 ## limits to the parameter space
-lower <- c(0.1, 0.1, 0.1, 0.1)
-upper <- c(200, Inf, 10, 5000)
+lower <- c(0.1, 0.00001, 0.00001, -10)
+upper <- c(200, 10, 10, 10)
+
+optim.par <- optim(par = par,
+                   fn = SSE,
+                   data = df_16882 %>%
+  filter(Date_Time > as.POSIXct("2020-05-01") &
+           Date_Time < as.POSIXct("2020-06-01") & !is.infinite(J) |
+           Date_Time > as.POSIXct("2020-10-01") &
+           Date_Time < as.POSIXct("2020-11-01") & !is.infinite(J)),
+                   lower = lower,
+                   upper = upper,
+                   method = "L-BFGS-B")
+
+
+K <- optim.par$par[[1]]
+a <- optim.par$par[[2]]
+n <- optim.par$par[[3]]
+x <- optim.par$par[[4]]
+
+optim.par
+```
+
+```
+## $par
+##          K          a          n          x 
+## 36.2213653  0.6481563  1.1401725 -0.5659189 
+## 
+## $value
+## [1] 6069.676
+## 
+## $counts
+## function gradient 
+##       74       74 
+## 
+## $convergence
+## [1] 0
+## 
+## $message
+## [1] "CONVERGENCE: REL_REDUCTION_OF_F <= FACTR*EPSMCH"
+```
+
+
+```r
+df_16882 %>%
+  filter(Date_Time > as.POSIXct("2020-05-01") &
+           Date_Time < as.POSIXct("2020-06-01") & !is.infinite(J) |
+           Date_Time > as.POSIXct("2020-10-01") &
+           Date_Time < as.POSIXct("2020-11-01") & !is.infinite(J)) %>%
+  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) %>%
+  ggplot() +
+  geom_point(aes(as.numeric(Depth), as.numeric(Flow), color = "measured"), alpha = 0.5) +
+  geom_point(aes(as.numeric(Depth), as.numeric(predicted), color = "predicted"), alpha = 0.2) +
+  #scale_y_log10() +
+  theme_ms()
+```
+
+```
+## Warning: Removed 1 rows containing missing values (geom_point).
+```
+
+<img src="document_files/figure-html/unnamed-chunk-25-1.png" width="672" />
+
+```r
+df_16882 %>%
+  filter(Date_Time > as.POSIXct("2020-05-01") &
+           Date_Time < as.POSIXct("2020-06-01") & !is.infinite(J) |
+           Date_Time > as.POSIXct("2020-10-01") &
+           Date_Time < as.POSIXct("2020-11-01") & !is.infinite(J)) %>%
+  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) %>%
+  ggplot() +
+  geom_point(aes(as.numeric(Flow), as.numeric(predicted), color = "measured"), alpha = 0.5) +
+  geom_abline(slope = 1) +
+  #scale_y_log10() + scale_x_log10() +
+  theme_ms()
+```
+
+```
+## Warning: Removed 1 rows containing missing values (geom_point).
+```
+
+<img src="document_files/figure-html/unnamed-chunk-25-2.png" width="672" />
+
+
+```r
+df_16882 %>%
+  filter(Date_Time > as.POSIXct("2020-05-01") &
+           Date_Time < as.POSIXct("2020-06-01") & !is.infinite(J) |
+           Date_Time > as.POSIXct("2020-10-01") &
+           Date_Time < as.POSIXct("2020-11-01") & !is.infinite(J)) %>%
+  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) -> df_16882_spring
+
+df_16882_spring_results <- tibble(Site = "16882:Spring",
+       K = K,
+       a = a,
+       n = n,
+       x = x,
+       NSE = hydroGOF::NSE(df_16882_spring$predicted, as.numeric(df_16882_spring$Flow)),
+       RMSE = hydroGOF::rmse(df_16882_spring$predicted, as.numeric(df_16882_spring$Flow)))
+df_16882_spring_results
+```
+
+```
+## # A tibble: 1 x 7
+##   Site             K     a     n      x   NSE  RMSE
+##   <chr>        <dbl> <dbl> <dbl>  <dbl> <dbl> <dbl>
+## 1 16882:Spring  36.2 0.648  1.14 -0.566 0.963  1.75
+```
+
+
+
+
+```r
+par <- c(K = 1,
+         a = 5,
+         n = 2,
+         x = 50)
+
+## limits to the parameter space
+lower <- c(.00001, 0, 0.00001, -10)
+upper <- c(200, 10, 10, 100)
 
 optim.par <- optim(par = par,
                    fn = SSE,
@@ -1167,6 +1340,27 @@ K <- optim.par$par[[1]]
 a <- optim.par$par[[2]]
 n <- optim.par$par[[3]]
 x <- optim.par$par[[4]]
+
+optim.par
+```
+
+```
+## $par
+##         K         a         n         x 
+## 8.0785577 0.8679692 2.3945289 1.6137518 
+## 
+## $value
+## [1] 5574.524
+## 
+## $counts
+## function gradient 
+##      116      116 
+## 
+## $convergence
+## [1] 0
+## 
+## $message
+## [1] "CONVERGENCE: REL_REDUCTION_OF_F <= FACTR*EPSMCH"
 ```
 
 
@@ -1182,10 +1376,10 @@ df_16882 %>%
 ```
 
 ```
-## Warning: Removed 3228 rows containing missing values (geom_point).
+## Warning: Removed 1 rows containing missing values (geom_point).
 ```
 
-<img src="document_files/figure-html/unnamed-chunk-25-1.png" width="672" />
+<img src="document_files/figure-html/unnamed-chunk-28-1.png" width="672" />
 
 ```r
 df_16882 %>%
@@ -1199,8 +1393,31 @@ df_16882 %>%
 ```
 
 ```
-## Warning: Removed 3228 rows containing missing values (geom_point).
+## Warning: Removed 1 rows containing missing values (geom_point).
 ```
 
-<img src="document_files/figure-html/unnamed-chunk-25-2.png" width="672" />
+<img src="document_files/figure-html/unnamed-chunk-28-2.png" width="672" />
 
+
+
+```r
+df_16882 %>%
+  filter(Date_Time > as.POSIXct("2020-11-01") & !is.infinite(J)) %>%
+  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) -> df_16882_winter
+
+df_16882_winter_results <- tibble(Site = "16882:Winter",
+       K = K,
+       a = a,
+       n = n,
+       x = x,
+       NSE = hydroGOF::NSE(df_16882_winter$predicted, as.numeric(df_16882_winter$Flow)),
+       RMSE = hydroGOF::rmse(df_16882_winter$predicted, as.numeric(df_16882_winter$Flow)))
+df_16882_winter_results
+```
+
+```
+## # A tibble: 1 x 7
+##   Site             K     a     n     x   NSE  RMSE
+##   <chr>        <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
+## 1 16882:Winter  8.08 0.868  2.39  1.61 0.946  9.48
+```
