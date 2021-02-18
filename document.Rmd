@@ -1231,3 +1231,61 @@ ggplot() +
 ```
 
 We need to fix the depths between devices first. 
+
+```{r}
+df_16396 %>%
+  select(Date_Time, Depth) %>%
+  fuzzyjoin::difference_left_join(DailyFlows_16396 %>% select(Date_Time, Depth), by = "Date_Time", max_dist = 10) %>%
+  ggplot() +
+  geom_point(aes(Depth.y, Depth.x)) +
+  geom_smooth(aes(Depth.y, Depth.x),method = "lm")
+```
+
+```{r}
+df_16396 %>%
+  select(Date_Time, Depth) %>%
+  fuzzyjoin::difference_left_join(DailyFlows_16396 %>% select(Date_Time, Depth), by = "Date_Time", max_dist = 10) %>%
+  lm(Depth.x ~ Depth.y, data = .) -> lm_16396_hobo_iq
+```
+
+
+```{r}
+hobo_df %>%
+  filter(Site == "16396") %>%
+  filter(Date_Time >= as.POSIXct("2020-03-04")) %>%
+  dplyr::rename(Depth.y = Water_Level) %>%
+  mutate(AdjustDepth = predict(lm_16396_hobo_iq, .)) -> DailyFlows_16396
+
+ggplot() +
+  geom_line(data = DailyFlows_16396, aes(Date_Time, AdjustDepth, color = "Hobo Depth")) +
+  geom_point(data = df_16396, aes(Date_Time, as.numeric(Depth), color = "IQ Depth"), alpha = 0.1) +
+  scale_y_log10()
+
+  
+```
+
+```{r}
+hobo_df %>%
+  filter(Site == "16396") %>%
+  filter(Date_Time >= as.POSIXct("2020-03-04")) %>%
+  dplyr::rename(Depth.y = Water_Level) %>%
+  mutate(AdjustDepth = predict(lm_16396_hobo_iq, .)) %>%
+  mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
+         diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours")),
+         diff_depth = c(0, diff(as.numeric(AdjustDepth))),
+         J = as.numeric(diff_depth)/as.numeric(diff_time)) %>%
+  filter(!is.na(J)) %>%
+  mutate(K = df_16396_results$K,
+         a = df_16396_results$a,
+         n = df_16396_results$n,
+         x = df_16396_results$x,
+         Flow = (K*exponent(x = as.numeric(AdjustDepth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) -> DailyFlows_16396
+  
+```
+
+```{r}
+ggplot() +
+  geom_line(data = DailyFlows_16396, aes(Date_Time, as.numeric(Flow), color = "Predicted Flow")) +
+  geom_point(data = df_16396, aes(Date_Time, as.numeric(Flow), color = "Measured Flow"), alpha = 0.1) +
+  scale_y_log10()
+```
