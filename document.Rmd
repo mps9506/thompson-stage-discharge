@@ -1189,3 +1189,36 @@ df_16882_winter_results <- tibble(Site = "16882:Winter",
        RMSE = hydroGOF::rmse(df_16882_winter$predicted, as.numeric(df_16882_winter$Flow)))
 df_16882_winter_results
 ```
+
+
+
+## Predict flows using depth data
+
+We will predict the 15 minute flows then aggregate to mean daily flows at each station.
+
+### Station 16396
+
+```{r}
+hobo_df %>%
+  filter(Site == "16396") %>%
+  dplyr::rename(Depth = Water_Level) %>%
+  mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
+         diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours")),
+         diff_depth = c(0, diff(as.numeric(Depth))),
+         J = as.numeric(diff_depth)/as.numeric(diff_time)) %>%
+  filter(!is.na(J)) %>%
+  mutate(K = df_16396_results$K,
+         a = df_16396_results$a,
+         n = df_16396_results$n,
+         x = df_16396_results$x,
+         Flow = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) %>%
+  ggplot() +
+  geom_line(aes(Date_Time, Flow))
+
+## looks like some < zero cfs flows predicted early for some reason.
+## can overlay measured flows on this plot
+  
+
+```
+
+
