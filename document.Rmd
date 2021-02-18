@@ -1198,6 +1198,8 @@ We will predict the 15 minute flows then aggregate to mean daily flows at each s
 
 ### Station 16396
 
+Use equation to predict flows:
+
 ```{r}
 hobo_df %>%
   filter(Site == "16396") %>%
@@ -1211,9 +1213,7 @@ hobo_df %>%
          a = df_16396_results$a,
          n = df_16396_results$n,
          x = df_16396_results$x,
-         Flow = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) %>%
-  ggplot() +
-  geom_line(aes(Date_Time, Flow))
+         Flow = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) -> DailyFlows_16396
 
 ## looks like some < zero cfs flows predicted early for some reason.
 ## can overlay measured flows on this plot
@@ -1221,4 +1221,13 @@ hobo_df %>%
 
 ```
 
+Make sure the measured depths between devices are consistent:
 
+```{r}
+ggplot() +
+  geom_line(data = DailyFlows_16396, aes(Date_Time, as.numeric(Depth), color = "Hobo Depth")) +
+  geom_point(data = df_16396, aes(Date_Time, as.numeric(Depth), color = "IQ Depth"), alpha = 0.1) +
+  scale_y_log10()
+```
+
+We need to fix the depths between devices first. 
