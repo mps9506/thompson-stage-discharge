@@ -1,6 +1,6 @@
 ---
 title: "Exploring Thompsons Creek Stage Discharge Data"
-date: "2021-02-11"
+date: "2021-02-18"
 github-repo: https://github.com/mps9506/thompson-stage-discharge
 bibliography: bibliography.bib
 biblio-style: "apalike"
@@ -1128,7 +1128,7 @@ iqplus_df %>%
   filter(Site == "16882",
          System_Status == 0,
          System_In_Water == 100,
-         as.numeric(Depth) >= .26, ## minimum operating depth
+         as.numeric(Depth) >= 0.26, ## minimum operating depth
          as.numeric(Flow) > 0) %>%
   ## remove outliers identified in box plots under 1 foot depth
   filter(as.numeric(Depth) < 1 & as.numeric(Flow) < 4.3 |
@@ -1212,9 +1212,7 @@ optim.par <- optim(par = par,
                    fn = SSE,
                    data = df_16882 %>%
   filter(Date_Time > as.POSIXct("2020-05-01") &
-           Date_Time < as.POSIXct("2020-06-01") & !is.infinite(J) |
-           Date_Time > as.POSIXct("2020-10-01") &
-           Date_Time < as.POSIXct("2020-11-01") & !is.infinite(J)),
+           Date_Time < as.POSIXct("2020-06-01") & !is.infinite(J)),
                    lower = lower,
                    upper = upper,
                    method = "L-BFGS-B")
@@ -1231,14 +1229,14 @@ optim.par
 ```
 ## $par
 ##          K          a          n          x 
-## 36.2213653  0.6481563  1.1401725 -0.5659189 
+## 32.6463249  0.3829660  1.1024585 -0.5648966 
 ## 
 ## $value
-## [1] 6069.676
+## [1] 2358.648
 ## 
 ## $counts
 ## function gradient 
-##       74       74 
+##       69       69 
 ## 
 ## $convergence
 ## [1] 0
@@ -1251,14 +1249,12 @@ optim.par
 ```r
 df_16882 %>%
   filter(Date_Time > as.POSIXct("2020-05-01") &
-           Date_Time < as.POSIXct("2020-06-01") & !is.infinite(J) |
-           Date_Time > as.POSIXct("2020-10-01") &
-           Date_Time < as.POSIXct("2020-11-01") & !is.infinite(J)) %>%
+           Date_Time < as.POSIXct("2020-06-01") & !is.infinite(J)) %>%
   mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) %>%
   ggplot() +
   geom_point(aes(as.numeric(Depth), as.numeric(Flow), color = "measured"), alpha = 0.5) +
   geom_point(aes(as.numeric(Depth), as.numeric(predicted), color = "predicted"), alpha = 0.2) +
-  #scale_y_log10() +
+  scale_y_log10() +
   theme_ms()
 ```
 
@@ -1271,9 +1267,7 @@ df_16882 %>%
 ```r
 df_16882 %>%
   filter(Date_Time > as.POSIXct("2020-05-01") &
-           Date_Time < as.POSIXct("2020-06-01") & !is.infinite(J) |
-           Date_Time > as.POSIXct("2020-10-01") &
-           Date_Time < as.POSIXct("2020-11-01") & !is.infinite(J)) %>%
+           Date_Time < as.POSIXct("2020-06-01") & !is.infinite(J))%>%
   mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) %>%
   ggplot() +
   geom_point(aes(as.numeric(Flow), as.numeric(predicted), color = "measured"), alpha = 0.5) +
@@ -1292,9 +1286,7 @@ df_16882 %>%
 ```r
 df_16882 %>%
   filter(Date_Time > as.POSIXct("2020-05-01") &
-           Date_Time < as.POSIXct("2020-06-01") & !is.infinite(J) |
-           Date_Time > as.POSIXct("2020-10-01") &
-           Date_Time < as.POSIXct("2020-11-01") & !is.infinite(J)) %>%
+           Date_Time < as.POSIXct("2020-06-01") & !is.infinite(J)) %>%
   mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) -> df_16882_spring
 
 df_16882_spring_results <- tibble(Site = "16882:Spring",
@@ -1311,9 +1303,111 @@ df_16882_spring_results
 ## # A tibble: 1 x 7
 ##   Site             K     a     n      x   NSE  RMSE
 ##   <chr>        <dbl> <dbl> <dbl>  <dbl> <dbl> <dbl>
-## 1 16882:Spring  36.2 0.648  1.14 -0.566 0.963  1.75
+## 1 16882:Spring  32.6 0.383  1.10 -0.565 0.969  6.12
 ```
 
+
+
+
+```r
+## 16882:Fall
+## limits to the parameter space
+lower <- c(0.1, 0.00001, 0.00001, -10)
+upper <- c(200, 10, 10, 10)
+
+par <- c(K = 5,
+         a = 5,
+         n = 2,
+         x = 1)
+
+optim.par <- optim(par = par,
+                   fn = SSE,
+                   data = df_16882 %>%
+  filter(Date_Time > as.POSIXct("2020-10-01") &
+           Date_Time < as.POSIXct("2020-11-01") & !is.infinite(J)),
+                   lower = lower,
+                   upper = upper,
+                   method = "L-BFGS-B")
+
+
+K <- optim.par$par[[1]]
+a <- optim.par$par[[2]]
+n <- optim.par$par[[3]]
+x <- optim.par$par[[4]]
+
+optim.par
+```
+
+```
+## $par
+##          K          a          n          x 
+## 34.4447950  0.6169175  1.2757297 -0.5454046 
+## 
+## $value
+## [1] 1005.021
+## 
+## $counts
+## function gradient 
+##       81       81 
+## 
+## $convergence
+## [1] 0
+## 
+## $message
+## [1] "CONVERGENCE: REL_REDUCTION_OF_F <= FACTR*EPSMCH"
+```
+
+```r
+df_16882 %>%
+  filter(Date_Time > as.POSIXct("2020-10-01") &
+           Date_Time < as.POSIXct("2020-11-01") & !is.infinite(J)) %>%
+  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) %>%
+  ggplot() +
+  geom_point(aes(as.numeric(Depth), as.numeric(Flow), color = "measured"), alpha = 0.5) +
+  geom_point(aes(as.numeric(Depth), as.numeric(predicted), color = "predicted"), alpha = 0.2) +
+  scale_y_log10() +
+  theme_ms()
+```
+
+<img src="document_files/figure-html/unnamed-chunk-27-1.png" width="672" />
+
+```r
+df_16882 %>%
+  filter(Date_Time > as.POSIXct("2020-10-01") &
+           Date_Time < as.POSIXct("2020-11-01") & !is.infinite(J))%>%
+  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) %>%
+  ggplot() +
+  geom_point(aes(as.numeric(Flow), as.numeric(predicted), color = "measured"), alpha = 0.5) +
+  geom_abline(slope = 1) +
+  #scale_y_log10() + scale_x_log10() +
+  theme_ms()
+```
+
+<img src="document_files/figure-html/unnamed-chunk-27-2.png" width="672" />
+
+
+```r
+df_16882 %>%
+  filter(Date_Time > as.POSIXct("2020-10-01") &
+           Date_Time < as.POSIXct("2020-11-01") & !is.infinite(J)) %>%
+  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) -> df_16882_fall
+
+df_16882_fall_results <- tibble(Site = "16882:Fall",
+       K = K,
+       a = a,
+       n = n,
+       x = x,
+       NSE = hydroGOF::NSE(df_16882_fall$predicted, as.numeric(df_16882_fall$Flow)),
+       RMSE = hydroGOF::rmse(df_16882_fall$predicted, as.numeric(df_16882_fall$Flow)))
+df_16882_fall_results
+```
+
+```
+## # A tibble: 1 x 7
+##   Site           K     a     n      x   NSE  RMSE
+##   <chr>      <dbl> <dbl> <dbl>  <dbl> <dbl> <dbl>
+## 1 16882:Fall  34.4 0.617  1.28 -0.545 0.948 0.722
+```
 
 
 
@@ -1379,7 +1473,7 @@ df_16882 %>%
 ## Warning: Removed 1 rows containing missing values (geom_point).
 ```
 
-<img src="document_files/figure-html/unnamed-chunk-28-1.png" width="672" />
+<img src="document_files/figure-html/unnamed-chunk-30-1.png" width="672" />
 
 ```r
 df_16882 %>%
@@ -1396,7 +1490,7 @@ df_16882 %>%
 ## Warning: Removed 1 rows containing missing values (geom_point).
 ```
 
-<img src="document_files/figure-html/unnamed-chunk-28-2.png" width="672" />
+<img src="document_files/figure-html/unnamed-chunk-30-2.png" width="672" />
 
 
 
@@ -1421,3 +1515,47 @@ df_16882_winter_results
 ##   <chr>        <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
 ## 1 16882:Winter  8.08 0.868  2.39  1.61 0.946  9.48
 ```
+
+
+
+## Predict flows using depth data
+
+We will predict the 15 minute flows then aggregate to mean daily flows at each station.
+
+### Station 16396
+
+Use equation to predict flows:
+
+
+```r
+hobo_df %>%
+  filter(Site == "16396") %>%
+  dplyr::rename(Depth = Water_Level) %>%
+  mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
+         diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours")),
+         diff_depth = c(0, diff(as.numeric(Depth))),
+         J = as.numeric(diff_depth)/as.numeric(diff_time)) %>%
+  filter(!is.na(J)) %>%
+  mutate(K = df_16396_results$K,
+         a = df_16396_results$a,
+         n = df_16396_results$n,
+         x = df_16396_results$x,
+         Flow = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) -> DailyFlows_16396
+
+## looks like some < zero cfs flows predicted early for some reason.
+## can overlay measured flows on this plot
+```
+
+Make sure the measured depths between devices are consistent:
+
+
+```r
+ggplot() +
+  geom_line(data = DailyFlows_16396, aes(Date_Time, as.numeric(Depth), color = "Hobo Depth")) +
+  geom_point(data = df_16396, aes(Date_Time, as.numeric(Depth), color = "IQ Depth"), alpha = 0.1) +
+  scale_y_log10()
+```
+
+<img src="document_files/figure-html/unnamed-chunk-33-1.png" width="672" />
+
+We need to fix the depths between devices first. 
