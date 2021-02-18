@@ -926,7 +926,7 @@ iqplus_df %>%
   filter(Site == "16882",
          System_Status == 0,
          System_In_Water == 100,
-         as.numeric(Depth) >= .26, ## minimum operating depth
+         as.numeric(Depth) >= 0.26, ## minimum operating depth
          as.numeric(Flow) > 0) %>%
   ## remove outliers identified in box plots under 1 foot depth
   filter(as.numeric(Depth) < 1 & as.numeric(Flow) < 4.3 |
@@ -1005,9 +1005,7 @@ optim.par <- optim(par = par,
                    fn = SSE,
                    data = df_16882 %>%
   filter(Date_Time > as.POSIXct("2020-05-01") &
-           Date_Time < as.POSIXct("2020-06-01") & !is.infinite(J) |
-           Date_Time > as.POSIXct("2020-10-01") &
-           Date_Time < as.POSIXct("2020-11-01") & !is.infinite(J)),
+           Date_Time < as.POSIXct("2020-06-01") & !is.infinite(J)),
                    lower = lower,
                    upper = upper,
                    method = "L-BFGS-B")
@@ -1024,21 +1022,17 @@ optim.par
 ```{r}
 df_16882 %>%
   filter(Date_Time > as.POSIXct("2020-05-01") &
-           Date_Time < as.POSIXct("2020-06-01") & !is.infinite(J) |
-           Date_Time > as.POSIXct("2020-10-01") &
-           Date_Time < as.POSIXct("2020-11-01") & !is.infinite(J)) %>%
+           Date_Time < as.POSIXct("2020-06-01") & !is.infinite(J)) %>%
   mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) %>%
   ggplot() +
   geom_point(aes(as.numeric(Depth), as.numeric(Flow), color = "measured"), alpha = 0.5) +
   geom_point(aes(as.numeric(Depth), as.numeric(predicted), color = "predicted"), alpha = 0.2) +
-  #scale_y_log10() +
+  scale_y_log10() +
   theme_ms()
 
 df_16882 %>%
   filter(Date_Time > as.POSIXct("2020-05-01") &
-           Date_Time < as.POSIXct("2020-06-01") & !is.infinite(J) |
-           Date_Time > as.POSIXct("2020-10-01") &
-           Date_Time < as.POSIXct("2020-11-01") & !is.infinite(J)) %>%
+           Date_Time < as.POSIXct("2020-06-01") & !is.infinite(J))%>%
   mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) %>%
   ggplot() +
   geom_point(aes(as.numeric(Flow), as.numeric(predicted), color = "measured"), alpha = 0.5) +
@@ -1050,9 +1044,7 @@ df_16882 %>%
 ```{r}
 df_16882 %>%
   filter(Date_Time > as.POSIXct("2020-05-01") &
-           Date_Time < as.POSIXct("2020-06-01") & !is.infinite(J) |
-           Date_Time > as.POSIXct("2020-10-01") &
-           Date_Time < as.POSIXct("2020-11-01") & !is.infinite(J)) %>%
+           Date_Time < as.POSIXct("2020-06-01") & !is.infinite(J)) %>%
   mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) -> df_16882_spring
 
 df_16882_spring_results <- tibble(Site = "16882:Spring",
@@ -1065,6 +1057,73 @@ df_16882_spring_results <- tibble(Site = "16882:Spring",
 df_16882_spring_results
 ```
 
+
+
+```{r}
+## 16882:Fall
+## limits to the parameter space
+lower <- c(0.1, 0.00001, 0.00001, -10)
+upper <- c(200, 10, 10, 10)
+
+par <- c(K = 5,
+         a = 5,
+         n = 2,
+         x = 1)
+
+optim.par <- optim(par = par,
+                   fn = SSE,
+                   data = df_16882 %>%
+  filter(Date_Time > as.POSIXct("2020-10-01") &
+           Date_Time < as.POSIXct("2020-11-01") & !is.infinite(J)),
+                   lower = lower,
+                   upper = upper,
+                   method = "L-BFGS-B")
+
+
+K <- optim.par$par[[1]]
+a <- optim.par$par[[2]]
+n <- optim.par$par[[3]]
+x <- optim.par$par[[4]]
+
+optim.par
+
+df_16882 %>%
+  filter(Date_Time > as.POSIXct("2020-10-01") &
+           Date_Time < as.POSIXct("2020-11-01") & !is.infinite(J)) %>%
+  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) %>%
+  ggplot() +
+  geom_point(aes(as.numeric(Depth), as.numeric(Flow), color = "measured"), alpha = 0.5) +
+  geom_point(aes(as.numeric(Depth), as.numeric(predicted), color = "predicted"), alpha = 0.2) +
+  scale_y_log10() +
+  theme_ms()
+
+df_16882 %>%
+  filter(Date_Time > as.POSIXct("2020-10-01") &
+           Date_Time < as.POSIXct("2020-11-01") & !is.infinite(J))%>%
+  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) %>%
+  ggplot() +
+  geom_point(aes(as.numeric(Flow), as.numeric(predicted), color = "measured"), alpha = 0.5) +
+  geom_abline(slope = 1) +
+  #scale_y_log10() + scale_x_log10() +
+  theme_ms()
+
+```
+
+```{r}
+df_16882 %>%
+  filter(Date_Time > as.POSIXct("2020-10-01") &
+           Date_Time < as.POSIXct("2020-11-01") & !is.infinite(J)) %>%
+  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) -> df_16882_fall
+
+df_16882_fall_results <- tibble(Site = "16882:Fall",
+       K = K,
+       a = a,
+       n = n,
+       x = x,
+       NSE = hydroGOF::NSE(df_16882_fall$predicted, as.numeric(df_16882_fall$Flow)),
+       RMSE = hydroGOF::rmse(df_16882_fall$predicted, as.numeric(df_16882_fall$Flow)))
+df_16882_fall_results
+```
 
 
 ```{r}
