@@ -43,7 +43,7 @@ jobs:
 
       - name: Install packages
         run: |
-          R -e 'install.packages(c("readr", "tibble", "dplyr", "ggplot2", "stringr", "renv", "here", "units", "ggforce", "hrbrthemes", "bookdown", "lubridate", "purrr", "hydroGOF"))'
+          R -e 'install.packages(c("readr", "tibble", "dplyr", "ggplot2", "stringr", "renv", "here", "units", "ggforce", "hrbrthemes", "bookdown", "lubridate", "purrr", "hydroGOF", "fuzzyjoin"))'
           R -e 'renv::restore()'
       - name: Build site
         run: Rscript -e 'bookdown::render_book("index.Rmd", quiet = TRUE)'
