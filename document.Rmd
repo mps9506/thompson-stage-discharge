@@ -10,7 +10,6 @@ link-citations: true
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE,
                       fig.retina = 2)
-units_options(parse = FALSE)
 ```
 
 ## About
@@ -35,6 +34,7 @@ library(mgcv)
 
 
 update_geom_font_defaults(font_rc)
+units_options(parse = FALSE)
 
 theme_ms <- function(...) {
   theme_ipsum_pub(plot_margin = margin(10,10,10,10),
