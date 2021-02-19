@@ -28,9 +28,11 @@ library(lubridate)
 library(purrr)
 library(hydroGOF)
 library(fuzzyjoin)
+library(mgcv)
 
 
 update_geom_font_defaults(font_rc)
+units_options(parse = FALSE)
 
 theme_ms <- function(...) {
   theme_ipsum_pub(plot_margin = margin(10,10,10,10),
@@ -124,7 +126,7 @@ hobo_df
 ```
 
 ```
-## # A tibble: 71,447 x 5
+## # A tibble: 90,149 x 5
 ##    Abs_Pres   Temp Water_Level Site  Date_Time          
 ##       [psi]   [°F]        [ft] <fct> <dttm>             
 ##  1  14.4270 76.006       0.392 16396 2020-03-02 15:17:19
@@ -137,7 +139,7 @@ hobo_df
 ##  8  14.4166 74.098       0.363 16396 2020-03-02 17:02:19
 ##  9  14.4207 73.926       0.372 16396 2020-03-02 17:17:19
 ## 10  14.4270 73.753       0.376 16396 2020-03-02 17:32:19
-## # … with 71,437 more rows
+## # … with 90,139 more rows
 ```
 
 ### IQ Plus
@@ -1561,38 +1563,25 @@ ggplot() +
 
 We need to fix the depths between devices first. 
 
+Try using GAMs. Gavin Simpson talks about extrapolating with GAMs on recent blog post. This applies to the Date Time series extrapolation here.
 
-```r
-df_16396 %>%
-  select(Date_Time, Depth) %>%
-  fuzzyjoin::difference_left_join(DailyFlows_16396 %>% select(Date_Time, Depth), by = "Date_Time", max_dist = 10) %>%
-  ggplot() +
-  geom_point(aes(Depth.y, Depth.x)) +
-  geom_smooth(aes(Depth.y, Depth.x),method = "lm")
-```
-
-```
-## `geom_smooth()` using formula 'y ~ x'
-```
-
-```
-## Warning: Removed 1795 rows containing non-finite values (stat_smooth).
-```
-
-```
-## Warning: Removed 1795 rows containing missing values (geom_point).
-```
-
-<img src="document_files/figure-html/unnamed-chunk-34-1.png" width="672" />
+Here we join the hobo depth data to IQ plus data by nearest time measurement. Then we fit a GAM model to estimate what the measured IQ plus depth would be based on the Hobo measured Depth and date of deployment. This accounts for seasonal shifts in the stream bed or slilght adjustments to deployment location.
 
 
 ```r
 df_16396 %>%
   select(Date_Time, Depth) %>%
   fuzzyjoin::difference_left_join(DailyFlows_16396 %>% select(Date_Time, Depth), by = "Date_Time", max_dist = 10) %>%
-  lm(Depth.x ~ Depth.y, data = .) -> lm_16396_hobo_iq
+  mutate(Dec_Date = decimal_date(Date_Time.x)) %>%
+  mgcv::gam(as.numeric(Depth.x) ~ s(as.numeric(Depth.y, bs = "cr")) + s(Dec_Date, bs = "bs", m = c(1)), data = .) -> lm_16396_hobo_iq
 ```
 
+```
+## Warning in smooth.construct.bs.smooth.spec(object, dk$data, dk$knots): there is
+## *no* information about some basis coefficients
+```
+
+Plot the depth predictions:
 
 
 ```r
@@ -1600,6 +1589,7 @@ hobo_df %>%
   filter(Site == "16396") %>%
   filter(Date_Time >= as.POSIXct("2020-03-04")) %>%
   dplyr::rename(Depth.y = Water_Level) %>%
+  mutate(Dec_Date = decimal_date(Date_Time)) %>%
   mutate(AdjustDepth = predict(lm_16396_hobo_iq, .)) -> DailyFlows_16396
 
 ggplot() +
@@ -1608,7 +1598,9 @@ ggplot() +
   scale_y_log10()
 ```
 
-<img src="document_files/figure-html/unnamed-chunk-36-1.png" width="672" />
+<img src="document_files/figure-html/unnamed-chunk-35-1.png" width="672" />
+
+The depth predictions look reasonable. I should followup by inspecting the residuals. But for now I am skipping to predicting depth and flow:
 
 
 ```r
@@ -1616,6 +1608,7 @@ hobo_df %>%
   filter(Site == "16396") %>%
   filter(Date_Time >= as.POSIXct("2020-03-04")) %>%
   dplyr::rename(Depth.y = Water_Level) %>%
+  mutate(Dec_Date = decimal_date(Date_Time)) %>%
   mutate(AdjustDepth = predict(lm_16396_hobo_iq, .)) %>%
   mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
          diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours")),
@@ -1637,4 +1630,56 @@ ggplot() +
   scale_y_log10()
 ```
 
+<img src="document_files/figure-html/unnamed-chunk-37-1.png" width="672" />
+
+The visual plot of measured and predicted time series data looks ok. We should follow up with a goodness of fit metric with the IQ measured flow.
+
+
+```r
+df_16396 %>% 
+  dplyr::select(Date_Time, Flow) %>%
+  dplyr::rename(Measured_Flow = Flow) %>%
+  difference_left_join(DailyFlows_16396 %>%
+                         dplyr::select(Date_Time, Flow) %>%
+                         dplyr::rename(Estimated_Flow = Flow),
+                       by = "Date_Time", max_dist = 10) -> gof_16396
+
+
+units(gof_16396$Measured_Flow) <- as_units("ft^3/s")
+units(gof_16396$Estimated_Flow) <- as_units("ft^3/s")
+
+##I'd like to plot this in log, but ggforce is bugged
+ggplot(gof_16396) +
+  geom_point(aes(as.numeric(Estimated_Flow), 
+                 as.numeric(Measured_Flow)), 
+             alpha = 0.2, color = "dodgerblue") +
+  geom_abline(slope = 1) +
+  scale_x_log10(name = "Estimated Flow") + 
+  scale_y_log10(name = "Measured Flow") +
+  theme_ms()
+```
+
+```
+## Warning: Removed 1 rows containing missing values (geom_point).
+```
+
 <img src="document_files/figure-html/unnamed-chunk-38-1.png" width="672" />
+
+```r
+hydroGOF::rmse(as.numeric(gof_16396$Estimated_Flow),
+               as.numeric(gof_16396$Measured_Flow))
+```
+
+```
+## [1] 23.22629
+```
+
+```r
+hydroGOF::NSE(as.numeric(gof_16396$Estimated_Flow),
+               as.numeric(gof_16396$Measured_Flow))
+```
+
+```
+## [1] 0.9120482
+```
+
