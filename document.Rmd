@@ -10,6 +10,7 @@ link-citations: true
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE,
                       fig.retina = 2)
+units_options(parse = FALSE)
 ```
 
 ## About
@@ -30,6 +31,7 @@ library(lubridate)
 library(purrr)
 library(hydroGOF)
 library(fuzzyjoin)
+library(mgcv)
 
 
 update_geom_font_defaults(font_rc)
@@ -1233,28 +1235,26 @@ ggplot() +
 
 We need to fix the depths between devices first. 
 
-```{r}
-df_16396 %>%
-  select(Date_Time, Depth) %>%
-  fuzzyjoin::difference_left_join(DailyFlows_16396 %>% select(Date_Time, Depth), by = "Date_Time", max_dist = 10) %>%
-  ggplot() +
-  geom_point(aes(Depth.y, Depth.x)) +
-  geom_smooth(aes(Depth.y, Depth.x),method = "lm")
-```
+Try using GAMs. Gavin Simpson talks about extrapolating with GAMs on recent blog post. This applies to the Date Time series extrapolation here.
+
+Here we join the hobo depth data to IQ plus data by nearest time measurement. Then we fit a GAM model to estimate what the measured IQ plus depth would be based on the Hobo measured Depth and date of deployment. This accounts for seasonal shifts in the stream bed or slilght adjustments to deployment location.
 
 ```{r}
 df_16396 %>%
   select(Date_Time, Depth) %>%
   fuzzyjoin::difference_left_join(DailyFlows_16396 %>% select(Date_Time, Depth), by = "Date_Time", max_dist = 10) %>%
-  lm(Depth.x ~ Depth.y, data = .) -> lm_16396_hobo_iq
+  mutate(Dec_Date = decimal_date(Date_Time.x)) %>%
+  mgcv::gam(as.numeric(Depth.x) ~ s(as.numeric(Depth.y, bs = "cr")) + s(Dec_Date, bs = "bs", m = c(1)), data = .) -> lm_16396_hobo_iq
 ```
 
+Plot the depth predictions:
 
 ```{r}
 hobo_df %>%
   filter(Site == "16396") %>%
   filter(Date_Time >= as.POSIXct("2020-03-04")) %>%
   dplyr::rename(Depth.y = Water_Level) %>%
+  mutate(Dec_Date = decimal_date(Date_Time)) %>%
   mutate(AdjustDepth = predict(lm_16396_hobo_iq, .)) -> DailyFlows_16396
 
 ggplot() +
@@ -1265,11 +1265,14 @@ ggplot() +
   
 ```
 
+The depth predictions look reasonable. I should followup by inspecting the residuals. But for now I am skipping to predicting depth and flow:
+
 ```{r}
 hobo_df %>%
   filter(Site == "16396") %>%
   filter(Date_Time >= as.POSIXct("2020-03-04")) %>%
   dplyr::rename(Depth.y = Water_Level) %>%
+  mutate(Dec_Date = decimal_date(Date_Time)) %>%
   mutate(AdjustDepth = predict(lm_16396_hobo_iq, .)) %>%
   mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
          diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours")),
@@ -1290,3 +1293,35 @@ ggplot() +
   geom_point(data = df_16396, aes(Date_Time, as.numeric(Flow), color = "Measured Flow"), alpha = 0.1) +
   scale_y_log10()
 ```
+
+The visual plot of measured and predicted time series data looks ok. We should follow up with a goodness of fit metric with the IQ measured flow.
+
+```{r}
+df_16396 %>% 
+  dplyr::select(Date_Time, Flow) %>%
+  dplyr::rename(Measured_Flow = Flow) %>%
+  difference_left_join(DailyFlows_16396 %>%
+                         dplyr::select(Date_Time, Flow) %>%
+                         dplyr::rename(Estimated_Flow = Flow),
+                       by = "Date_Time", max_dist = 10) -> gof_16396
+
+
+units(gof_16396$Measured_Flow) <- as_units("ft^3/s")
+units(gof_16396$Estimated_Flow) <- as_units("ft^3/s")
+
+##I'd like to plot this in log, but ggforce is bugged
+ggplot(gof_16396) +
+  geom_point(aes(as.numeric(Estimated_Flow), 
+                 as.numeric(Measured_Flow)), 
+             alpha = 0.2, color = "dodgerblue") +
+  geom_abline(slope = 1) +
+  scale_x_log10(name = "Estimated Flow") + 
+  scale_y_log10(name = "Measured Flow") +
+  theme_ms()
+
+hydroGOF::rmse(as.numeric(gof_16396$Estimated_Flow),
+               as.numeric(gof_16396$Measured_Flow))
+hydroGOF::NSE(as.numeric(gof_16396$Estimated_Flow),
+               as.numeric(gof_16396$Measured_Flow))
+```
+
