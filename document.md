@@ -1,6 +1,6 @@
 ---
 title: "Exploring Thompsons Creek Stage Discharge Data"
-date: "2021-02-18"
+date: "2021-02-19"
 github-repo: https://github.com/mps9506/thompson-stage-discharge
 bibliography: bibliography.bib
 biblio-style: "apalike"
@@ -27,6 +27,7 @@ library(hrbrthemes)
 library(lubridate)
 library(purrr)
 library(hydroGOF)
+library(fuzzyjoin)
 
 
 update_geom_font_defaults(font_rc)
@@ -1559,3 +1560,81 @@ ggplot() +
 <img src="document_files/figure-html/unnamed-chunk-33-1.png" width="672" />
 
 We need to fix the depths between devices first. 
+
+
+```r
+df_16396 %>%
+  select(Date_Time, Depth) %>%
+  fuzzyjoin::difference_left_join(DailyFlows_16396 %>% select(Date_Time, Depth), by = "Date_Time", max_dist = 10) %>%
+  ggplot() +
+  geom_point(aes(Depth.y, Depth.x)) +
+  geom_smooth(aes(Depth.y, Depth.x),method = "lm")
+```
+
+```
+## `geom_smooth()` using formula 'y ~ x'
+```
+
+```
+## Warning: Removed 1795 rows containing non-finite values (stat_smooth).
+```
+
+```
+## Warning: Removed 1795 rows containing missing values (geom_point).
+```
+
+<img src="document_files/figure-html/unnamed-chunk-34-1.png" width="672" />
+
+
+```r
+df_16396 %>%
+  select(Date_Time, Depth) %>%
+  fuzzyjoin::difference_left_join(DailyFlows_16396 %>% select(Date_Time, Depth), by = "Date_Time", max_dist = 10) %>%
+  lm(Depth.x ~ Depth.y, data = .) -> lm_16396_hobo_iq
+```
+
+
+
+```r
+hobo_df %>%
+  filter(Site == "16396") %>%
+  filter(Date_Time >= as.POSIXct("2020-03-04")) %>%
+  dplyr::rename(Depth.y = Water_Level) %>%
+  mutate(AdjustDepth = predict(lm_16396_hobo_iq, .)) -> DailyFlows_16396
+
+ggplot() +
+  geom_line(data = DailyFlows_16396, aes(Date_Time, AdjustDepth, color = "Hobo Depth")) +
+  geom_point(data = df_16396, aes(Date_Time, as.numeric(Depth), color = "IQ Depth"), alpha = 0.1) +
+  scale_y_log10()
+```
+
+<img src="document_files/figure-html/unnamed-chunk-36-1.png" width="672" />
+
+
+```r
+hobo_df %>%
+  filter(Site == "16396") %>%
+  filter(Date_Time >= as.POSIXct("2020-03-04")) %>%
+  dplyr::rename(Depth.y = Water_Level) %>%
+  mutate(AdjustDepth = predict(lm_16396_hobo_iq, .)) %>%
+  mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
+         diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours")),
+         diff_depth = c(0, diff(as.numeric(AdjustDepth))),
+         J = as.numeric(diff_depth)/as.numeric(diff_time)) %>%
+  filter(!is.na(J)) %>%
+  mutate(K = df_16396_results$K,
+         a = df_16396_results$a,
+         n = df_16396_results$n,
+         x = df_16396_results$x,
+         Flow = (K*exponent(x = as.numeric(AdjustDepth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) -> DailyFlows_16396
+```
+
+
+```r
+ggplot() +
+  geom_line(data = DailyFlows_16396, aes(Date_Time, as.numeric(Flow), color = "Predicted Flow")) +
+  geom_point(data = df_16396, aes(Date_Time, as.numeric(Flow), color = "Measured Flow"), alpha = 0.1) +
+  scale_y_log10()
+```
+
+<img src="document_files/figure-html/unnamed-chunk-38-1.png" width="672" />

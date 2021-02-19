@@ -23,7 +23,7 @@
 
 
 
-<meta name="date" content="2021-02-18" />
+<meta name="date" content="2021-02-19" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -169,7 +169,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
             <section class="normal" id="section-">
 <div id="header">
 <h1 class="title">Exploring Thompsons Creek Stage Discharge Data</h1>
-<p class="date"><em>2021-02-18</em></p>
+<p class="date"><em>2021-02-19</em></p>
 </div>
 <div id="about" class="section level2">
 <h2>About</h2>
@@ -186,20 +186,21 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb1-10"><a href="#cb1-10"></a><span class="kw">library</span>(lubridate)</span>
 <span id="cb1-11"><a href="#cb1-11"></a><span class="kw">library</span>(purrr)</span>
 <span id="cb1-12"><a href="#cb1-12"></a><span class="kw">library</span>(hydroGOF)</span>
-<span id="cb1-13"><a href="#cb1-13"></a></span>
+<span id="cb1-13"><a href="#cb1-13"></a><span class="kw">library</span>(fuzzyjoin)</span>
 <span id="cb1-14"><a href="#cb1-14"></a></span>
-<span id="cb1-15"><a href="#cb1-15"></a><span class="kw">update_geom_font_defaults</span>(font_rc)</span>
-<span id="cb1-16"><a href="#cb1-16"></a></span>
-<span id="cb1-17"><a href="#cb1-17"></a>theme_ms &lt;-<span class="st"> </span><span class="cf">function</span>(...) {</span>
-<span id="cb1-18"><a href="#cb1-18"></a>  <span class="kw">theme_ipsum_pub</span>(<span class="dt">plot_margin =</span> <span class="kw">margin</span>(<span class="dv">10</span>,<span class="dv">10</span>,<span class="dv">10</span>,<span class="dv">10</span>),</span>
-<span id="cb1-19"><a href="#cb1-19"></a>              <span class="dt">axis_title_just =</span> <span class="st">&quot;c&quot;</span>) <span class="op">+</span></span>
-<span id="cb1-20"><a href="#cb1-20"></a><span class="st">    </span><span class="kw">theme</span>(<span class="dt">legend.position =</span> <span class="st">&quot;bottom&quot;</span>,</span>
-<span id="cb1-21"><a href="#cb1-21"></a>          <span class="dt">panel.background =</span> <span class="kw">element_rect</span>(<span class="dt">fill =</span> <span class="st">&quot;white&quot;</span>, </span>
-<span id="cb1-22"><a href="#cb1-22"></a>            <span class="dt">colour =</span> <span class="ot">NA</span>), </span>
-<span id="cb1-23"><a href="#cb1-23"></a>          <span class="dt">panel.border =</span> <span class="kw">element_rect</span>(<span class="dt">fill =</span> <span class="ot">NA</span>, </span>
-<span id="cb1-24"><a href="#cb1-24"></a>            <span class="dt">colour =</span> <span class="st">&quot;grey20&quot;</span>),</span>
-<span id="cb1-25"><a href="#cb1-25"></a>          ...)</span>
-<span id="cb1-26"><a href="#cb1-26"></a>}</span></code></pre></div>
+<span id="cb1-15"><a href="#cb1-15"></a></span>
+<span id="cb1-16"><a href="#cb1-16"></a><span class="kw">update_geom_font_defaults</span>(font_rc)</span>
+<span id="cb1-17"><a href="#cb1-17"></a></span>
+<span id="cb1-18"><a href="#cb1-18"></a>theme_ms &lt;-<span class="st"> </span><span class="cf">function</span>(...) {</span>
+<span id="cb1-19"><a href="#cb1-19"></a>  <span class="kw">theme_ipsum_pub</span>(<span class="dt">plot_margin =</span> <span class="kw">margin</span>(<span class="dv">10</span>,<span class="dv">10</span>,<span class="dv">10</span>,<span class="dv">10</span>),</span>
+<span id="cb1-20"><a href="#cb1-20"></a>              <span class="dt">axis_title_just =</span> <span class="st">&quot;c&quot;</span>) <span class="op">+</span></span>
+<span id="cb1-21"><a href="#cb1-21"></a><span class="st">    </span><span class="kw">theme</span>(<span class="dt">legend.position =</span> <span class="st">&quot;bottom&quot;</span>,</span>
+<span id="cb1-22"><a href="#cb1-22"></a>          <span class="dt">panel.background =</span> <span class="kw">element_rect</span>(<span class="dt">fill =</span> <span class="st">&quot;white&quot;</span>, </span>
+<span id="cb1-23"><a href="#cb1-23"></a>            <span class="dt">colour =</span> <span class="ot">NA</span>), </span>
+<span id="cb1-24"><a href="#cb1-24"></a>          <span class="dt">panel.border =</span> <span class="kw">element_rect</span>(<span class="dt">fill =</span> <span class="ot">NA</span>, </span>
+<span id="cb1-25"><a href="#cb1-25"></a>            <span class="dt">colour =</span> <span class="st">&quot;grey20&quot;</span>),</span>
+<span id="cb1-26"><a href="#cb1-26"></a>          ...)</span>
+<span id="cb1-27"><a href="#cb1-27"></a>}</span></code></pre></div>
 </div>
 <div id="data-import" class="section level2">
 <h2>Data Import</h2>
@@ -1332,6 +1333,51 @@ Q = K(H-H_0)^z
 <span id="cb81-4"><a href="#cb81-4"></a><span class="st">  </span><span class="kw">scale_y_log10</span>()</span></code></pre></div>
 <p><img src="document_files/figure-html/unnamed-chunk-33-1.png" width="672" /></p>
 <p>We need to fix the depths between devices first.</p>
+<div class="sourceCode" id="cb82"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb82-1"><a href="#cb82-1"></a>df_<span class="dv">16396</span> <span class="op">%&gt;%</span></span>
+<span id="cb82-2"><a href="#cb82-2"></a><span class="st">  </span><span class="kw">select</span>(Date_Time, Depth) <span class="op">%&gt;%</span></span>
+<span id="cb82-3"><a href="#cb82-3"></a><span class="st">  </span>fuzzyjoin<span class="op">::</span><span class="kw">difference_left_join</span>(DailyFlows_<span class="dv">16396</span> <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">select</span>(Date_Time, Depth), <span class="dt">by =</span> <span class="st">&quot;Date_Time&quot;</span>, <span class="dt">max_dist =</span> <span class="dv">10</span>) <span class="op">%&gt;%</span></span>
+<span id="cb82-4"><a href="#cb82-4"></a><span class="st">  </span><span class="kw">ggplot</span>() <span class="op">+</span></span>
+<span id="cb82-5"><a href="#cb82-5"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(Depth.y, Depth.x)) <span class="op">+</span></span>
+<span id="cb82-6"><a href="#cb82-6"></a><span class="st">  </span><span class="kw">geom_smooth</span>(<span class="kw">aes</span>(Depth.y, Depth.x),<span class="dt">method =</span> <span class="st">&quot;lm&quot;</span>)</span></code></pre></div>
+<pre><code>## `geom_smooth()` using formula &#39;y ~ x&#39;</code></pre>
+<pre><code>## Warning: Removed 1795 rows containing non-finite values (stat_smooth).</code></pre>
+<pre><code>## Warning: Removed 1795 rows containing missing values (geom_point).</code></pre>
+<p><img src="document_files/figure-html/unnamed-chunk-34-1.png" width="672" /></p>
+<div class="sourceCode" id="cb86"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb86-1"><a href="#cb86-1"></a>df_<span class="dv">16396</span> <span class="op">%&gt;%</span></span>
+<span id="cb86-2"><a href="#cb86-2"></a><span class="st">  </span><span class="kw">select</span>(Date_Time, Depth) <span class="op">%&gt;%</span></span>
+<span id="cb86-3"><a href="#cb86-3"></a><span class="st">  </span>fuzzyjoin<span class="op">::</span><span class="kw">difference_left_join</span>(DailyFlows_<span class="dv">16396</span> <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">select</span>(Date_Time, Depth), <span class="dt">by =</span> <span class="st">&quot;Date_Time&quot;</span>, <span class="dt">max_dist =</span> <span class="dv">10</span>) <span class="op">%&gt;%</span></span>
+<span id="cb86-4"><a href="#cb86-4"></a><span class="st">  </span><span class="kw">lm</span>(Depth.x <span class="op">~</span><span class="st"> </span>Depth.y, <span class="dt">data =</span> .) -&gt;<span class="st"> </span>lm_<span class="dv">16396</span>_hobo_iq</span></code></pre></div>
+<div class="sourceCode" id="cb87"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb87-1"><a href="#cb87-1"></a>hobo_df <span class="op">%&gt;%</span></span>
+<span id="cb87-2"><a href="#cb87-2"></a><span class="st">  </span><span class="kw">filter</span>(Site <span class="op">==</span><span class="st"> &quot;16396&quot;</span>) <span class="op">%&gt;%</span></span>
+<span id="cb87-3"><a href="#cb87-3"></a><span class="st">  </span><span class="kw">filter</span>(Date_Time <span class="op">&gt;=</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-03-04&quot;</span>)) <span class="op">%&gt;%</span></span>
+<span id="cb87-4"><a href="#cb87-4"></a><span class="st">  </span>dplyr<span class="op">::</span><span class="kw">rename</span>(<span class="dt">Depth.y =</span> Water_Level) <span class="op">%&gt;%</span></span>
+<span id="cb87-5"><a href="#cb87-5"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">AdjustDepth =</span> <span class="kw">predict</span>(lm_<span class="dv">16396</span>_hobo_iq, .)) -&gt;<span class="st"> </span>DailyFlows_<span class="dv">16396</span></span>
+<span id="cb87-6"><a href="#cb87-6"></a></span>
+<span id="cb87-7"><a href="#cb87-7"></a><span class="kw">ggplot</span>() <span class="op">+</span></span>
+<span id="cb87-8"><a href="#cb87-8"></a><span class="st">  </span><span class="kw">geom_line</span>(<span class="dt">data =</span> DailyFlows_<span class="dv">16396</span>, <span class="kw">aes</span>(Date_Time, AdjustDepth, <span class="dt">color =</span> <span class="st">&quot;Hobo Depth&quot;</span>)) <span class="op">+</span></span>
+<span id="cb87-9"><a href="#cb87-9"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="dt">data =</span> df_<span class="dv">16396</span>, <span class="kw">aes</span>(Date_Time, <span class="kw">as.numeric</span>(Depth), <span class="dt">color =</span> <span class="st">&quot;IQ Depth&quot;</span>), <span class="dt">alpha =</span> <span class="fl">0.1</span>) <span class="op">+</span></span>
+<span id="cb87-10"><a href="#cb87-10"></a><span class="st">  </span><span class="kw">scale_y_log10</span>()</span></code></pre></div>
+<p><img src="document_files/figure-html/unnamed-chunk-36-1.png" width="672" /></p>
+<div class="sourceCode" id="cb88"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb88-1"><a href="#cb88-1"></a>hobo_df <span class="op">%&gt;%</span></span>
+<span id="cb88-2"><a href="#cb88-2"></a><span class="st">  </span><span class="kw">filter</span>(Site <span class="op">==</span><span class="st"> &quot;16396&quot;</span>) <span class="op">%&gt;%</span></span>
+<span id="cb88-3"><a href="#cb88-3"></a><span class="st">  </span><span class="kw">filter</span>(Date_Time <span class="op">&gt;=</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-03-04&quot;</span>)) <span class="op">%&gt;%</span></span>
+<span id="cb88-4"><a href="#cb88-4"></a><span class="st">  </span>dplyr<span class="op">::</span><span class="kw">rename</span>(<span class="dt">Depth.y =</span> Water_Level) <span class="op">%&gt;%</span></span>
+<span id="cb88-5"><a href="#cb88-5"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">AdjustDepth =</span> <span class="kw">predict</span>(lm_<span class="dv">16396</span>_hobo_iq, .)) <span class="op">%&gt;%</span></span>
+<span id="cb88-6"><a href="#cb88-6"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">time_lag =</span> <span class="kw">lag</span>(Date_Time, <span class="dt">default =</span> Date_Time[<span class="dv">1</span>]),</span>
+<span id="cb88-7"><a href="#cb88-7"></a>         <span class="dt">diff_time =</span> <span class="kw">as.numeric</span>(<span class="kw">difftime</span>(Date_Time, time_lag, <span class="dt">units =</span> <span class="st">&quot;hours&quot;</span>)),</span>
+<span id="cb88-8"><a href="#cb88-8"></a>         <span class="dt">diff_depth =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="kw">diff</span>(<span class="kw">as.numeric</span>(AdjustDepth))),</span>
+<span id="cb88-9"><a href="#cb88-9"></a>         <span class="dt">J =</span> <span class="kw">as.numeric</span>(diff_depth)<span class="op">/</span><span class="kw">as.numeric</span>(diff_time)) <span class="op">%&gt;%</span></span>
+<span id="cb88-10"><a href="#cb88-10"></a><span class="st">  </span><span class="kw">filter</span>(<span class="op">!</span><span class="kw">is.na</span>(J)) <span class="op">%&gt;%</span></span>
+<span id="cb88-11"><a href="#cb88-11"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">K =</span> df_<span class="dv">16396</span>_results<span class="op">$</span>K,</span>
+<span id="cb88-12"><a href="#cb88-12"></a>         <span class="dt">a =</span> df_<span class="dv">16396</span>_results<span class="op">$</span>a,</span>
+<span id="cb88-13"><a href="#cb88-13"></a>         <span class="dt">n =</span> df_<span class="dv">16396</span>_results<span class="op">$</span>n,</span>
+<span id="cb88-14"><a href="#cb88-14"></a>         <span class="dt">x =</span> df_<span class="dv">16396</span>_results<span class="op">$</span>x,</span>
+<span id="cb88-15"><a href="#cb88-15"></a>         <span class="dt">Flow =</span> (K<span class="op">*</span><span class="kw">exponent</span>(<span class="dt">x =</span> <span class="kw">as.numeric</span>(AdjustDepth) <span class="op">-</span><span class="st"> </span>a, <span class="dt">pow =</span> n)) <span class="op">*</span><span class="st"> </span><span class="kw">exponent</span>(<span class="dt">x =</span> (<span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x <span class="op">*</span><span class="st"> </span>J), <span class="dt">pow =</span> (<span class="dv">1</span><span class="op">/</span><span class="dv">2</span>))) -&gt;<span class="st"> </span>DailyFlows_<span class="dv">16396</span></span></code></pre></div>
+<div class="sourceCode" id="cb89"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb89-1"><a href="#cb89-1"></a><span class="kw">ggplot</span>() <span class="op">+</span></span>
+<span id="cb89-2"><a href="#cb89-2"></a><span class="st">  </span><span class="kw">geom_line</span>(<span class="dt">data =</span> DailyFlows_<span class="dv">16396</span>, <span class="kw">aes</span>(Date_Time, <span class="kw">as.numeric</span>(Flow), <span class="dt">color =</span> <span class="st">&quot;Predicted Flow&quot;</span>)) <span class="op">+</span></span>
+<span id="cb89-3"><a href="#cb89-3"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="dt">data =</span> df_<span class="dv">16396</span>, <span class="kw">aes</span>(Date_Time, <span class="kw">as.numeric</span>(Flow), <span class="dt">color =</span> <span class="st">&quot;Measured Flow&quot;</span>), <span class="dt">alpha =</span> <span class="fl">0.1</span>) <span class="op">+</span></span>
+<span id="cb89-4"><a href="#cb89-4"></a><span class="st">  </span><span class="kw">scale_y_log10</span>()</span></code></pre></div>
+<p><img src="document_files/figure-html/unnamed-chunk-38-1.png" width="672" /></p>
 
 <div id="refs" class="references">
 <div id="ref-petersen-overleir_modelling_2006">
