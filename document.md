@@ -1,6 +1,6 @@
 ---
 title: "Exploring Thompsons Creek Stage Discharge Data"
-date: "2021-02-19"
+date: "2021-03-01"
 github-repo: https://github.com/mps9506/thompson-stage-discharge
 bibliography: bibliography.bib
 biblio-style: "apalike"
@@ -9,33 +9,44 @@ link-citations: true
 
 
 
-## About
-
-This document is an exploratory analysis of the pressure data and IQ data at ...
-
 
 ```r
+## readr imports data
 library(readr)
+## tibbles are advanced fancy dataframes
 library(tibble)
+## dplyr for data handling and piping functions
 library(dplyr)
+## ggplot for plots
 library(ggplot2)
+## stringr to read and manipulate strings
 library(stringr)
+## here is a function to ensure file paths are correct
 library(here)
+## units and ggforce facilitate attaching units to data
 library(units)
 library(ggforce)
+## hrbrtheme is optional, I use it to pretty my plots
 library(hrbrthemes)
+## lubridate provides functions for handling time and date
 library(lubridate)
+## purrr lets us use map_ functions as an alternative to loops
 library(purrr)
+## hydroGOF provide goodness of fit metrics (NSE, RMSE, etc.)
 library(hydroGOF)
-library(fuzzyjoin)
-library(mgcv)
-
-
+## tsibble and imputeTS will allow some simple time series interpolation
+library(tsibble)
+library(imputeTS)
+## gt
+library(gtsummary)
+## set some options
 update_geom_font_defaults(font_rc)
 units_options(parse = FALSE)
 
+
+## some custom functions
 theme_ms <- function(...) {
-  theme_ipsum_pub(plot_margin = margin(10,10,10,10),
+  theme_ipsum_rc(plot_margin = margin(10,10,10,10),
               axis_title_just = "c") +
     theme(legend.position = "bottom",
           panel.background = element_rect(fill = "white", 
@@ -44,23 +55,52 @@ theme_ms <- function(...) {
             colour = "grey20"),
           ...)
 }
+
+exponent <- function(x, pow) {
+  (abs(x)^pow)*sign(x)
+}
 ```
 
+## About
 
+This document walks through some exploratory data analysis to develop rating curves and streamflow predictions on Thompsons Creek. The purpose is to utilize (1) instantaneous streamflows measured during periodic deployments of bottom mounted doppler units and (2) instantaneous depth measurements from water level data loggers deployed long-term in-stream to create and update rating curves. The rating curves will be utilized to calculate streamflow over the HOBO pressure transducer deployment period (approximately 1-yr). The resulting data will be used to create and validate regression and DAR streamflow estimates in Thompsons creek over a 10-15 year period.
 
-## Data Import
+## Introduction
 
-### Pressure Transducers
+Due to the high costs associated with continuous in-stream measurements of stream discharge, it is preferable to estimate discharge using stream height measurements. Continuous measurements of stream height can be accomplished inexpensively using pressure transducers. When supplemented with periodic discharge measurements, a power function can relate stream height and discharge [@venetis1970note]:
 
-Use `readr::read_csv()` to import data. The HOBO pressure data is pre-computed but has extra lines we need to clean up.
+\begin{equation}
+  Q = K(H-H_0)^z
+  (\#eq:powerfunction)
+\end{equation} 
+where:
+$Q$ represents steady state discharge, $H$ represents stream height (stage), $H_0$ is the stage at zero discharge; $K$ and $z$ are rating curve constants.
 
-- each location has two files, March through August and August through December.
+Unsteady flows occur when the rising and falling stages of a stream hydrograph result in different discharges at identical stream heights. This resulting hysteresis-affected rating curve will present as a loop as opposed to a line. The modified Jones formula described by @petersen-overleir_modelling_2006 and @zakwan_spreadsheet-based_2018 may be used:
 
-- ideally, I can make one dataframe that compiles all the data
+\begin{equation}
+  Q = K(h-a)^n\times\sqrt{1 + x\frac{\partial h}{\partial t}}
+  (\#eq:Jonesformula)
+\end{equation} 
 
-- we can read all the files and row bind but we need to add a column indicating the site number
+where:
+$Q$ is discharge, $h$ is stream height, and $\frac{\partial h}{\partial t}}$ is the partial first order derivative approximated using finite differences. This can be considered the slope or instantaneous rate of change for the function between stream height and time which is estimated using measured stream height values. $K$, $a$, $n$, and $x$ are rating curve constants.
 
-- for this deployment it looks like the daylight savings time adjustment is not applied to data. So everything between March 6 and November 1 is off 1 hour from DST. Assuming all data will be reported in observed time, it is probably easiest to convert time back to GMT, then apply R's built in time zones to convert the times with appropriate -5 or -6 hour offsets.
+A number of different methods are available to solve for the rating curve parameters. We use a quasi-Newton optimization method to minimize the residual sum of square error (SSE) of the rating curve parameters. The residual SSE is calculated as:
+
+\begin{equation}
+SSE = \sum\limits_{i=1}^N[X-Y]^2
+  (\#eq:sseformula)
+\end{equation} 
+
+where:
+$X$ is the measured value and $Y$ is the predicted value. Nonlinear optimization methods, such as quasi-Newton optimization, search though parameter combinations to minimize the objective function (residual SSE in this case).
+
+## Method
+
+### Data collection
+
+Water level data loggers (HOBO U20 Series Water Level Data Loggers) were deployed at TCEQ SWQM stations 16396, 16397, and 16882. An additional data logger was deployed at ... to provide ambient atmospheric pressure corrections for the data loggers deployed underwater. Water level data loggers were deployed near continuously from 2020-03-02 through 2021-..-... and setup to record water level at 15-minute intervals.
 
 
 ```r
@@ -121,32 +161,394 @@ units(hobo_df$Water_Level) <- as_units("ft")
 units(hobo_df$Temp) <- as_units("°F")
 units(hobo_df$Abs_Pres) <- as_units("psi")
 
+## report summary stats
+hobo_df %>% 
+  select(Site, Water_Level) %>%
+  mutate(Water_Level = as.numeric(Water_Level)) %>%
+  tbl_summary(by = Site) %>%
+  add_n() %>%
+  modify_header(label = "**Variable**")
+```
+
+```{=html}
+<style>html {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
+}
+
+#wbllvygmcv .gt_table {
+  display: table;
+  border-collapse: collapse;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#wbllvygmcv .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#wbllvygmcv .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#wbllvygmcv .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 0;
+  padding-bottom: 4px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#wbllvygmcv .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#wbllvygmcv .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#wbllvygmcv .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#wbllvygmcv .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#wbllvygmcv .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#wbllvygmcv .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#wbllvygmcv .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#wbllvygmcv .gt_group_heading {
+  padding: 8px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#wbllvygmcv .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#wbllvygmcv .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#wbllvygmcv .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#wbllvygmcv .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#wbllvygmcv .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 12px;
+}
+
+#wbllvygmcv .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#wbllvygmcv .gt_first_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+}
+
+#wbllvygmcv .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#wbllvygmcv .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#wbllvygmcv .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#wbllvygmcv .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#wbllvygmcv .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#wbllvygmcv .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding: 4px;
+}
+
+#wbllvygmcv .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#wbllvygmcv .gt_sourcenote {
+  font-size: 90%;
+  padding: 4px;
+}
+
+#wbllvygmcv .gt_left {
+  text-align: left;
+}
+
+#wbllvygmcv .gt_center {
+  text-align: center;
+}
+
+#wbllvygmcv .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#wbllvygmcv .gt_font_normal {
+  font-weight: normal;
+}
+
+#wbllvygmcv .gt_font_bold {
+  font-weight: bold;
+}
+
+#wbllvygmcv .gt_font_italic {
+  font-style: italic;
+}
+
+#wbllvygmcv .gt_super {
+  font-size: 65%;
+}
+
+#wbllvygmcv .gt_footnote_marks {
+  font-style: italic;
+  font-size: 65%;
+}
+</style>
+<div id="wbllvygmcv" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
   
-hobo_df
+  <thead class="gt_col_headings">
+    <tr>
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1"><strong>Variable</strong></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>N</strong></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>16396</strong>, N = 29,821<sup class="gt_footnote_marks">1</sup></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>16397</strong>, N = 29,823<sup class="gt_footnote_marks">1</sup></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>16882</strong>, N = 30,505<sup class="gt_footnote_marks">1</sup></th>
+    </tr>
+  </thead>
+  <tbody class="gt_table_body">
+    <tr>
+      <td class="gt_row gt_left">Water_Level</td>
+      <td class="gt_row gt_center">90,149</td>
+      <td class="gt_row gt_center">1.72 (1.66, 1.82)</td>
+      <td class="gt_row gt_center">1.42 (1.06, 1.79)</td>
+      <td class="gt_row gt_center">2.39 (2.35, 2.44)</td>
+    </tr>
+  </tbody>
+  
+  <tfoot>
+    <tr class="gt_footnotes">
+      <td colspan="5">
+        <p class="gt_footnote">
+          <sup class="gt_footnote_marks">
+            <em>1</em>
+          </sup>
+           
+          Median (IQR)
+          <br />
+        </p>
+      </td>
+    </tr>
+  </tfoot>
+</table></div>
 ```
 
-```
-## # A tibble: 90,149 x 5
-##    Abs_Pres   Temp Water_Level Site  Date_Time          
-##       [psi]   [°F]        [ft] <fct> <dttm>             
-##  1  14.4270 76.006       0.392 16396 2020-03-02 15:17:19
-##  2  14.4237 75.659       0.388 16396 2020-03-02 15:32:19
-##  3  14.4272 75.312       0.399 16396 2020-03-02 15:47:19
-##  4  14.4192 74.964       0.391 16396 2020-03-02 16:02:19
-##  5  14.4165 74.791       0.379 16396 2020-03-02 16:17:19
-##  6  14.4153 74.446       0.361 16396 2020-03-02 16:32:19
-##  7  14.4172 74.271       0.364 16396 2020-03-02 16:47:19
-##  8  14.4166 74.098       0.363 16396 2020-03-02 17:02:19
-##  9  14.4207 73.926       0.372 16396 2020-03-02 17:17:19
-## 10  14.4270 73.753       0.376 16396 2020-03-02 17:32:19
-## # … with 90,139 more rows
-```
+Periodic streamflow measurements were made at each SWQM site using a bottom-mounted multi-beam Doppler flow meter (Son-Tek IQ Plus). The Son-Tek IQ Plus measures cross sectional area, stream height, and velocity. Using these measurements, the device utilizes an index velocity method to report instantaneous discharge. The streamflow measurement device were deployed for a few days at a time to capture the full hydrograph under varying flow conditions at each SWQM station. Only one streamflow device was available, so deployments rotated between stations. Streamflow was recorded at 15-minute intervals. 
 
-### IQ Plus
 
 ```r
-#read_csv(here::here("Data/IQPlus/16397-2020_12_31.csv"))
-
 ## make a list of files to import
 file_paths <- paste0(here("Data/IQPlus"),
                      "/",
@@ -191,616 +593,91 @@ units(iqplus_df$Depth) <- as_units("ft")
 units(iqplus_df$Flow) <- as_units("ft^3/s")
 units(iqplus_df$Index_Velocity) <- as_units("ft/s")
 
-iqplus_df
-```
-
-```
-## # A tibble: 41,625 x 7
-##    Date_Time              Depth     Flow System_In_Water System_Status
-##    <dttm>                  [ft] [ft^3/s]           <dbl>         <dbl>
-##  1 2020-05-12 16:58:00 1.758559 17.25626             100             0
-##  2 2020-05-12 17:13:00 1.867973 20.86921             100             0
-##  3 2020-05-12 17:28:00 2.006131 27.27231             100             0
-##  4 2020-05-12 17:43:00 2.119382 31.04828             100             0
-##  5 2020-05-12 17:58:00 2.172015 33.71041             100             0
-##  6 2020-05-12 18:13:00 2.228058 36.78339             100             0
-##  7 2020-05-12 18:28:00 2.350440 44.18084             100             0
-##  8 2020-05-12 18:43:00 2.508431 51.30917             100             0
-##  9 2020-05-12 18:58:00 2.674151 60.84247             100             0
-## 10 2020-05-12 19:13:00 2.809936 69.92496             100             0
-## # … with 41,615 more rows, and 2 more variables: Index_Velocity [ft/s],
-## #   Site <chr>
-```
-
-
-
-## Data Explore
-
-### Pressure Transducers
-
-Plot the depth date over time for all three sites
-
-
-```r
-## note, that if the scale name has a space, there is a bug in ggforce
-## need to set units_options(parse = FALSE) per:
-## https://github.com/thomasp85/ggforce/issues/197
-
-ggplot(hobo_df) +
-  geom_line(aes(Date_Time, Water_Level, color = Site)) +
-  scale_y_unit(name = "Level", unit = "ft") +
-  scale_x_datetime(name = "Date/Time") +
-  labs(title = "15-Minute Measured Height") +
-  theme_ms()
-```
-
-<img src="document_files/figure-html/unnamed-chunk-1-1.png" width="672" />
-
-## IQPlus
-
-Plot the depth data drom the IQPlus from all three sites.
-
-
-```r
-iqplus_df %>%
-  filter(System_Status == 0,
-         System_In_Water == 100) %>%
-  ggplot() +
-  geom_point(aes(Date_Time, Depth, color = Site)) +
-  facet_wrap(~Site, scales = "free") +
-  labs(title = "Stage") +
-  theme_ms()
-```
-
-<img src="document_files/figure-html/unnamed-chunk-2-1.png" width="672" />
-
-
-Plot the depth-discharge from all three sites as measured by the IQPlus.
-
-
-```r
+## some data cleaning
 iqplus_df %>%
   filter(System_Status == 0,
          System_In_Water == 100,
-         as.numeric(Flow) > 0) %>%
-  ggplot() +
-  geom_point(aes(Depth, Flow, color = Site)) +
-  scale_y_unit(name = "Flow", unit = "ft^3/s") +
-  facet_wrap(~Site, scales = "free") +
-  labs(title = "Stage Discharge") +
+         as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) > 0) -> iqplus_df
+
+ggplot(iqplus_df) +
+  geom_point(aes(Date_Time, Flow)) +
+  facet_wrap(~Site, ncol = 1, scales = "free_y") +
   theme_ms()
 ```
 
-<img src="document_files/figure-html/unnamed-chunk-3-1.png" width="672" />
+<img src="document_files/figure-html/iqimport-1.png" width="672" />
 
 
 
 ```r
+## In order to join the hobo measured depth to the IQ streamflow measurements
+## we need to interpolate measured Depth to every minute because the depths are
+## offset. Then we can join the data. we will use linear interpolation.
+
+## I need a pipe friendly function that assigns an attribute to 
+## a tibble (tsibble) and returns a tibble (tsibble)
+pipe_attr <- function(df) {
+  attr(df, "interval") <- new_interval(minute = 1)
+  return(df)
+}
+
+## use purrr::map to run interpolation on each site
+hobo_df %>%
+  split(.$Site) %>%
+  map(~dplyr::mutate(.x, Date_Time = round_date(.x$Date_Time, unit = "minute"))) %>%
+  map(~as_tsibble(.x, key = Site, index = Date_Time)) %>%
+  map(~pipe_attr(.x)) %>%
+  map(~fill_gaps(.x)) %>%
+  map(~mutate(.x, Water_Level = na_interpolation(as.numeric(Water_Level), option = "linear"))) %>%
+  bind_rows() %>%
+  as_tibble() %>%
+  select(Water_Level, Site, Date_Time) -> hobo_df_interpolated
+
+## replace Depth in iqplus_df with Water_Level reading from Hobo
+## this is the dataframe we will develop rating curves from.
 iqplus_df %>%
-  filter(System_Status == 0,
-         System_In_Water == 100) %>%
-  mutate(Month = lubridate::month(Date_Time, label = TRUE)) %>%
-  ggplot() +
-  geom_point(aes(Depth, Flow, color = Month), alpha = 0.5) +
-  scale_y_unit(name = "Flow", unit = "ft^3/s") +
-  facet_wrap(~Site, scales = "free") +
-  labs(title = "Stage Discharge") +
-  theme_ms()
+  left_join(hobo_df_interpolated, by = c("Site" = "Site", "Date_Time" = "Date_Time")) %>%
+  select(Date_Time, Flow, System_In_Water, System_Status, Site, Water_Level) %>%
+  rename(Depth = Water_Level) %>%
+  mutate(Depth = set_units(Depth, "ft")) -> iqplus_df
 ```
 
-<img src="document_files/figure-html/unnamed-chunk-4-1.png" width="672" />
 
-Site `16396` looks pretty good. We still have some data cleaning and sorting on the remaining two sites.
+### Rating curve development
 
+In-stream and stream bank conditions change through the year due to plant growth, plant dieback, sedimentation, erosion, and other processes. These changing conditions can necessitate the development of multiple rating curves. Exploratory data analysis was used to identify periods of change and the potential for hysteresis affected rating curves. Once rating curve periods and appropriate formulas were determined, rating curve parameters were estimated using the `optim` function in `R` by minimizing the residual SSE.
 
+Individual rating curves were used to estimate streamflows using the measured stream heights. Nash-Sutcliffe Efficiency (NSE) and normalized Root Mean Square Error was used to evaluate goodness-of-fit between measured and estimated streamflow. NSE is a normalized statistic that evaluates the relative residual variance against the measured data variance and is calculated as:
 
-Exploring `16397` further...
+\begin{equation}
+NSE = 1 - \frac{\sum\limits_{t=1}^T(Q^t_{sim}-Q^t_{obs})^2}{\sum\limits_{t=1}^T(Q^t_{obs}-\bar{Q}_{obs})^2}
+  (\#eq:nseformula)
+\end{equation} 
 
+Where:
+***add***
 
-```r
-iqplus_df %>%
-  filter(Site == "16397",
-         System_Status == 0,
-         System_In_Water == 100,
-         #as.numeric(Depth) >= 0.75,
-         as.numeric(Flow) > 0) %>%
-  mutate(Month = lubridate::month(Date_Time, label = TRUE)) %>%
-  ggplot() +
-  geom_point(aes(Depth, Flow, color = Month), alpha = 0.5) +
-  scale_y_unit(name = "Flow", unit = "ft^3/s") +
-  facet_wrap(~Month) +
-  labs(title = "Stage Discharge") +
-  theme_ms() +
-  theme(panel.spacing = unit(2, "points"))
-```
-
-<img src="document_files/figure-html/unnamed-chunk-5-1.png" width="672" />
+***Add nRMSE formula***
 
 
+## Results
 
+### Site 16396
 
-
-
-Exploring `16882` further...
+Based on exploratory analysis, two rating curves were developed for site 16396. The rating curve periods were 2020-03-03 through 2020-11-30 and 2020-12-01 through 2021-01-31. Due to apparent unsteady flow in the observed hydrogaphs, we applied the Jones formula (Formaula\@ref(eq:Jonesformula)). Both time periods resulted in a rating curve with NSE greater than 0.97 and nRMSE less than 2% indicating excellent fit (Table \@ref(tab:results16369); Figure \@ref(fig:metricplot16396)).
 
 
 ```r
-iqplus_df %>%
-  filter(Site == "16882",
-         System_Status == 0,
-         System_In_Water == 100,
-         as.numeric(Flow) > 0) %>%
-  mutate(Month = lubridate::month(Date_Time, label = TRUE)) %>%
-  ggplot() +
-  geom_point(aes(Depth, Flow, color = Month), alpha = 0.5) +
-  scale_y_unit(name = "Flow", unit = "ft^3/s") +
-  facet_wrap(~Month) +
-  labs(title = "Stage Discharge") +
-  theme_ms() +
-  theme(panel.spacing = unit(2, "points"))
-```
+## Make dataframe for site 16396 before december 
 
-<img src="document_files/figure-html/unnamed-chunk-6-1.png" width="672" />
-
-
-
-The looped rating curve in May and Dec might be a flood flow event. Discharge is typically higher on the rising stage than the falling stage.
-
-
-
-
-
-```r
-iqplus_df %>%
-  filter(Site == "16397",
-         System_Status == 0,
-         System_In_Water == 100,
-         as.numeric(Depth) >= 0.26, ## minimum operating depth
-         as.numeric(Flow) > 0) %>%
-  filter(Date_Time <= as.POSIXct("2020-07-01")) %>%
-  ggplot() +
-  geom_point(aes(Date_Time, Flow))
-```
-
-<img src="document_files/figure-html/unnamed-chunk-7-1.png" width="672" />
-
-```r
-iqplus_df %>%
-  filter(Site == "16397",
-         System_Status == 0,
-         System_In_Water == 100,
-         as.numeric(Depth) >= 0.26, ## minimum operating depth
-         as.numeric(Flow) > 0) %>%
-  filter(Date_Time <= as.POSIXct("2020-07-01")) %>%
-  ggplot() +
-  geom_point(aes(Date_Time, Depth))
-```
-
-<img src="document_files/figure-html/unnamed-chunk-7-2.png" width="672" />
-
-```r
-iqplus_df %>%
-  filter(Site == "16397",
-         System_Status == 0,
-         System_In_Water == 100,
-         as.numeric(Depth) >= 0.26, ## minimum operating depth
-         as.numeric(Flow) > 0) %>%
-  filter(Date_Time <= as.POSIXct("2020-07-01")) %>%
-  ggplot() +
-  geom_point(aes(Depth, Flow))
-```
-
-<img src="document_files/figure-html/unnamed-chunk-7-3.png" width="672" />
-
-
-
-
-```r
-iqplus_df %>%
-  filter(Site == "16397",
-         System_Status == 0,
-         System_In_Water == 100,
-         as.numeric(Depth) >= 0.26, ## minimum operating depth
-         as.numeric(Flow) > 0) %>%
-  filter(Date_Time > as.POSIXct("2020-07-01") & 
-           Date_Time < as.POSIXct("2020-09-01")) %>%
-  ggplot() +
-  geom_point(aes(Date_Time, Flow))
-```
-
-<img src="document_files/figure-html/unnamed-chunk-8-1.png" width="672" />
-
-```r
-iqplus_df %>%
-  filter(Site == "16397",
-         System_Status == 0,
-         System_In_Water == 100,
-         as.numeric(Depth) >= 0.26, ## minimum operating depth
-         as.numeric(Flow) > 0) %>%
-  filter(Date_Time > as.POSIXct("2020-07-01") & 
-           Date_Time < as.POSIXct("2020-09-01")) %>%
-  ggplot() +
-  geom_point(aes(Date_Time, Depth))
-```
-
-<img src="document_files/figure-html/unnamed-chunk-8-2.png" width="672" />
-
-```r
-iqplus_df %>%
-  filter(Site == "16397",
-         System_Status == 0,
-         System_In_Water == 100,
-         as.numeric(Depth) >= 0.26, ## minimum operating depth
-         as.numeric(Flow) > 0) %>%
-  filter(Date_Time > as.POSIXct("2020-07-01") & 
-           Date_Time < as.POSIXct("2020-09-01")) %>%
-  ggplot() +
-  geom_point(aes(Depth, Flow))
-```
-
-<img src="document_files/figure-html/unnamed-chunk-8-3.png" width="672" />
-
-
-
-```r
-iqplus_df %>%
-  filter(Site == "16397",
-         System_Status == 0,
-         System_In_Water == 100,
-         as.numeric(Depth) >= 0.26, ## minimum operating depth
-         as.numeric(Flow) > 0) %>%
-  filter(Date_Time > as.POSIXct("2020-09-01") & 
-           Date_Time < as.POSIXct("2020-10-15")) %>%
-  ggplot() +
-  geom_point(aes(Date_Time, Flow))
-```
-
-<img src="document_files/figure-html/unnamed-chunk-9-1.png" width="672" />
-
-```r
-iqplus_df %>%
-  filter(Site == "16397",
-         System_Status == 0,
-         System_In_Water == 100,
-         as.numeric(Depth) >= 0.26, ## minimum operating depth
-         as.numeric(Flow) > 0) %>%
-  filter(Date_Time > as.POSIXct("2020-09-01") & 
-           Date_Time < as.POSIXct("2020-10-15")) %>%
-  ggplot() +
-  geom_point(aes(Date_Time, Depth))
-```
-
-<img src="document_files/figure-html/unnamed-chunk-9-2.png" width="672" />
-
-```r
-iqplus_df %>%
-  filter(Site == "16397",
-         System_Status == 0,
-         System_In_Water == 100,
-         as.numeric(Depth) >= 0.26, ## minimum operating depth
-         as.numeric(Flow) > 0) %>%
-  filter(Date_Time > as.POSIXct("2020-09-01") & 
-           Date_Time < as.POSIXct("2020-10-15")) %>%
-  ggplot() +
-  geom_point(aes(Depth, Flow))
-```
-
-<img src="document_files/figure-html/unnamed-chunk-9-3.png" width="672" />
-
-
-
-
-```r
-iqplus_df %>%
-  filter(Site == "16397",
-         System_Status == 0,
-         System_In_Water == 100,
-         as.numeric(Depth) >= 0.26, ## minimum operating depth
-         as.numeric(Flow) > 0) %>%
-  filter(Date_Time > as.POSIXct("2020-10-15") & 
-           Date_Time < as.POSIXct("2020-11-25")) %>%
-  ggplot() +
-  geom_point(aes(Date_Time, Flow))
-```
-
-<img src="document_files/figure-html/unnamed-chunk-10-1.png" width="672" />
-
-```r
-iqplus_df %>%
-  filter(Site == "16397",
-         System_Status == 0,
-         System_In_Water == 100,
-         as.numeric(Depth) >= 0.26, ## minimum operating depth
-         as.numeric(Flow) > 0) %>%
-  filter(Date_Time > as.POSIXct("2020-10-15") & 
-           Date_Time < as.POSIXct("2020-11-25")) %>%
-  ggplot() +
-  geom_point(aes(Date_Time, Depth))
-```
-
-<img src="document_files/figure-html/unnamed-chunk-10-2.png" width="672" />
-
-```r
-iqplus_df %>%
-  filter(Site == "16397",
-         System_Status == 0,
-         System_In_Water == 100,
-         as.numeric(Depth) >= 0.26, ## minimum operating depth
-         as.numeric(Flow) > 0) %>%
-  filter(Date_Time > as.POSIXct("2020-10-15") & 
-           Date_Time < as.POSIXct("2020-11-25")) %>%
-  ggplot() +
-  geom_point(aes(Depth, Flow))
-```
-
-<img src="document_files/figure-html/unnamed-chunk-10-3.png" width="672" />
-
-
-
-```r
-iqplus_df %>%
-  filter(Site == "16397",
-         System_Status == 0,
-         System_In_Water == 100,
-         as.numeric(Depth) >= 0.26, ## minimum operating depth
-         as.numeric(Flow) > 0) %>%
-  filter(Date_Time > as.POSIXct("2020-11-25") & 
-           Date_Time < as.POSIXct("2020-12-15")) %>%
-  ggplot() +
-  geom_point(aes(Date_Time, Flow))
-```
-
-<img src="document_files/figure-html/unnamed-chunk-11-1.png" width="672" />
-
-```r
-iqplus_df %>%
-  filter(Site == "16397",
-         System_Status == 0,
-         System_In_Water == 100,
-         as.numeric(Depth) >= 0.26, ## minimum operating depth
-         as.numeric(Flow) > 0) %>%
-  filter(Date_Time > as.POSIXct("2020-11-25") & 
-           Date_Time < as.POSIXct("2020-12-15")) %>%
-  ggplot() +
-  geom_point(aes(Date_Time, Depth))
-```
-
-<img src="document_files/figure-html/unnamed-chunk-11-2.png" width="672" />
-
-```r
-iqplus_df %>%
-  filter(Site == "16397",
-         System_Status == 0,
-         System_In_Water == 100,
-         as.numeric(Depth) >= 0.26, ## minimum operating depth
-         as.numeric(Flow) > 0) %>%
-  filter(Date_Time > as.POSIXct("2020-11-25") & 
-           Date_Time < as.POSIXct("2020-12-15")) %>%
-  ggplot() +
-  geom_point(aes(Depth, Flow))
-```
-
-<img src="document_files/figure-html/unnamed-chunk-11-3.png" width="672" />
-
-
-
-
-```r
-iqplus_df %>%
-  filter(Site == "16397",
-         System_Status == 0,
-         System_In_Water == 100,
-         as.numeric(Depth) >= 0.26, ## minimum operating depth
-         as.numeric(Flow) > 0) %>%
-  filter(Date_Time > as.POSIXct("2020-12-15") & 
-           Date_Time < as.POSIXct("2020-12-31")) %>%
-  ggplot() +
-  geom_point(aes(Date_Time, Flow))
-```
-
-<img src="document_files/figure-html/unnamed-chunk-12-1.png" width="672" />
-
-```r
-iqplus_df %>%
-  filter(Site == "16397",
-         System_Status == 0,
-         System_In_Water == 100,
-         as.numeric(Depth) >= 0.26, ## minimum operating depth
-         as.numeric(Flow) > 0) %>%
-  filter(Date_Time > as.POSIXct("2020-12-15") & 
-           Date_Time < as.POSIXct("2020-12-31")) %>%
-  ggplot() +
-  geom_point(aes(Date_Time, Depth))
-```
-
-<img src="document_files/figure-html/unnamed-chunk-12-2.png" width="672" />
-
-```r
-iqplus_df %>%
-  filter(Site == "16397",
-         System_Status == 0,
-         System_In_Water == 100,
-         as.numeric(Depth) >= 0.26, ## minimum operating depth
-         as.numeric(Flow) > 0) %>%
-  filter(Date_Time > as.POSIXct("2020-12-15") & 
-           Date_Time < as.POSIXct("2020-12-31")) %>%
-  ggplot() +
-  geom_point(aes(Depth, Flow))
-```
-
-<img src="document_files/figure-html/unnamed-chunk-12-3.png" width="672" />
-
-
-
-```r
-iqplus_df %>%
-  filter(Site == "16397",
-         System_Status == 0,
-         System_In_Water == 100,
-         as.numeric(Depth) >= 0.26, ## minimum operating depth
-         as.numeric(Flow) > 0) %>%
-  filter(Date_Time > as.POSIXct("2021-01-01")) %>%
-  ggplot() +
-  geom_point(aes(Date_Time, Flow))
-```
-
-<img src="document_files/figure-html/unnamed-chunk-13-1.png" width="672" />
-
-```r
-iqplus_df %>%
-  filter(Site == "16397",
-         System_Status == 0,
-         System_In_Water == 100,
-         as.numeric(Depth) >= 0.26, ## minimum operating depth
-         as.numeric(Flow) > 0) %>%
-  filter(Date_Time > as.POSIXct("2021-01-01")) %>%
-  ggplot() +
-  geom_point(aes(Date_Time, Depth))
-```
-
-<img src="document_files/figure-html/unnamed-chunk-13-2.png" width="672" />
-
-```r
-iqplus_df %>%
-  filter(Site == "16397",
-         System_Status == 0,
-         System_In_Water == 100,
-         as.numeric(Depth) >= 0.26, ## minimum operating depth
-         as.numeric(Flow) > 0) %>%
-  filter(Date_Time > as.POSIXct("2021-01-01")) %>%
-  ggplot() +
-  geom_point(aes(Depth, Flow))
-```
-
-<img src="document_files/figure-html/unnamed-chunk-13-3.png" width="672" />
-
-
-
-##16396
-
-
-```r
 iqplus_df %>%
   filter(Site == "16396",
          System_Status == 0,
          System_In_Water == 100,
          as.numeric(Depth) >= 0.26, ## minimum operating depth
-         as.numeric(Flow) >= 0) %>%
-    filter(Date_Time > as.POSIXct("2020-12-01") & 
-           Date_Time < as.POSIXct("2020-12-31")) %>%
-  ggplot() +
-  geom_point(aes(Date_Time, Flow))
-```
-
-<img src="document_files/figure-html/unnamed-chunk-14-1.png" width="672" />
-
-```r
-iqplus_df %>%
-  filter(Site == "16396",
-         System_Status == 0,
-         System_In_Water == 100,
-         as.numeric(Depth) >= 0.26, ## minimum operating depth
-         as.numeric(Flow) >= 0) %>%
-    filter(Date_Time > as.POSIXct("2020-12-01") & 
-           Date_Time < as.POSIXct("2020-12-31")) %>%
-  ggplot() +
-  geom_point(aes(Date_Time, Depth))
-```
-
-<img src="document_files/figure-html/unnamed-chunk-14-2.png" width="672" />
-
-```r
-iqplus_df %>%
-  filter(Site == "16396",
-         System_Status == 0,
-         System_In_Water == 100,
-         as.numeric(Depth) >= 0.26, ## minimum operating depth
-         as.numeric(Flow) >= 0) %>%
-   filter(Date_Time > as.POSIXct("2020-12-01") & 
-           Date_Time < as.POSIXct("2020-12-31")) %>%
-  ggplot() +
-  geom_point(aes(Depth, Flow, color = Date_Time)) +
-  scale_y_unit(trans = "log10")
-```
-
-<img src="document_files/figure-html/unnamed-chunk-14-3.png" width="672" />
-
-
-```r
-iqplus_df %>%
-  filter(Site == "16396",
-         #System_Status == 0,
-         #System_In_Water == 100,
-         #as.numeric(Depth) >= 0.26, ## minimum operating depth
-         as.numeric(Flow) >= 0) %>%
-  filter(Date_Time > as.POSIXct("2021-01-01")) %>%
-  ggplot() +
-  geom_point(aes(Date_Time, Flow))
-```
-
-<img src="document_files/figure-html/unnamed-chunk-15-1.png" width="672" />
-
-```r
-iqplus_df %>%
-  filter(Site == "16396",
-         #System_Status == 0,
-         #System_In_Water == 100,
-         #as.numeric(Depth) >= 0.26, ## minimum operating depth
-         as.numeric(Flow) >= 0) %>%
-  filter(Date_Time > as.POSIXct("2021-01-01")) %>%
-  ggplot() +
-  geom_point(aes(Date_Time, Depth))
-```
-
-<img src="document_files/figure-html/unnamed-chunk-15-2.png" width="672" />
-
-```r
-iqplus_df %>%
-  filter(Site == "16396",
-         #System_Status == 0,
-         #System_In_Water == 100,
-         #as.numeric(Depth) >= 0.26, ## minimum operating depth
-         as.numeric(Flow) >= 0) %>%
-  filter(Date_Time > as.POSIXct("2021-01-01")) %>%
-  ggplot() +
-  geom_point(aes(Depth, Flow, color = Date_Time))
-```
-
-<img src="document_files/figure-html/unnamed-chunk-15-3.png" width="672" />
-
-The Jones Formula can be used to estimate the hysteresis or unstready flow depicted in the rating curve. A reduced formula described by @petersen-overleir_modelling_2006 and @zakwan_spreadsheet-based_2018 is used here.
-
-$$
-Q = K(h-a)^n\times\sqrt{1 + x\frac{\partial h}{\partial t}}
-$$
-
-- $Q$ is discharge
-
-- $h$ is gage height
-
-- $\frac{\partial h}{\partial t}}$ is the partial first order derivative approximated using finite differences. This can be considered the slope or instantaneous rate of change for the function between gage height and time which is estimated using measured stream height values.
-
-
-Solve for K, a, n, x by minimizing sum of square error (SSE).
-
-$$
-SSE = \sum\limits_{i=1}^N[X-Y]^2
-$$
-
-
-
-In order to incorporate the first derivative of stream height function we will need to (1) split the data set into each sampling period; (2) calculate the derivatives in each dataset; (3) remove rows with NA (basically first record in each sampling event); (4) combine desired datasets based on shape or sample the datasets; (4) refit the function above to one or more datasets.
-
-
-
-
-```r
-iqplus_df %>%
-  filter(Site == "16396",
-         System_Status == 0,
-         System_In_Water == 100,
-         as.numeric(Depth) >= 0.26, ## minimum operating depth
-         as.numeric(Flow) >= 0) %>%
+         as.numeric(Flow) >= 0,
+         Date_Time < as.Date("2020-12-01")) %>%
   arrange(Date_Time) %>%
   mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
          diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours"))) %>%
@@ -815,15 +692,36 @@ iqplus_df %>%
   imap(~mutate(.x, event = as.character(.y))) %>%
   bind_rows() %>%
   filter(!is.na(diff_depth)) %>%
-  mutate(J = as.numeric(diff_depth)/as.numeric(diff_time)) -> df_16396
+  mutate(J = as.numeric(diff_depth)/as.numeric(diff_time)) -> df_16396_2020_12
+
+iqplus_df %>%
+  filter(Site == "16396",
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) >= 0,
+         Date_Time >= as.Date("2020-12-01") &
+           Date_Time <= as.Date("2021-02-01")) %>%
+  arrange(Date_Time) %>%
+  mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
+         diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours"))) %>%
+  group_split(cumsum(diff_time > 8)) %>%
+  ## remove events where max flow did not go over 10 cfs
+  keep(~ max(as.numeric(.x$Flow)) > 10) %>%
+  map(~select(.x, Date_Time, Depth, Flow)) %>%
+  map(~mutate(.x,
+              time_lag = lag(Date_Time, default = Date_Time[1]),
+              diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours")),
+              diff_depth = c(0, diff(.x$Depth)))) %>%
+  imap(~mutate(.x, event = as.character(.y))) %>%
+  bind_rows() %>%
+  filter(!is.na(diff_depth)) %>%
+  mutate(J = as.numeric(diff_depth)/as.numeric(diff_time)) -> df_16396_2021_02
 ```
 
 
 
 ```r
-exponent <- function(x, pow) {
-  (abs(x)^pow)*sign(x)
-}
 SSE <- function(pars, data) {
   Depth = as.numeric(data$Depth)
   J = data$J
@@ -843,98 +741,120 @@ SSE <- function(pars, data) {
   sse
 }
 
-par <- c(K = 5,
-         a = 5,
+par <- c(K = 30,
+         a = 1,
          n = 2,
-         x = 2000)
+         x = 1)
 
 ## limits to the parameter space
-lower <- c(0.1, 0.1, 0.1, 0.1)
-upper <- c(200, Inf, 10, 5000)
+lower <- c(-10, 0.1, -10, 0.0001)
+upper <- c(200, 10, 10, 10)
 
-optim.par <- optim(par = par,
+optim_par_16396_2020_12 <- optim(par = par,
                    fn = SSE,
-                   data = df_16396,
+                   data = df_16396_2020_12,
                    lower = lower,
                    upper = upper,
                    method = "L-BFGS-B")
 
-
-K <- optim.par$par[[1]]
-a <- optim.par$par[[2]]
-n <- optim.par$par[[3]]
-x <- optim.par$par[[4]]
+optim_par_16396_2021_02 <- optim(par = par,
+                   fn = SSE,
+                   data = df_16396_2021_02,
+                   lower = lower,
+                   upper = upper,
+                   method = "L-BFGS-B")
 ```
 
 
 
 
 ```r
-df_16396 %>%
-  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) %>%
+## setup dataframe with parameter results. Will use this later to report parameters and GOF metrics
+df_results_16369 <- tibble(Site = c("16396","16396"),
+                           Period = c("2020-03-01 : 2020-11-30",
+                                      "2020-12-01 : 2021-01-31"),
+                           K = c(optim_par_16396_2020_12$par[[1]],
+                                 optim_par_16396_2021_02$par[[1]]),
+                           a = c(optim_par_16396_2020_12$par[[2]],
+                                 optim_par_16396_2021_02$par[[2]]),
+                           n = c(optim_par_16396_2020_12$par[[3]],
+                                 optim_par_16396_2021_02$par[[3]]),
+                           x = c(optim_par_16396_2020_12$par[[4]],
+                                 optim_par_16396_2021_02$par[[4]]))
+```
+
+
+```r
+## Develop rating curve predictions and
+## create table with GOF metrics
+df_16396_2020_12 %>%
+    mutate(predicted = (df_results_16369$K[1]*exponent(x = as.numeric(Depth) - df_results_16369$a[1], pow = df_results_16369$n[1])) * exponent(x = (1 + df_results_16369$x[1] * J), pow = (1/2))) -> df_16396_2020_12
+
+df_16396_2021_02 %>%
+      mutate(predicted = (df_results_16369$K[2]*exponent(x = as.numeric(Depth) - df_results_16369$a[2], pow = df_results_16369$n[2])) * exponent(x = (1 + df_results_16369$x[2] * J), pow = (1/2))) -> df_16396_2021_02
+
+
+df_results_16369 %>%
+  mutate(NSE = c(
+    hydroGOF::NSE(df_16396_2020_12$predicted, as.numeric(df_16396_2020_12$Flow)),
+    hydroGOF::NSE(df_16396_2021_02$predicted, as.numeric(df_16396_2021_02$Flow))),
+    nRMSE = c(hydroGOF::nrmse(df_16396_2020_12$predicted, as.numeric(df_16396_2020_12$Flow), norm = "maxmin"),
+              hydroGOF::nrmse(df_16396_2021_02$predicted, as.numeric(df_16396_2021_02$Flow), norm = "maxmin"))
+    ) -> df_results_16369
+
+##display table
+kable(df_results_16369, 
+      caption = "Rating curve parameter estimates and goodness-of-fit metrics for station 16369.") 
+```
+
+
+
+Table: (\#tab:results16369)Rating curve parameter estimates and goodness-of-fit metrics for station 16369.
+
+|Site  |Period                  |        K|        a|        n|         x|       NSE| nRMSE|
+|:-----|:-----------------------|--------:|--------:|--------:|---------:|---------:|-----:|
+|16396 |2020-03-01 : 2020-11-30 | 24.15103| 1.275218| 1.639702| 0.0001000| 0.9802261|     1|
+|16396 |2020-12-01 : 2021-01-31 | 26.47283| 1.226563| 1.722387| 0.5904576| 0.9778216|     2|
+
+
+```r
+## plot rating curve results
+df_16396_2020_12 %>%
+  bind_rows(df_16396_2021_02) %>%
+  mutate(predicted = set_units(predicted, "ft^3/s")) %>%
   ggplot() +
-  geom_point(aes(as.numeric(Depth), as.numeric(Flow), color = "measured"), alpha = 0.5) +
-  geom_point(aes(as.numeric(Depth), as.numeric(predicted), color = "predicted"), alpha = 0.2) +
-  scale_y_log10() +
-  theme_ms()
+  geom_point(aes(as.numeric(predicted), as.numeric(Flow), color = "Rating curve prediction against measured flow"), alpha = 0.25) +
+  geom_abline(aes(slope = 1, intercept = 0, linetype = "1:1 line")) +
+  scale_x_continuous(name = "Rating curve flow estimate [cfs]", trans = "log10") +
+  scale_y_continuous(name = "Measured flow [cfs]", trans = "log10") +
+  theme_ms() +
+  theme(legend.title = element_blank())
 ```
 
 ```
 ## Warning: Removed 8 rows containing missing values (geom_point).
 ```
 
-<img src="document_files/figure-html/unnamed-chunk-18-1.png" width="672" />
+<div class="figure">
+<img src="document_files/figure-html/metricplot16396-1.png" alt="Scatter plot of rating curve estimated flows against measured flows at station 16396" width="672" />
+<p class="caption">(\#fig:metricplot16396)Scatter plot of rating curve estimated flows against measured flows at station 16396</p>
+</div>
 
-```r
-df_16396 %>%
-  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) %>%
-  ggplot() +
-  geom_point(aes(as.numeric(Flow), as.numeric(predicted), color = "measured"), alpha = 0.5) +
-  geom_abline(slope = 1) +
-  scale_y_log10() + scale_x_log10() +
-  theme_ms()
-```
-
-```
-## Warning: Removed 8 rows containing missing values (geom_point).
-```
-
-<img src="document_files/figure-html/unnamed-chunk-18-2.png" width="672" />
-
-
-```r
-df_16396 %>%
-  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) -> df_16396
-
-df_16396_results <- tibble(Site = "16396",
-       K = K,
-       a = a,
-       n = n,
-       x = x,
-       NSE = hydroGOF::NSE(df_16396$predicted, as.numeric(df_16396$Flow)),
-       RMSE = hydroGOF::rmse(df_16396$predicted, as.numeric(df_16396$Flow)))
-df_16396_results
-```
-
-```
-## # A tibble: 1 x 7
-##   Site      K     a     n     x   NSE  RMSE
-##   <chr> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-## 1 16396  29.8  1.02  1.60 0.507 0.978  11.4
-```
+*** add plot of full predicted flows over time using hobo data ***
 
 
 ## Site 16397
 
-This site was pooled from August through November 2020. It appears we can use the standard power function [@venetis1970note]:
-$$
-Q = K(H-H_0)^z
-$$
+Exploratory analysis indicated pooled conditions when during doppler flow meter deployment from August 2020 through November 2020. A single rating curve was developed at this site using the power function (Formula \@ref(eq:powerfunction)) since unsteady flow conditions were not observed in the hydrographs. Rating curve predictions resulted in NSE greater than 0.95 indicating excellent fit (Table \@ref(tab:results16369)). The nRMSE was less than 6%, which is likely a good result for the smaller sample sized obtained at this station and probably influenced by the observed low flow variance (Table \@ref(tab:results16369); Figure \@ref(fig:metricplot16396)).
 
+
+*** add plot of full predicted flows over time using hobo data ***
 
 
 
 ```r
+## setup dataframe to fit rating curve to 16397
+
 iqplus_df %>%
   filter(Site == "16397",
          System_Status == 0,
@@ -964,55 +884,6 @@ iqplus_df %>%
   filter(!is.na(diff_depth)) %>%
   mutate(J = as.numeric(diff_depth)/as.numeric(diff_time)) -> df_16397
 
-df_16397 %>%
-  filter(as.numeric(Depth) < 2) %>%
-  ggplot() +
-  geom_boxplot(aes(y = Flow))
-```
-
-<img src="document_files/figure-html/unnamed-chunk-20-1.png" width="672" />
-
-```r
-# SSE <- function(pars, data) {
-#   Depth = as.numeric(data$Depth)
-#   J = data$J
-#   K = pars[1]
-#   a = pars[2]
-#   n = pars[3]
-#   x = pars[4]
-# 
-#   
-#   preds <- (K*exponent(x = Depth - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))
-#   #print(preds)
-#   Q = as.numeric(data$Flow)
-#   
-#   ## minimize the sum of square errors per the paper
-#   sse <- sum((Q - preds)^2, na.rm = TRUE)
-#   #print(sse)
-#   sse
-# }
-# 
-# par <- c(K = 5,
-#          a = 5,
-#          n = 2,
-#          x = 2000)
-# 
-# ## limits to the parameter space
-# lower <- c(0.1, 0.1, 0.1, 0.1)
-# upper <- c(200, Inf, 10, 5000)
-# 
-# optim.par <- optim(par = par,
-#                    fn = SSE,
-#                    data = df_16397 %>% filter(!is.infinite(J)),
-#                    lower = lower,
-#                    upper = upper,
-#                    method = "L-BFGS-B")
-# 
-# 
-# K <- optim.par$par[[1]]
-# a <- optim.par$par[[2]]
-# n <- optim.par$par[[3]]
-# x <- optim.par$par[[4]]
 
 SSE <- function(pars, data) {
   Depth = as.numeric(data$Depth)
@@ -1039,100 +910,85 @@ par <- c(K = 1,
 lower <- c(-Inf, -5, 0.001)
 upper <- c(Inf, 5, Inf)
 
-optim.par <- optim(par = par,
+optim_par_16397 <- optim(par = par,
                    fn = SSE,
                    data = df_16397,
                    lower = lower,
                    upper = upper,
                    method = "L-BFGS-B")
-
-optim.par
 ```
 
-```
-## $par
-##            K          H_0            Z 
-##  0.004524273 -2.870003103  4.148212545 
-## 
-## $value
-## [1] 302.7499
-## 
-## $counts
-## function gradient 
-##      156      156 
-## 
-## $convergence
-## [1] 1
-## 
-## $message
-## [1] "NEW_X"
-```
+
 
 ```r
-K <- optim.par$par[[1]]
-H_0 <- optim.par$par[[2]]
-Z <- optim.par$par[[3]]
+## setup dataframe with parameter results. Will use this later to report parameters and GOF metrics
+df_results_16397 <- tibble(Site = c("16397"),
+                           Period = c("2020-03-01 : 2020-01-30"),
+                           K = c(optim_par_16397$par[[1]]),
+                           H_0 = c(optim_par_16397$par[[2]]),
+                           Z = c(optim_par_16397$par[[3]]))
 ```
 
 
 
 ```r
 df_16397 %>%
-  mutate(predicted = K*(as.numeric(Depth) - H_0)^Z) %>%
+  mutate(predicted = df_results_16397$K[1]*(as.numeric(Depth) - df_results_16397$H_0[1])^df_results_16397$Z[1]) -> df_16397
+
+
+df_results_16397 %>%
+  mutate(NSE = hydroGOF::NSE(df_16397$predicted, as.numeric(df_16397$Flow)),
+         nRMSE = hydroGOF::nrmse(df_16397$predicted, as.numeric(df_16397$Flow),
+                              norm="maxmin")) -> df_results_16397
+
+kable(df_results_16397,
+      caption = "Rating curve parameter estimates and goodness-of-fit metrics for station 16397.")
+```
+
+
+
+Table: (\#tab:results16397)Rating curve parameter estimates and goodness-of-fit metrics for station 16397.
+
+|Site  |Period                  |         K|       H_0|       Z|       NSE| nRMSE|
+|:-----|:-----------------------|---------:|---------:|-------:|---------:|-----:|
+|16397 |2020-03-01 : 2020-01-30 | 0.0007257| -3.756137| 4.47589| 0.8471358|   4.7|
+
+
+
+```r
+## plot rating curve results
+df_16397 %>%
+  mutate(predicted = set_units(predicted, "ft^3/s")) %>%
   ggplot() +
-  geom_point(aes(as.numeric(Depth), as.numeric(Flow), color = "measured"), alpha = 0.5) +
-  geom_point(aes(as.numeric(Depth), as.numeric(predicted), color = "predicted"), alpha = 0.2) +
-  scale_y_log10() +
-  theme_ms()
+  geom_point(aes(as.numeric(predicted), as.numeric(Flow), color = "Rating curve prediction against measured flow"), alpha = 0.9) +
+  geom_abline(aes(slope = 1, intercept = 0, linetype = "1:1 line")) +
+  scale_x_continuous(name = "Rating curve flow estimate [cfs]", trans = "log10") +
+  scale_y_continuous(name = "Measured flow [cfs]", trans = "log10") +
+  theme_ms() +
+  theme(legend.title = element_blank())
 ```
 
-<img src="document_files/figure-html/unnamed-chunk-21-1.png" width="672" />
+<div class="figure">
+<img src="document_files/figure-html/metricplot16397-1.png" alt="Scatter plot of rating curve estimated flows against measured flows at station 16397" width="672" />
+<p class="caption">(\#fig:metricplot16397)Scatter plot of rating curve estimated flows against measured flows at station 16397</p>
+</div>
 
-```r
-df_16397 %>%
-  mutate(predicted = K*(as.numeric(Depth) - H_0)^Z) %>%
-  ggplot() +
-  geom_point(aes(as.numeric(Flow), as.numeric(predicted), color = "measured"), alpha = 0.5) +
-  geom_abline(slope = 1) +
-  #scale_y_log10() + scale_x_log10() +
-  theme_ms()
-```
+### Site 16882
 
-<img src="document_files/figure-html/unnamed-chunk-21-2.png" width="672" />
-
+Based on exploratory analysis, three rating curves were developed for site 16396. The rating curve periods were 2020-03-03 through 2020-05-30; 2020-06-01 through 2020-10-31; and 2020-11-01 through 2021-01-31. Due to apparent unsteady flow in the observed hydrogaphs, we applied the Jones formula (Formula\@ref(eq:Jonesformula)).
 
 
 ```r
-df_16397 %>%
-  mutate(predicted = K*(as.numeric(Depth) - H_0)^Z) -> df_16397
+## make 3 different dataframes to fit jones formula to.
 
-df_16397_results <- tibble(Site = "16397",
-       K = K,
-       H_0 = H_0,
-       Z = Z,
-       NSE = hydroGOF::NSE(df_16397$predicted, as.numeric(df_16397$Flow)),
-       RMSE = hydroGOF::rmse(df_16397$predicted, as.numeric(df_16397$Flow)))
-df_16397_results
-```
-
-```
-## # A tibble: 1 x 6
-##   Site        K   H_0     Z   NSE  RMSE
-##   <chr>   <dbl> <dbl> <dbl> <dbl> <dbl>
-## 1 16397 0.00452 -2.87  4.15 0.969  2.13
-```
-
-
-## site 16882
-
-
-```r
 iqplus_df %>%
   filter(Site == "16882",
          System_Status == 0,
          System_In_Water == 100,
          as.numeric(Depth) >= 0.26, ## minimum operating depth
          as.numeric(Flow) > 0) %>%
+    filter(Date_Time > as.POSIXct("2020-05-01") &
+           Date_Time < as.POSIXct("2020-06-01")) %>%
   ## remove outliers identified in box plots under 1 foot depth
   filter(as.numeric(Depth) < 1 & as.numeric(Flow) < 4.3 |
            as.numeric(Depth) > 1) %>%
@@ -1150,39 +1006,68 @@ iqplus_df %>%
   imap(~mutate(.x, event = as.character(.y))) %>%
   bind_rows() %>%
   filter(!is.na(diff_depth)) %>%
-  mutate(J = as.numeric(diff_depth)/as.numeric(diff_time)) -> df_16882
+  mutate(J = as.numeric(diff_depth)/as.numeric(diff_time)) -> df_16882_2020_03
 
-df_16882 %>%
-  filter(Date_Time > as.POSIXct("2020-11-01")) %>%
-  ggplot() +
-  geom_point(aes(Depth, Flow))
+iqplus_df %>%
+  filter(Site == "16882",
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) > 0) %>%
+    filter(Date_Time >= as.POSIXct("2020-06-01") &
+           Date_Time < as.POSIXct("2020-10-31")) %>%
+  ## remove outliers identified in box plots under 1 foot depth
+  filter(as.numeric(Depth) < 1 & as.numeric(Flow) < 4.3 |
+           as.numeric(Depth) > 1) %>%
+  arrange(Date_Time) %>%
+  mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
+         diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours"))) %>%
+  group_split(cumsum(diff_time > 8)) %>%
+  ## remove events where max flow did not go over 10 cfs
+  keep(~ max(as.numeric(.x$Flow)) > 10) %>%
+  map(~select(.x, Date_Time, Depth, Flow)) %>%
+  map(~mutate(.x,
+              time_lag = lag(Date_Time, default = Date_Time[1]),
+              diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours")),
+              diff_depth = c(0, diff(.x$Depth)))) %>%
+  imap(~mutate(.x, event = as.character(.y))) %>%
+  bind_rows() %>%
+  filter(!is.na(diff_depth)) %>%
+  mutate(J = as.numeric(diff_depth)/as.numeric(diff_time)) -> df_16882_2020_06
+
+
+iqplus_df %>%
+  filter(Site == "16882",
+         System_Status == 0,
+         System_In_Water == 100,
+         as.numeric(Depth) >= 0.26, ## minimum operating depth
+         as.numeric(Flow) > 0) %>%
+    filter(Date_Time >= as.POSIXct("2020-11-01") &
+           Date_Time < as.POSIXct("2021-01-31")) %>%
+  ## remove outliers identified in box plots under 1 foot depth
+  filter(as.numeric(Depth) < 1 & as.numeric(Flow) < 4.3 |
+           as.numeric(Depth) > 1) %>%
+  arrange(Date_Time) %>%
+  mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
+         diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours"))) %>%
+  group_split(cumsum(diff_time > 8)) %>%
+  ## remove events where max flow did not go over 10 cfs
+  keep(~ max(as.numeric(.x$Flow)) > 10) %>%
+  map(~select(.x, Date_Time, Depth, Flow)) %>%
+  map(~mutate(.x,
+              time_lag = lag(Date_Time, default = Date_Time[1]),
+              diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours")),
+              diff_depth = c(0, diff(.x$Depth)))) %>%
+  imap(~mutate(.x, event = as.character(.y))) %>%
+  bind_rows() %>%
+  filter(!is.na(diff_depth)) %>%
+  mutate(J = as.numeric(diff_depth)/as.numeric(diff_time)) -> df_16882_2020_11
 ```
 
-<img src="document_files/figure-html/unnamed-chunk-23-1.png" width="672" />
-
-```r
-df_16882 %>%
-  filter(Date_Time > as.POSIXct("2020-05-01") &
-           Date_Time < as.POSIXct("2020-06-01")) %>%
-  ggplot() +
-  geom_point(aes(Depth, Flow))
-```
-
-<img src="document_files/figure-html/unnamed-chunk-23-2.png" width="672" />
-
-```r
-df_16882 %>%
-  filter(Date_Time > as.POSIXct("2020-10-01") &
-           Date_Time < as.POSIXct("2020-11-01")) %>%
-  ggplot() +
-  geom_point(aes(Depth, Flow))
-```
-
-<img src="document_files/figure-html/unnamed-chunk-23-3.png" width="672" />
-
 
 
 ```r
+## estimate parameters for each dataset
 SSE <- function(pars, data) {
   Depth = as.numeric(data$Depth)
   J = data$J
@@ -1202,484 +1087,144 @@ SSE <- function(pars, data) {
   sse
 }
 
-par <- c(K = 5,
-         a = 5,
+par <- c(K = 30,
+         a = 1,
          n = 2,
-         x = 5000)
+         x = 1)
 
 ## limits to the parameter space
-lower <- c(0.1, 0.00001, 0.00001, -10)
+lower <- c(-30, 0.1, -20, -10)
 upper <- c(200, 10, 10, 10)
 
-optim.par <- optim(par = par,
+optim_par_16882_2020_03 <- optim(par = par,
                    fn = SSE,
-                   data = df_16882 %>%
-  filter(Date_Time > as.POSIXct("2020-05-01") &
-           Date_Time < as.POSIXct("2020-06-01") & !is.infinite(J)),
+                   data = df_16882_2020_03,
                    lower = lower,
                    upper = upper,
                    method = "L-BFGS-B")
 
-
-K <- optim.par$par[[1]]
-a <- optim.par$par[[2]]
-n <- optim.par$par[[3]]
-x <- optim.par$par[[4]]
-
-optim.par
-```
-
-```
-## $par
-##          K          a          n          x 
-## 32.6463249  0.3829660  1.1024585 -0.5648966 
-## 
-## $value
-## [1] 2358.648
-## 
-## $counts
-## function gradient 
-##       69       69 
-## 
-## $convergence
-## [1] 0
-## 
-## $message
-## [1] "CONVERGENCE: REL_REDUCTION_OF_F <= FACTR*EPSMCH"
-```
-
-
-```r
-df_16882 %>%
-  filter(Date_Time > as.POSIXct("2020-05-01") &
-           Date_Time < as.POSIXct("2020-06-01") & !is.infinite(J)) %>%
-  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) %>%
-  ggplot() +
-  geom_point(aes(as.numeric(Depth), as.numeric(Flow), color = "measured"), alpha = 0.5) +
-  geom_point(aes(as.numeric(Depth), as.numeric(predicted), color = "predicted"), alpha = 0.2) +
-  scale_y_log10() +
-  theme_ms()
-```
-
-```
-## Warning: Removed 1 rows containing missing values (geom_point).
-```
-
-<img src="document_files/figure-html/unnamed-chunk-25-1.png" width="672" />
-
-```r
-df_16882 %>%
-  filter(Date_Time > as.POSIXct("2020-05-01") &
-           Date_Time < as.POSIXct("2020-06-01") & !is.infinite(J))%>%
-  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) %>%
-  ggplot() +
-  geom_point(aes(as.numeric(Flow), as.numeric(predicted), color = "measured"), alpha = 0.5) +
-  geom_abline(slope = 1) +
-  #scale_y_log10() + scale_x_log10() +
-  theme_ms()
-```
-
-```
-## Warning: Removed 1 rows containing missing values (geom_point).
-```
-
-<img src="document_files/figure-html/unnamed-chunk-25-2.png" width="672" />
-
-
-```r
-df_16882 %>%
-  filter(Date_Time > as.POSIXct("2020-05-01") &
-           Date_Time < as.POSIXct("2020-06-01") & !is.infinite(J)) %>%
-  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) -> df_16882_spring
-
-df_16882_spring_results <- tibble(Site = "16882:Spring",
-       K = K,
-       a = a,
-       n = n,
-       x = x,
-       NSE = hydroGOF::NSE(df_16882_spring$predicted, as.numeric(df_16882_spring$Flow)),
-       RMSE = hydroGOF::rmse(df_16882_spring$predicted, as.numeric(df_16882_spring$Flow)))
-df_16882_spring_results
-```
-
-```
-## # A tibble: 1 x 7
-##   Site             K     a     n      x   NSE  RMSE
-##   <chr>        <dbl> <dbl> <dbl>  <dbl> <dbl> <dbl>
-## 1 16882:Spring  32.6 0.383  1.10 -0.565 0.969  6.12
-```
-
-
-
-
-```r
-## 16882:Fall
-## limits to the parameter space
-lower <- c(0.1, 0.00001, 0.00001, -10)
-upper <- c(200, 10, 10, 10)
-
+## starting estimates need some tweaking for the third season
 par <- c(K = 5,
          a = 5,
          n = 2,
          x = 1)
 
-optim.par <- optim(par = par,
+## limits to the parameter space
+lower <- c(0.1, 0.00001, 0.00001, -10)
+upper <- c(200, 10, 10, 10)
+
+optim_par_16882_2020_06 <- optim(par = par,
                    fn = SSE,
-                   data = df_16882 %>%
-  filter(Date_Time > as.POSIXct("2020-10-01") &
-           Date_Time < as.POSIXct("2020-11-01") & !is.infinite(J)),
+                   data = df_16882_2020_06,
                    lower = lower,
                    upper = upper,
                    method = "L-BFGS-B")
 
-
-K <- optim.par$par[[1]]
-a <- optim.par$par[[2]]
-n <- optim.par$par[[3]]
-x <- optim.par$par[[4]]
-
-optim.par
-```
-
-```
-## $par
-##          K          a          n          x 
-## 34.4447950  0.6169175  1.2757297 -0.5454046 
-## 
-## $value
-## [1] 1005.021
-## 
-## $counts
-## function gradient 
-##       81       81 
-## 
-## $convergence
-## [1] 0
-## 
-## $message
-## [1] "CONVERGENCE: REL_REDUCTION_OF_F <= FACTR*EPSMCH"
-```
-
-```r
-df_16882 %>%
-  filter(Date_Time > as.POSIXct("2020-10-01") &
-           Date_Time < as.POSIXct("2020-11-01") & !is.infinite(J)) %>%
-  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) %>%
-  ggplot() +
-  geom_point(aes(as.numeric(Depth), as.numeric(Flow), color = "measured"), alpha = 0.5) +
-  geom_point(aes(as.numeric(Depth), as.numeric(predicted), color = "predicted"), alpha = 0.2) +
-  scale_y_log10() +
-  theme_ms()
-```
-
-<img src="document_files/figure-html/unnamed-chunk-27-1.png" width="672" />
-
-```r
-df_16882 %>%
-  filter(Date_Time > as.POSIXct("2020-10-01") &
-           Date_Time < as.POSIXct("2020-11-01") & !is.infinite(J))%>%
-  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) %>%
-  ggplot() +
-  geom_point(aes(as.numeric(Flow), as.numeric(predicted), color = "measured"), alpha = 0.5) +
-  geom_abline(slope = 1) +
-  #scale_y_log10() + scale_x_log10() +
-  theme_ms()
-```
-
-<img src="document_files/figure-html/unnamed-chunk-27-2.png" width="672" />
-
-
-```r
-df_16882 %>%
-  filter(Date_Time > as.POSIXct("2020-10-01") &
-           Date_Time < as.POSIXct("2020-11-01") & !is.infinite(J)) %>%
-  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) -> df_16882_fall
-
-df_16882_fall_results <- tibble(Site = "16882:Fall",
-       K = K,
-       a = a,
-       n = n,
-       x = x,
-       NSE = hydroGOF::NSE(df_16882_fall$predicted, as.numeric(df_16882_fall$Flow)),
-       RMSE = hydroGOF::rmse(df_16882_fall$predicted, as.numeric(df_16882_fall$Flow)))
-df_16882_fall_results
-```
-
-```
-## # A tibble: 1 x 7
-##   Site           K     a     n      x   NSE  RMSE
-##   <chr>      <dbl> <dbl> <dbl>  <dbl> <dbl> <dbl>
-## 1 16882:Fall  34.4 0.617  1.28 -0.545 0.948 0.722
-```
-
-
-
-```r
-par <- c(K = 1,
-         a = 5,
+## starting estimates need some tweaking for the third season
+par <- c(K = 8,
+         a = 1,
          n = 2,
-         x = 50)
+         x = 1)
 
 ## limits to the parameter space
-lower <- c(.00001, 0, 0.00001, -10)
-upper <- c(200, 10, 10, 100)
+lower <- c(0.1, 0.00001, 0.00001, -10)
+upper <- c(200, 10, 10, 10)
 
-optim.par <- optim(par = par,
+optim_par_16882_2020_11 <- optim(par = par,
                    fn = SSE,
-                   data = df_16882 %>%
-  filter(Date_Time > as.POSIXct("2020-11-01") & !is.infinite(J)),
+                   data = df_16882_2020_11,
                    lower = lower,
                    upper = upper,
                    method = "L-BFGS-B")
-
-
-K <- optim.par$par[[1]]
-a <- optim.par$par[[2]]
-n <- optim.par$par[[3]]
-x <- optim.par$par[[4]]
-
-optim.par
-```
-
-```
-## $par
-##         K         a         n         x 
-## 8.0785577 0.8679692 2.3945289 1.6137518 
-## 
-## $value
-## [1] 5574.524
-## 
-## $counts
-## function gradient 
-##      116      116 
-## 
-## $convergence
-## [1] 0
-## 
-## $message
-## [1] "CONVERGENCE: REL_REDUCTION_OF_F <= FACTR*EPSMCH"
 ```
 
 
 ```r
-df_16882 %>%
-  filter(Date_Time > as.POSIXct("2020-11-01") & !is.infinite(J)) %>%
-  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) %>%
+## setup dataframe with parameter results. Will use this later to report parameters and GOF metrics
+df_results_16882 <- tibble(Site = c("16882","16882","16882"),
+                           Period = c("2020-03-01 : 2020-05-31",
+                                      "2020-06-01 : 2020-10-31",
+                                      "2020-11-01 : 2021-01-31"),
+                           K = c(optim_par_16882_2020_03$par[[1]],
+                                 optim_par_16882_2020_06$par[[1]],
+                                 optim_par_16882_2020_11$par[[1]]),
+                           a = c(optim_par_16882_2020_03$par[[2]],
+                                 optim_par_16882_2020_06$par[[2]],
+                                 optim_par_16882_2020_11$par[[2]]),
+                           n = c(optim_par_16882_2020_03$par[[3]],
+                                 optim_par_16882_2020_06$par[[3]],
+                                 optim_par_16882_2020_11$par[[3]]),
+                           x = c(optim_par_16882_2020_03$par[[4]],
+                                 optim_par_16882_2020_06$par[[4]],
+                                 optim_par_16882_2020_11$par[[4]]))
+
+## Develop rating curve predictions and
+## create table with GOF metrics
+df_16882_2020_03 %>%
+    mutate(predicted = (df_results_16882$K[1]*exponent(x = as.numeric(Depth) - df_results_16882$a[1], pow = df_results_16882$n[1])) * exponent(x = (1 + df_results_16882$x[1] * J), pow = (1/2))) -> df_16882_2020_03
+
+df_16882_2020_06 %>%
+    mutate(predicted = (df_results_16882$K[2]*exponent(x = as.numeric(Depth) - df_results_16882$a[2], pow = df_results_16882$n[2])) * exponent(x = (1 + df_results_16882$x[2] * J), pow = (1/2))) -> df_16882_2020_06
+
+df_16882_2020_11 %>%
+    mutate(predicted = (df_results_16882$K[3]*exponent(x = as.numeric(Depth) - df_results_16882$a[3], pow = df_results_16882$n[3])) * exponent(x = (1 + df_results_16882$x[3] * J), pow = (1/2))) -> df_16882_2020_11
+
+
+df_results_16882 %>%
+  mutate(NSE = c(
+    hydroGOF::NSE(df_16882_2020_03$predicted, as.numeric(df_16882_2020_03$Flow)),
+    hydroGOF::NSE(df_16882_2020_06$predicted, as.numeric(df_16882_2020_06$Flow)),
+    hydroGOF::NSE(df_16882_2020_11$predicted, as.numeric(df_16882_2020_11$Flow))),
+    nRMSE = c(hydroGOF::nrmse(df_16882_2020_03$predicted, as.numeric(df_16882_2020_03$Flow), norm = "maxmin"),
+              hydroGOF::nrmse(df_16882_2020_06$predicted, as.numeric(df_16882_2020_06$Flow), norm = "maxmin"),
+              hydroGOF::nrmse(df_16882_2020_11$predicted, as.numeric(df_16882_2020_11$Flow), norm = "maxmin"))
+    ) -> df_results_16882
+
+##display table
+kable(df_results_16882, 
+      caption = "Rating curve parameter estimates and goodness-of-fit metrics for station 16882.") 
+```
+
+
+
+Table: (\#tab:results16882)Rating curve parameter estimates and goodness-of-fit metrics for station 16882.
+
+|Site  |Period                  |          K|        a|          n|           x|        NSE| nRMSE|
+|:-----|:-----------------------|----------:|--------:|----------:|-----------:|----------:|-----:|
+|16882 |2020-03-01 : 2020-05-31 | -30.000000| 10.00000| -20.000000| -10.0000000| -0.7363925|  33.4|
+|16882 |2020-06-01 : 2020-10-31 |   6.939952|  1.66193|   1.374969|  -0.6751434|  0.0430754|   4.3|
+|16882 |2020-11-01 : 2021-01-31 |   0.100000|  5.40777|   0.000010| -10.0000000| -0.8549177|   4.3|
+
+
+```r
+## plot rating curve results
+df_16882_2020_03 %>%
+  bind_rows(df_16882_2020_06, df_16882_2020_11) %>%
+  mutate(predicted = set_units(predicted, "ft^3/s")) %>%
   ggplot() +
-  geom_point(aes(as.numeric(Depth), as.numeric(Flow), color = "measured"), alpha = 0.5) +
-  geom_point(aes(as.numeric(Depth), as.numeric(predicted), color = "predicted"), alpha = 0.2) +
-  #scale_y_log10() +
-  theme_ms()
+  geom_point(aes(as.numeric(predicted), as.numeric(Flow), color = "Rating curve prediction against measured flow"), alpha = 0.25) +
+  geom_abline(aes(slope = 1, intercept = 0, linetype = "1:1 line")) +
+  scale_x_continuous(name = "Rating curve flow estimate [cfs]", trans = "log10") +
+  scale_y_continuous(name = "Measured flow [cfs]", trans = "log10") +
+  theme_ms() +
+  theme(legend.title = element_blank())
 ```
 
 ```
-## Warning: Removed 1 rows containing missing values (geom_point).
-```
-
-<img src="document_files/figure-html/unnamed-chunk-30-1.png" width="672" />
-
-```r
-df_16882 %>%
-  filter(Date_Time > as.POSIXct("2020-11-01") & !is.infinite(J)) %>%
-  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) %>%
-  ggplot() +
-  geom_point(aes(as.numeric(Flow), as.numeric(predicted), color = "measured"), alpha = 0.5) +
-  geom_abline(slope = 1) +
-  #scale_y_log10() + scale_x_log10() +
-  theme_ms()
+## Warning in self$trans$transform(x): NaNs produced
 ```
 
 ```
-## Warning: Removed 1 rows containing missing values (geom_point).
-```
-
-<img src="document_files/figure-html/unnamed-chunk-30-2.png" width="672" />
-
-
-
-```r
-df_16882 %>%
-  filter(Date_Time > as.POSIXct("2020-11-01") & !is.infinite(J)) %>%
-  mutate(predicted = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) -> df_16882_winter
-
-df_16882_winter_results <- tibble(Site = "16882:Winter",
-       K = K,
-       a = a,
-       n = n,
-       x = x,
-       NSE = hydroGOF::NSE(df_16882_winter$predicted, as.numeric(df_16882_winter$Flow)),
-       RMSE = hydroGOF::rmse(df_16882_winter$predicted, as.numeric(df_16882_winter$Flow)))
-df_16882_winter_results
+## Warning: Transformation introduced infinite values in continuous x-axis
 ```
 
 ```
-## # A tibble: 1 x 7
-##   Site             K     a     n     x   NSE  RMSE
-##   <chr>        <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-## 1 16882:Winter  8.08 0.868  2.39  1.61 0.946  9.48
+## Warning: Removed 7864 rows containing missing values (geom_point).
 ```
 
+<div class="figure">
+<img src="document_files/figure-html/metricplot16882-1.png" alt="Scatter plot of rating curve estimated flows against measured flows at station 16882" width="672" />
+<p class="caption">(\#fig:metricplot16882)Scatter plot of rating curve estimated flows against measured flows at station 16882</p>
+</div>
 
-
-## Predict flows using depth data
-
-We will predict the 15 minute flows then aggregate to mean daily flows at each station.
-
-### Station 16396
-
-Use equation to predict flows:
-
-
-```r
-hobo_df %>%
-  filter(Site == "16396") %>%
-  dplyr::rename(Depth = Water_Level) %>%
-  mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
-         diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours")),
-         diff_depth = c(0, diff(as.numeric(Depth))),
-         J = as.numeric(diff_depth)/as.numeric(diff_time)) %>%
-  filter(!is.na(J)) %>%
-  mutate(K = df_16396_results$K,
-         a = df_16396_results$a,
-         n = df_16396_results$n,
-         x = df_16396_results$x,
-         Flow = (K*exponent(x = as.numeric(Depth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) -> DailyFlows_16396
-
-## looks like some < zero cfs flows predicted early for some reason.
-## can overlay measured flows on this plot
-```
-
-Make sure the measured depths between devices are consistent:
-
-
-```r
-ggplot() +
-  geom_line(data = DailyFlows_16396, aes(Date_Time, as.numeric(Depth), color = "Hobo Depth")) +
-  geom_point(data = df_16396, aes(Date_Time, as.numeric(Depth), color = "IQ Depth"), alpha = 0.1) +
-  scale_y_log10()
-```
-
-<img src="document_files/figure-html/unnamed-chunk-33-1.png" width="672" />
-
-We need to fix the depths between devices first. 
-
-Try using GAMs. Gavin Simpson talks about extrapolating with GAMs on recent blog post. This applies to the Date Time series extrapolation here.
-
-Here we join the hobo depth data to IQ plus data by nearest time measurement. Then we fit a GAM model to estimate what the measured IQ plus depth would be based on the Hobo measured Depth and date of deployment. This accounts for seasonal shifts in the stream bed or slilght adjustments to deployment location.
-
-
-```r
-df_16396 %>%
-  select(Date_Time, Depth) %>%
-  fuzzyjoin::difference_left_join(DailyFlows_16396 %>% select(Date_Time, Depth), by = "Date_Time", max_dist = 10) %>%
-  mutate(Dec_Date = decimal_date(Date_Time.x)) %>%
-  mgcv::gam(as.numeric(Depth.x) ~ s(as.numeric(Depth.y, bs = "cr")) + s(Dec_Date, bs = "bs", m = c(1)), data = .) -> lm_16396_hobo_iq
-```
-
-```
-## Warning in smooth.construct.bs.smooth.spec(object, dk$data, dk$knots): there is
-## *no* information about some basis coefficients
-```
-
-Plot the depth predictions:
-
-
-```r
-hobo_df %>%
-  filter(Site == "16396") %>%
-  filter(Date_Time >= as.POSIXct("2020-03-04")) %>%
-  dplyr::rename(Depth.y = Water_Level) %>%
-  mutate(Dec_Date = decimal_date(Date_Time)) %>%
-  mutate(AdjustDepth = predict(lm_16396_hobo_iq, .)) -> DailyFlows_16396
-
-ggplot() +
-  geom_line(data = DailyFlows_16396, aes(Date_Time, AdjustDepth, color = "Hobo Depth")) +
-  geom_point(data = df_16396, aes(Date_Time, as.numeric(Depth), color = "IQ Depth"), alpha = 0.1) +
-  scale_y_log10()
-```
-
-<img src="document_files/figure-html/unnamed-chunk-35-1.png" width="672" />
-
-The depth predictions look reasonable. I should followup by inspecting the residuals. But for now I am skipping to predicting depth and flow:
-
-
-```r
-hobo_df %>%
-  filter(Site == "16396") %>%
-  filter(Date_Time >= as.POSIXct("2020-03-04")) %>%
-  dplyr::rename(Depth.y = Water_Level) %>%
-  mutate(Dec_Date = decimal_date(Date_Time)) %>%
-  mutate(AdjustDepth = predict(lm_16396_hobo_iq, .)) %>%
-  mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
-         diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours")),
-         diff_depth = c(0, diff(as.numeric(AdjustDepth))),
-         J = as.numeric(diff_depth)/as.numeric(diff_time)) %>%
-  filter(!is.na(J)) %>%
-  mutate(K = df_16396_results$K,
-         a = df_16396_results$a,
-         n = df_16396_results$n,
-         x = df_16396_results$x,
-         Flow = (K*exponent(x = as.numeric(AdjustDepth) - a, pow = n)) * exponent(x = (1 + x * J), pow = (1/2))) -> DailyFlows_16396
-```
-
-
-```r
-ggplot() +
-  geom_line(data = DailyFlows_16396, aes(Date_Time, as.numeric(Flow), color = "Predicted Flow")) +
-  geom_point(data = df_16396, aes(Date_Time, as.numeric(Flow), color = "Measured Flow"), alpha = 0.1) +
-  scale_y_log10()
-```
-
-<img src="document_files/figure-html/unnamed-chunk-37-1.png" width="672" />
-
-The visual plot of measured and predicted time series data looks ok. We should follow up with a goodness of fit metric with the IQ measured flow.
-
-
-```r
-df_16396 %>% 
-  dplyr::select(Date_Time, Flow) %>%
-  dplyr::rename(Measured_Flow = Flow) %>%
-  difference_left_join(DailyFlows_16396 %>%
-                         dplyr::select(Date_Time, Flow) %>%
-                         dplyr::rename(Estimated_Flow = Flow),
-                       by = "Date_Time", max_dist = 10) -> gof_16396
-
-
-units(gof_16396$Measured_Flow) <- as_units("ft^3/s")
-units(gof_16396$Estimated_Flow) <- as_units("ft^3/s")
-
-##I'd like to plot this in log, but ggforce is bugged
-ggplot(gof_16396) +
-  geom_point(aes(as.numeric(Estimated_Flow), 
-                 as.numeric(Measured_Flow)), 
-             alpha = 0.2, color = "dodgerblue") +
-  geom_abline(slope = 1) +
-  scale_x_log10(name = "Estimated Flow") + 
-  scale_y_log10(name = "Measured Flow") +
-  theme_ms()
-```
-
-```
-## Warning: Removed 1 rows containing missing values (geom_point).
-```
-
-<img src="document_files/figure-html/unnamed-chunk-38-1.png" width="672" />
-
-```r
-hydroGOF::rmse(as.numeric(gof_16396$Estimated_Flow),
-               as.numeric(gof_16396$Measured_Flow))
-```
-
-```
-## [1] 23.22629
-```
-
-```r
-hydroGOF::NSE(as.numeric(gof_16396$Estimated_Flow),
-               as.numeric(gof_16396$Measured_Flow))
-```
-
-```
-## [1] 0.9120482
-```
 

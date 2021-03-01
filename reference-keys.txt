@@ -1,0 +1,10 @@
+eq:powerfunction
+eq:Jonesformula
+eq:sseformula
+eq:nseformula
+tab:results16369
+fig:metricplot16396
+tab:results16397
+fig:metricplot16397
+tab:results16882
+fig:metricplot16882
