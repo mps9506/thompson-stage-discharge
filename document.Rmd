@@ -87,7 +87,7 @@ Unsteady flows occur when the rising and falling stages of a stream hydrograph r
 \end{equation} 
 
 where:
-$Q$ is discharge, $h$ is stream height, and $\frac{\partial h}{\partial t}}$ is the partial first order derivative approximated using finite differences. This can be considered the slope or instantaneous rate of change for the function between stream height and time which is estimated using measured stream height values. $K$, $a$, $n$, and $x$ are rating curve constants.
+$Q$ is discharge, $h$ is stream height, and $\frac{\partial h}{\partial t}$ is the partial first order derivative approximated using finite differences. This can be considered the slope or instantaneous rate of change for the function between stream height and time which is estimated using measured stream height values. $K$, $a$, $n$, and $x$ are rating curve constants.
 
 A number of different methods are available to solve for the rating curve parameters. We use a quasi-Newton optimization method to minimize the residual sum of square error (SSE) of the rating curve parameters. The residual SSE is calculated as:
 
@@ -273,7 +273,7 @@ iqplus_df %>%
 
 ### Rating curve development
 
-In-stream and stream bank conditions change through the year due to plant growth, plant dieback, sedimentation, erosion, and other processes. These changing conditions can necessitate the development of multiple rating curves. Exploratory data analysis was used to identify periods of change and the potential for hysteresis affected rating curves. Once rating curve periods and appropriate formulas were determined, rating curve parameters were estimated using the `optim` function in `R` by minimizing the residual SSE.
+In-stream and stream bank conditions change through the year due to plant growth, plant dieback, sedimentation, erosion, and other processes. These changing conditions can necessitate the development of multiple rating curves. Exploratory data analysis was used to identify periods of change and the potential for hysteresis affected rating curves. Once rating curve periods and appropriate formulas were determined, rating curve parameters in formulas \@ref(eq:powerfunction) and \@ref(eq:Jonesformula)  were estimated using the `optim` function in `R` by minimizing the residual SSE.
 
 Individual rating curves were used to estimate streamflows using the measured stream heights. Nash-Sutcliffe Efficiency (NSE) and normalized Root Mean Square Error was used to evaluate goodness-of-fit between measured and estimated streamflow. NSE is a normalized statistic that evaluates the relative residual variance against the measured data variance and is calculated as:
 
@@ -282,11 +282,16 @@ NSE = 1 - \frac{\sum\limits_{t=1}^T(Q^t_{sim}-Q^t_{obs})^2}{\sum\limits_{t=1}^T(
   (\#eq:nseformula)
 \end{equation} 
 
-Where:
-***add***
+Where $\bar{Q}_{obs}$ is the mean of observed discharges, $Q^t_{sim}$ is the estimated discharge at time $t$, and $Q^t_{obs}$ is observed discharge at time $t$. Values of NSE range from $-\infty$ to 1, where 1 indicates perfect predicitive performance. NSE of zero indicates the model has the same predictive performance as the mean of the dataset.
 
-***Add nRMSE formula***
+The nRMSE is a percentage based metric that describes the difference between predicted and measured discharge values:
 
+\begin{equation}
+nRMSE = \frac{RMSE}{Q_{max}-Q_{min}}, \quad \textrm{where} \quad RMSE = \sqrt{\frac{\sum_{t=1}^{n}{(Q_t-\hat{Q}_t)^2}}{n}}
+  (\#eq:nRMSE)
+\end{equation}
+
+Where $Q_i$ is the observed discharge at time $t$, $\hat{Q}_t$ is the estimated discharge at time $t$, $n$ is the number of samples, $Q_max$ and $Q_min$ are the maximum and minimum observed discharges. The resulting nRMSE calculation is a percentage value.
 
 ## Results
 
@@ -454,7 +459,7 @@ df_16396_2020_12 %>%
 *** add plot of full predicted flows over time using hobo data ***
 
 
-## Site 16397
+### Site 16397
 
 Exploratory analysis indicated pooled conditions when during doppler flow meter deployment from August 2020 through November 2020. A single rating curve was developed at this site using the power function (Formula \@ref(eq:powerfunction)) since unsteady flow conditions were not observed in the hydrographs. Rating curve predictions resulted in NSE greater than 0.95 indicating excellent fit (Table \@ref(tab:results16369)). The nRMSE was less than 6%, which is likely a good result for the smaller sample sized obtained at this station and probably influenced by the observed low flow variance (Table \@ref(tab:results16369); Figure \@ref(fig:metricplot16396)).
 
