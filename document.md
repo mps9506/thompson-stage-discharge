@@ -84,7 +84,7 @@ Unsteady flows occur when the rising and falling stages of a stream hydrograph r
 \end{equation} 
 
 where:
-$Q$ is discharge, $h$ is stream height, and $\frac{\partial h}{\partial t}}$ is the partial first order derivative approximated using finite differences. This can be considered the slope or instantaneous rate of change for the function between stream height and time which is estimated using measured stream height values. $K$, $a$, $n$, and $x$ are rating curve constants.
+$Q$ is discharge, $h$ is stream height, and $\frac{\partial h}{\partial t}$ is the partial first order derivative approximated using finite differences. This can be considered the slope or instantaneous rate of change for the function between stream height and time which is estimated using measured stream height values. $K$, $a$, $n$, and $x$ are rating curve constants.
 
 A number of different methods are available to solve for the rating curve parameters. We use a quasi-Newton optimization method to minimize the residual sum of square error (SSE) of the rating curve parameters. The residual SSE is calculated as:
 
@@ -175,7 +175,7 @@ hobo_df %>%
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
 }
 
-#wbllvygmcv .gt_table {
+#bqjsjzjjys .gt_table {
   display: table;
   border-collapse: collapse;
   margin-left: auto;
@@ -200,7 +200,7 @@ hobo_df %>%
   border-left-color: #D3D3D3;
 }
 
-#wbllvygmcv .gt_heading {
+#bqjsjzjjys .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -212,7 +212,7 @@ hobo_df %>%
   border-right-color: #D3D3D3;
 }
 
-#wbllvygmcv .gt_title {
+#bqjsjzjjys .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -222,7 +222,7 @@ hobo_df %>%
   border-bottom-width: 0;
 }
 
-#wbllvygmcv .gt_subtitle {
+#bqjsjzjjys .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -232,13 +232,13 @@ hobo_df %>%
   border-top-width: 0;
 }
 
-#wbllvygmcv .gt_bottom_border {
+#bqjsjzjjys .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#wbllvygmcv .gt_col_headings {
+#bqjsjzjjys .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -253,7 +253,7 @@ hobo_df %>%
   border-right-color: #D3D3D3;
 }
 
-#wbllvygmcv .gt_col_heading {
+#bqjsjzjjys .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -273,7 +273,7 @@ hobo_df %>%
   overflow-x: hidden;
 }
 
-#wbllvygmcv .gt_column_spanner_outer {
+#bqjsjzjjys .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -285,15 +285,15 @@ hobo_df %>%
   padding-right: 4px;
 }
 
-#wbllvygmcv .gt_column_spanner_outer:first-child {
+#bqjsjzjjys .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#wbllvygmcv .gt_column_spanner_outer:last-child {
+#bqjsjzjjys .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#wbllvygmcv .gt_column_spanner {
+#bqjsjzjjys .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -305,7 +305,7 @@ hobo_df %>%
   width: 100%;
 }
 
-#wbllvygmcv .gt_group_heading {
+#bqjsjzjjys .gt_group_heading {
   padding: 8px;
   color: #333333;
   background-color: #FFFFFF;
@@ -327,7 +327,7 @@ hobo_df %>%
   vertical-align: middle;
 }
 
-#wbllvygmcv .gt_empty_group_heading {
+#bqjsjzjjys .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -342,15 +342,15 @@ hobo_df %>%
   vertical-align: middle;
 }
 
-#wbllvygmcv .gt_from_md > :first-child {
+#bqjsjzjjys .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#wbllvygmcv .gt_from_md > :last-child {
+#bqjsjzjjys .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#wbllvygmcv .gt_row {
+#bqjsjzjjys .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -369,7 +369,7 @@ hobo_df %>%
   overflow-x: hidden;
 }
 
-#wbllvygmcv .gt_stub {
+#bqjsjzjjys .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -381,7 +381,7 @@ hobo_df %>%
   padding-left: 12px;
 }
 
-#wbllvygmcv .gt_summary_row {
+#bqjsjzjjys .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -391,7 +391,7 @@ hobo_df %>%
   padding-right: 5px;
 }
 
-#wbllvygmcv .gt_first_summary_row {
+#bqjsjzjjys .gt_first_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -401,7 +401,7 @@ hobo_df %>%
   border-top-color: #D3D3D3;
 }
 
-#wbllvygmcv .gt_grand_summary_row {
+#bqjsjzjjys .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -411,7 +411,7 @@ hobo_df %>%
   padding-right: 5px;
 }
 
-#wbllvygmcv .gt_first_grand_summary_row {
+#bqjsjzjjys .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -421,11 +421,11 @@ hobo_df %>%
   border-top-color: #D3D3D3;
 }
 
-#wbllvygmcv .gt_striped {
+#bqjsjzjjys .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#wbllvygmcv .gt_table_body {
+#bqjsjzjjys .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -434,7 +434,7 @@ hobo_df %>%
   border-bottom-color: #D3D3D3;
 }
 
-#wbllvygmcv .gt_footnotes {
+#bqjsjzjjys .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -448,13 +448,13 @@ hobo_df %>%
   border-right-color: #D3D3D3;
 }
 
-#wbllvygmcv .gt_footnote {
+#bqjsjzjjys .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding: 4px;
 }
 
-#wbllvygmcv .gt_sourcenotes {
+#bqjsjzjjys .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -468,46 +468,46 @@ hobo_df %>%
   border-right-color: #D3D3D3;
 }
 
-#wbllvygmcv .gt_sourcenote {
+#bqjsjzjjys .gt_sourcenote {
   font-size: 90%;
   padding: 4px;
 }
 
-#wbllvygmcv .gt_left {
+#bqjsjzjjys .gt_left {
   text-align: left;
 }
 
-#wbllvygmcv .gt_center {
+#bqjsjzjjys .gt_center {
   text-align: center;
 }
 
-#wbllvygmcv .gt_right {
+#bqjsjzjjys .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#wbllvygmcv .gt_font_normal {
+#bqjsjzjjys .gt_font_normal {
   font-weight: normal;
 }
 
-#wbllvygmcv .gt_font_bold {
+#bqjsjzjjys .gt_font_bold {
   font-weight: bold;
 }
 
-#wbllvygmcv .gt_font_italic {
+#bqjsjzjjys .gt_font_italic {
   font-style: italic;
 }
 
-#wbllvygmcv .gt_super {
+#bqjsjzjjys .gt_super {
   font-size: 65%;
 }
 
-#wbllvygmcv .gt_footnote_marks {
+#bqjsjzjjys .gt_footnote_marks {
   font-style: italic;
   font-size: 65%;
 }
 </style>
-<div id="wbllvygmcv" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
+<div id="bqjsjzjjys" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
   
   <thead class="gt_col_headings">
     <tr>
@@ -646,7 +646,7 @@ iqplus_df %>%
 
 ### Rating curve development
 
-In-stream and stream bank conditions change through the year due to plant growth, plant dieback, sedimentation, erosion, and other processes. These changing conditions can necessitate the development of multiple rating curves. Exploratory data analysis was used to identify periods of change and the potential for hysteresis affected rating curves. Once rating curve periods and appropriate formulas were determined, rating curve parameters were estimated using the `optim` function in `R` by minimizing the residual SSE.
+In-stream and stream bank conditions change through the year due to plant growth, plant dieback, sedimentation, erosion, and other processes. These changing conditions can necessitate the development of multiple rating curves. Exploratory data analysis was used to identify periods of change and the potential for hysteresis affected rating curves. Once rating curve periods and appropriate formulas were determined, rating curve parameters in formulas \@ref(eq:powerfunction) and \@ref(eq:Jonesformula)  were estimated using the `optim` function in `R` by minimizing the residual SSE.
 
 Individual rating curves were used to estimate streamflows using the measured stream heights. Nash-Sutcliffe Efficiency (NSE) and normalized Root Mean Square Error was used to evaluate goodness-of-fit between measured and estimated streamflow. NSE is a normalized statistic that evaluates the relative residual variance against the measured data variance and is calculated as:
 
@@ -655,11 +655,16 @@ NSE = 1 - \frac{\sum\limits_{t=1}^T(Q^t_{sim}-Q^t_{obs})^2}{\sum\limits_{t=1}^T(
   (\#eq:nseformula)
 \end{equation} 
 
-Where:
-***add***
+Where $\bar{Q}_{obs}$ is the mean of observed discharges, $Q^t_{sim}$ is the estimated discharge at time $t$, and $Q^t_{obs}$ is observed discharge at time $t$. Values of NSE range from $-\infty$ to 1, where 1 indicates perfect predicitive performance. NSE of zero indicates the model has the same predictive performance as the mean of the dataset.
 
-***Add nRMSE formula***
+The nRMSE is a percentage based metric that describes the difference between predicted and measured discharge values:
 
+\begin{equation}
+nRMSE = \frac{RMSE}{Q_{max}-Q_{min}}, \quad \textrm{where} \quad RMSE = \sqrt{\frac{\sum_{t=1}^{n}{(Q_t-\hat{Q}_t)^2}}{n}}
+  (\#eq:nRMSE)
+\end{equation}
+
+Where $Q_i$ is the observed discharge at time $t$, $\hat{Q}_t$ is the estimated discharge at time $t$, $n$ is the number of samples, $Q_max$ and $Q_min$ are the maximum and minimum observed discharges. The resulting nRMSE calculation is a percentage value.
 
 ## Results
 
@@ -843,7 +848,7 @@ df_16396_2020_12 %>%
 *** add plot of full predicted flows over time using hobo data ***
 
 
-## Site 16397
+### Site 16397
 
 Exploratory analysis indicated pooled conditions when during doppler flow meter deployment from August 2020 through November 2020. A single rating curve was developed at this site using the power function (Formula \@ref(eq:powerfunction)) since unsteady flow conditions were not observed in the hydrographs. Rating curve predictions resulted in NSE greater than 0.95 indicating excellent fit (Table \@ref(tab:results16369)). The nRMSE was less than 6%, which is likely a good result for the smaller sample sized obtained at this station and probably influenced by the observed low flow variance (Table \@ref(tab:results16369); Figure \@ref(fig:metricplot16396)).
 

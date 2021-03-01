@@ -2,6 +2,7 @@ eq:powerfunction
 eq:Jonesformula
 eq:sseformula
 eq:nseformula
+eq:nRMSE
 tab:results16369
 fig:metricplot16396
 tab:results16397
