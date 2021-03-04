@@ -1,6 +1,8 @@
 eq:powerfunction
 eq:Jonesformula
+eq:finitediff
 eq:sseformula
+fig:iqimport
 eq:nseformula
 eq:nRMSE
 tab:results16369
