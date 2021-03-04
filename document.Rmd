@@ -10,7 +10,8 @@ link-citations: true
 ```{r setup, include=FALSE}
 library(knitr)
 knitr::opts_chunk$set(echo = TRUE,
-                      fig.retina = 2)
+                      fig.retina = 2,
+                      dev = "ragg_png")
 ```
 
 ```{r library, echo=TRUE, message=FALSE, warning=FALSE}
@@ -31,6 +32,8 @@ library(units)
 library(ggforce)
 ## hrbrtheme is optional, I use it to pretty my plots
 library(hrbrthemes)
+## patchwork support arranging multiple ggplots into one plot
+library(patchwork)
 ## lubridate provides functions for handling time and date
 library(lubridate)
 ## purrr lets us use map_ functions as an alternative to loops
@@ -80,7 +83,7 @@ Due to the high costs associated with continuous in-stream measurements of strea
   (\#eq:powerfunction)
 \end{equation} 
 where:
-$Q$ represents steady state discharge, $H$ represents stream height (stage), $H_0$ is the stage at zero discharge; $K$ and $z$ are rating curve constants.
+$Q$ represents steady state discharge, $H$ represents stream height (stage), $H_0$ is the stage at zero discharge; $K$ and $z$ are rating curve constants. Following convention, $Q$ and $H$ are often log-transformed prior to parameter estimation.
 
 Unsteady flows occur when the rising and falling stages of a stream hydrograph result in different discharges at identical stream heights. This resulting hysteresis-affected rating curve will present as a loop as opposed to a line. The modified Jones formula described by @petersen-overleir_modelling_2006 and @zakwan_spreadsheet-based_2018 may be used:
 
@@ -89,8 +92,14 @@ Unsteady flows occur when the rising and falling stages of a stream hydrograph r
   (\#eq:Jonesformula)
 \end{equation} 
 
-where:
-$Q$ is discharge, $h$ is stream height, and $\frac{\partial h}{\partial t}$ is the partial first order derivative approximated using finite differences. This can be considered the slope or instantaneous rate of change for the function between stream height and time which is estimated using measured stream height values. $K$, $a$, $n$, and $x$ are rating curve constants.
+where $Q$ is discharge and $h$ is stream height. The partial first order derivative$\frac{\partial h}{\partial t}$ is approximated as $J$ using finite differences:
+
+\begin{equation}
+J(h_t) = (h_{t+1}-h_{t-1})/\Delta t
+  (\#eq:finitediff)
+\end{equation} 
+
+where $h_t$ is the stream height at time $t$ and $\Delta t$ is the time interval. This can be considered the slope or instantaneous rate of change for the function between stream height and time which is estimated using measured stream height values. $K$, $a$, $n$, and $x$ are rating curve constants.
 
 A number of different methods are available to solve for the rating curve parameters. We use non-linear least squares regression to minimize the residual sum of square error (SSE) of the rating curve parameters. The residual SSE is calculated as:
 
@@ -100,13 +109,13 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
 \end{equation} 
 
 where:
-$X$ is the measured value and $Y$ is the predicted value. Nonlinear optimization methods search though parameter combinations to minimize the objective function (residual SSE in this case).
+$X$ is the measured value and $Y$ is the predicted value. Nonlinear optimization methods search though parameter combinations to minimize the objective function (residual SSE in this case). @petersen2006modelling applied the Nelder-Mead algorithm to solve the Jones formula. @zakwan_spreadsheet-based_2018 present spreadsheet based nonlinear optimization methods using generalized reduced gradient and genetic algorithm. Most methods require careful planning for parameter starting values that are somewhat near the global minimum value or risk identifying a alternative local minimum values. To reduce the likelihood of convergance on local minimum, the `nls.multstart` package in `R` provides functionality to iterate non-linear least squares optimization over many different starting values [@padfield_2020]. 
 
 ## Method
 
 ### Data collection
 
-Water level data loggers (HOBO U20 Series Water Level Data Loggers) were deployed at TCEQ SWQM stations 16396, 16397, and 16882. An additional data logger was deployed at ... to provide ambient atmospheric pressure corrections for the data loggers deployed underwater. Water level data loggers were deployed near continuously from 2020-03-02 through 2021-..-... and setup to record water level at 15-minute intervals.
+Water level data loggers (HOBO U20 Series Water Level Data Loggers) were deployed at TCEQ SWQM stations 16396, 16397, and 16882 (Table \@ref(tab:hoboimport)). An additional data logger was deployed at ... to provide ambient atmospheric pressure corrections for the data loggers deployed underwater. Water level data loggers were deployed near continuously from 2020-03-02 through 2021-..-... and setup to record water level at 15-minute intervals.
 
 ```{r hoboimport}
 
@@ -176,9 +185,11 @@ hobo_df %>%
   modify_header(label = "**Variable**")
 ```
 
-Periodic streamflow measurements were made at each SWQM site using a bottom-mounted multi-beam Doppler flow meter (Son-Tek IQ Plus). The Son-Tek IQ Plus measures cross sectional area, stream height, and velocity. Using these measurements, the device utilizes an index velocity method to report instantaneous discharge. The streamflow measurement device were deployed for a few days at a time to capture the full hydrograph under varying flow conditions at each SWQM station. Only one streamflow device was available, so deployments rotated between stations. Streamflow was recorded at 15-minute intervals. 
+Periodic streamflow measurements were made at each SWQM site using a bottom-mounted multi-beam Doppler flow meter (Son-Tek IQ Plus) (Figure \@ref(iqimport)). The Son-Tek IQ Plus measures cross sectional area, stream height, and velocity. Using these measurements, the device utilizes an index velocity method to report instantaneous discharge. The streamflow measurement device were deployed for a few days at a time to capture the full hydrograph under varying flow conditions at each SWQM station. Only two Doppler flow meters were available, so deployments rotated between stations. Additionally, one device stopped working and was under repair for a few months. Streamflow was recorded at 15-minute intervals.
 
-```{r iqimport}
+During data exploration it was evident there was excess noise in the data at low flows for each station. During periods of stagnant or near stagnant conditions the doppler flow meters recorded highly variable stream velocities and reported unrealistic flows. Due to the excess data noise, periods of extreme low or stagnant flow were cleaned from the data record. Future deployments will need to consider under what conditions long term deployments are appropriate. For small streams such as these, periodic storm flow deployments are likely the most appropriate deployment.
+
+```{r iqimport, fig.cap="Period of recorded data at each station."}
 ## make a list of files to import
 file_paths <- paste0(here("Data/IQPlus"),
                      "/",
@@ -227,10 +238,10 @@ units(iqplus_df$Index_Velocity) <- as_units("ft/s")
 iqplus_df %>%
   filter(System_Status == 0,
          System_In_Water == 100,
-         as.numeric(Depth) >= 0.26, ## minimum operating depth
+         #as.numeric(Depth) >= 0.26, ## minimum operating depth
          as.numeric(Flow) > 0) %>%
   filter(Site == "16396" &
-           Date_Time >= as.POSIXct("2020-05-15") &
+           Date_Time >= as.POSIXct("2020-05-03") &
            Date_Time <= as.POSIXct("2020-05-31") &
            as.numeric(Depth) >= 0.875 |
            Site == "16396" &
@@ -241,14 +252,13 @@ iqplus_df %>%
            Date_Time >= as.POSIXct("2020-12-15") &
            Date_Time <= as.POSIXct("2020-12-31") &
            as.numeric(Depth) >= 0.875 |
-           # as.numeric(Depth) > 1.5 |
            Site == "16397" &
            Date_Time >= as.POSIXct("2021-01-05") &
            as.numeric(Depth) >= 0.875 |
            # as.numeric(Depth) > 2 |
            Site == "16882" &## possible sedimentation at low flows, removing low flow measurements.
            Date_Time >= as.POSIXct("2020-05-01") &
-           Date_Time < as.POSIXct("2020-06-01") & 
+           Date_Time < as.POSIXct("2020-06-01") &
            as.numeric(Depth) >= 0.875 |
            Site == "16882" & ## possible sedimentation at low flows, removing low flow measurements.
            Date_Time >= as.POSIXct("2020-10-11") &
@@ -263,6 +273,7 @@ iqplus_df %>%
 ggplot(iqplus_df) +
   geom_point(aes(Date_Time, Flow), alpha = 0.2) +
   facet_wrap(~Site, ncol = 1, scales = "free_y") +
+  labs(x = "Date") +
   theme_ms()
 
 ```
@@ -330,7 +341,7 @@ Where $Q_i$ is the observed discharge at time $t$, $\hat{Q}_t$ is the estimated 
 
 ### Site 16396
 
-Based on exploratory analysis, two rating curves were developed for site 16396. The rating curve periods were 2020-03-03 through 2020-11-30 and 2020-12-01 through 2021-01-31. Due to apparent unsteady flow in the observed hydrogaphs, we applied the Jones formula (Formula\@ref(eq:Jonesformula)). Both time periods resulted in a rating curve with NSE greater than 0.97 and nRMSE less than 2% indicating excellent fit (Table \@ref(tab:results16369); Figure \@ref(fig:metricplot16396)).
+Based on exploratory analysis, two rating curves were developed for site 16396. The rating curve periods were 2020-03-03 through 2020-11-30 and 2020-12-01 through 2021-01-31. Due to apparent unsteady flow in the observed hydrogaphs, we applied the Jones formula (Formula\@ref(eq:Jonesformula)). Both time periods resulted in a rating curve with NSE greater than 0.97 and nRMSE less than 3% indicating excellent fit (Table \@ref(tab:results16369); Figure \@ref(fig:metricplot16396)). Figure \@ref(fig:metricplot16396) does indicate some biased flow estimates at extremely low flow measurements. This is attributed to variability in flows recorded by the doppler flow meter at low flows. 
 
 ```{r}
 ## Make dataframe for site 16396 before december 
@@ -347,13 +358,15 @@ iqplus_df %>%
   map(~select(.x, Date_Time, Depth, Flow)) %>%
   map(~mutate(.x,
               time_lag = lag(Date_Time, default = Date_Time[1]),
-              diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours")),
-              diff_depth = c(0, diff(.x$Depth)))) %>%
+              time_lead = lead(Date_Time),
+              diff_time = as.numeric(difftime(time_lead,time_lag, units = "hours")),
+              diff_depth = lead(Depth) - lag(Depth))) %>%
   imap(~mutate(.x, event = as.character(.y))) %>%
   bind_rows() %>%
   filter(!is.na(diff_depth)) %>%
   mutate(J = as.numeric(diff_depth)/as.numeric(diff_time)) -> df_16396_2020_03
 
+## Make dataframe for site 16396 Dec 2020 through January 2021
 iqplus_df %>%
   filter(Site == "16396",
          Date_Time >= as.Date("2020-12-01") &
@@ -367,8 +380,9 @@ iqplus_df %>%
   map(~select(.x, Date_Time, Depth, Flow)) %>%
   map(~mutate(.x,
               time_lag = lag(Date_Time, default = Date_Time[1]),
-              diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours")),
-              diff_depth = c(0, diff(.x$Depth)))) %>%
+              time_lead = lead(Date_Time),
+              diff_time = as.numeric(difftime(time_lead,time_lag, units = "hours")),
+              diff_depth = lead(Depth) - lag(Depth))) %>%
   imap(~mutate(.x, event = as.character(.y))) %>%
   bind_rows() %>%
   filter(!is.na(diff_depth)) %>%
@@ -378,24 +392,33 @@ iqplus_df %>%
 
 
 ```{r}
+## use nls to estimate parameters in Jones formula
+jones_form <- formula(log(as.numeric(Flow)) ~ K*exponent(x = log(as.numeric(Depth)) - a, pow = n) * exponent(x = (1 + x * J), pow = (1/2)))
 
-jones_form <- formula(as.numeric(Flow) ~ K*exponent(x = as.numeric(Depth) - a, pow = n) * exponent(x = (1 + x * J), pow = (1/2)))
-
-start_lower <- list(K = 0.0001, a = 0, n = 0.00001, x = -10)
-start_upper <- list(K = 200, a = 20, n = 10, x = 50)
-
+## some starting paremeters. nls_multstart will use multiple
+## starting parameters and model selection to find 
+## global minimum
+start_lower <- list(K = 0, a = 0, n = 0, x = -5)
+start_upper <- list(K = 10, a = 10, n = 5, x = 5)
+## fit nls
 rc_16396_2020_03 <- nls_multstart(jones_form,
               data = df_16396_2020_03,
               iter = 1000,
               start_lower = start_lower,
               start_upper = start_upper,
+              convergence_count = FALSE,
               supp_errors = "Y")
 
+## set parameter starting limits
+start_lower <- list(K = -100, a = 0, n = 0, x = -5000)
+start_upper <- list(K = 100, a = 1000, n = 50, x = 5000)
+## fit nls
 rc_16396_2020_12 <- nls_multstart(jones_form,
               data = df_16396_2020_12,
               iter = 1000,
               start_lower = start_lower,
               start_upper = start_upper,
+              convergence_count = FALSE,
               supp_errors = "Y")
 
 ```
@@ -415,8 +438,6 @@ df_results_16369 <- tibble(Site = c("16396","16396"),
                                  coefficients(rc_16396_2020_12)[["n"]]),
                            x = c(coefficients(rc_16396_2020_03)[["x"]],
                                  coefficients(rc_16396_2020_12)[["x"]]))
-
-
 ```
 
 ```{r results16369}
@@ -424,10 +445,11 @@ df_results_16369 <- tibble(Site = c("16396","16396"),
 ## create table with GOF metrics
 df_16396_2020_03 %>%
   filter(!is.na(J)) %>%
-  mutate(predicted = predict(rc_16396_2020_03, .)) -> df_16396_2020_03
+  mutate(predicted = exp(predict(rc_16396_2020_03, .))) -> df_16396_2020_03
 
 df_16396_2020_12 %>%
-  mutate(predicted =  predict(rc_16396_2020_12, .)) -> df_16396_2020_12
+    filter(!is.na(J)) %>%
+  mutate(predicted =  exp(predict(rc_16396_2020_12, .))) -> df_16396_2020_12
 
 
 df_results_16369 %>%
@@ -444,30 +466,59 @@ kable(df_results_16369,
 
 ```
 
-```{r metricplot16396, fig.cap="Scatter plot of rating curve estimated flows against measured flows at station 16396"}
+```{r metricplot16396, fig.cap="Scatter plot of rating curve estimated flows against measured flows (A, C) and stage discharge predictions (B, D) for each rating curve period at station 16396.", out.width="100%", fig.asp = 1}
 ## plot rating curve results
-df_16396_2020_03 %>%
-  bind_rows(df_16396_2020_12) %>%
-  mutate(predicted = set_units(predicted, "ft^3/s")) %>%
-  ggplot() +
-  geom_point(aes(as.numeric(predicted), as.numeric(Flow), color = "Rating curve prediction against measured flow"), alpha = 0.25) +
+
+p1 <- ggplot(df_16396_2020_03) +
+    geom_point(aes(as.numeric(predicted), as.numeric(Flow), color = "Rating curve prediction against measured flow"), alpha = 0.25) +
   geom_abline(aes(slope = 1, intercept = 0, linetype = "1:1 line")) +
   scale_x_continuous(name = "Rating curve flow estimate [cfs]", trans = "log10") +
   scale_y_continuous(name = "Measured flow [cfs]", trans = "log10") +
-  theme_ms() +
+  theme_ms() + labs(subtitle = "March-November") +
+  theme(legend.title = element_blank(),
+        legend.position = "none")
+
+p2 <- ggplot(df_16396_2020_03) +
+  geom_point(aes(as.numeric(Flow), Depth, color = "Measured")) +
+  geom_path(aes(as.numeric(Flow), Depth, color = "Measured", linetype = "Measured"),
+            alpha = 0.5) +
+  geom_point(aes(as.numeric(predicted), Depth, color = "Predicted")) +
+  geom_path(aes(as.numeric(predicted), Depth, color = "Predicted", linetype = "Predicted"),
+            alpha = 0.5) +
+  scale_color_discrete("") + scale_linetype_discrete("") +
+  scale_x_continuous("Flow [cfs]", trans = "log10") +
+  labs(subtitle = "March-November") + theme_ms() + theme(legend.position = "none")
+
+p3 <- ggplot(df_16396_2020_12) +
+    geom_point(aes(as.numeric(predicted), as.numeric(Flow), color = "Rating curve prediction against measured flow"), alpha = 0.25) +
+  geom_abline(aes(slope = 1, intercept = 0, linetype = "1:1 line")) +
+  scale_x_continuous(name = "Rating curve flow estimate [cfs]", trans = "log10") +
+  scale_y_continuous(name = "Measured flow [cfs]", trans = "log10") +
+  theme_ms() + labs(subtitle = "December-January") +
   theme(legend.title = element_blank())
+
+p4 <- ggplot(df_16396_2020_12) +
+  geom_point(aes(as.numeric(Flow), Depth, color = "Measured")) +
+  geom_path(aes(as.numeric(Flow), Depth, color = "Measured", linetype = "Measured"),
+            alpha = 0.5) +
+  geom_point(aes(as.numeric(predicted), Depth, color = "Predicted")) +
+  geom_path(aes(as.numeric(predicted), Depth, color = "Predicted", linetype = "Predicted"),
+            alpha = 0.5) +
+  scale_color_discrete("") + scale_linetype_discrete("") +
+  scale_x_continuous("Flow [cfs]", trans = "log10") +
+  labs(subtitle = "December-January") + theme_ms()
+
+(p1 + p2) / (p3 + p4) + plot_annotation(tag_levels = "A")
+  
 
 ```
 
-*** add plot of full predicted flows over time using hobo data ***
 
 
 ### Site 16397
 
 Exploratory analysis indicated pooled conditions when during doppler flow meter deployment from August 2020 through November 2020. A single rating curve was developed at this site using the power function (Formula \@ref(eq:powerfunction)) since unsteady flow conditions were not observed in the hydrographs. Rating curve predictions resulted in NSE greater than 0.94 indicating excellent fit (Table \@ref(tab:results16369)). The nRMSE was less than 6%, which is likely a good result for the smaller sample sized obtained at this station and probably influenced by the observed low flow variance (Table \@ref(tab:results16369); Figure \@ref(fig:metricplot16396)).
 
-
-*** add plot of full predicted flows over time using hobo data ***
 
 
 ```{r}
@@ -479,8 +530,6 @@ iqplus_df %>%
   mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
          diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours"))) %>%
   group_split(cumsum(diff_time > 8)) %>%
-  ## remove events where max flow did not go over 10 cfs
-  #keep(~ max(as.numeric(.x$Flow)) > 10) %>%
   map(~select(.x, Date_Time, Depth, Flow)) %>%
   map(~mutate(.x,
               time_lag = lag(Date_Time, default = Date_Time[1]),
@@ -491,8 +540,10 @@ iqplus_df %>%
   filter(!is.na(diff_depth)) %>%
   mutate(J = as.numeric(diff_depth)/as.numeric(diff_time)) -> df_16397
 
-power_form <- formula(as.numeric(Flow) ~ K*(as.numeric(Depth) - H_0)^Z)
+## power function
+power_form <- formula(log(as.numeric(Flow)) ~ K*(log(as.numeric(Depth)) - H_0)^Z)
 
+## parameter starting limits
 start_lower <- list(K = -10, Z = 0.0001, H_0 = 0.0001)
 start_upper <- list(K = 10, Z = 10, H_0 = 8)
 rc_16397 <- nls_multstart(power_form,
@@ -500,6 +551,7 @@ rc_16397 <- nls_multstart(power_form,
               iter = 1000,
               start_lower = start_lower,
               start_upper = start_upper,
+              convergence_count = FALSE,
               supp_errors = "Y")
 
 ```
@@ -518,7 +570,7 @@ df_results_16397 <- tibble(Site = c("16397"),
 
 ```{r results16397}
 df_16397 %>%
-  mutate(predicted = predict(rc_16397, .)) -> df_16397
+  mutate(predicted = exp(predict(rc_16397, .))) -> df_16397
 
 
 df_results_16397 %>%
@@ -531,9 +583,9 @@ kable(df_results_16397,
 ```
 
 
-```{r metricplot16397, fig.cap="Scatter plot of rating curve estimated flows against measured flows at station 16397"}
+```{r metricplot16397, fig.cap="Scatter plot of rating curve estimated flows against measured flows (A) and stage discharge predictions (B) for station 16397.", out.width="100%", fig.asp = .5}
 ## plot rating curve results
-df_16397 %>%
+p1 <- df_16397 %>%
   mutate(predicted = set_units(predicted, "ft^3/s")) %>%
   ggplot() +
   geom_point(aes(as.numeric(predicted), as.numeric(Flow), color = "Rating curve prediction against measured flow"), alpha = 0.9) +
@@ -542,6 +594,14 @@ df_16397 %>%
   scale_y_continuous(name = "Measured flow [cfs]", trans = "log10") +
   theme_ms() +
   theme(legend.title = element_blank())
+
+p2 <- ggplot(df_16397) +
+  geom_point(aes(as.numeric(Flow), Depth, color = "Measured")) +
+  geom_point(aes(as.numeric(predicted), Depth, color = "Predicted")) +
+  scale_color_discrete("") +
+  scale_x_continuous("Flow [cfs]", trans = "log10") + theme_ms()
+
+p1 + p2 + plot_annotation(tag_levels = "A")
 
 ```
 
@@ -559,14 +619,16 @@ iqplus_df %>%
   arrange(Date_Time) %>%
   mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
          diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours"))) %>%
+  #filter(as.numeric(Depth) >= 2.36) %>%
   group_split(cumsum(diff_time > 8)) %>%
   ## remove events where max flow did not go over 10 cfs
-  keep(~ max(as.numeric(.x$Flow)) > 10) %>%
+  #keep(~ max(as.numeric(.x$Flow)) > 10) %>%
   map(~select(.x, Date_Time, Depth, Flow)) %>%
   map(~mutate(.x,
               time_lag = lag(Date_Time, default = Date_Time[1]),
-              diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours")),
-              diff_depth = c(0, diff(.x$Depth)))) %>%
+              time_lead = lead(Date_Time),
+              diff_time = as.numeric(difftime(time_lead,time_lag, units = "hours")),
+              diff_depth = lead(Depth) - lag(Depth))) %>%
   imap(~mutate(.x, event = as.character(.y))) %>%
   bind_rows() %>%
   filter(!is.na(diff_depth)) %>%
@@ -585,12 +647,13 @@ iqplus_df %>%
   map(~select(.x, Date_Time, Depth, Flow)) %>%
   map(~mutate(.x,
               time_lag = lag(Date_Time, default = Date_Time[1]),
-              diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours")),
-              diff_depth = c(0, diff(.x$Depth)))) %>%
+              time_lead = lead(Date_Time),
+              diff_time = as.numeric(difftime(time_lead,time_lag, units = "hours")),
+              diff_depth = lead(Depth) - lag(Depth))) %>%
   imap(~mutate(.x, event = as.character(.y))) %>%
   bind_rows() %>%
   filter(!is.na(diff_depth)) %>%
-  mutate(J = as.numeric(diff_depth)/as.numeric(diff_time)) -> df_16882_2020_06
+  mutate(J = as.numeric(diff_depth)/as.numeric(diff_time)) -> df_16882_2020_10
 
 
 iqplus_df %>%
@@ -606,12 +669,13 @@ iqplus_df %>%
   map(~select(.x, Date_Time, Depth, Flow)) %>%
   map(~mutate(.x,
               time_lag = lag(Date_Time, default = Date_Time[1]),
-              diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours")),
-              diff_depth = c(0, diff(.x$Depth)))) %>%
+              time_lead = lead(Date_Time),
+              diff_time = as.numeric(difftime(time_lead,time_lag, units = "hours")),
+              diff_depth = lead(Depth) - lag(Depth))) %>%
   imap(~mutate(.x, event = as.character(.y))) %>%
   bind_rows() %>%
   filter(!is.na(diff_depth)) %>%
-  mutate(J = as.numeric(diff_depth)/as.numeric(diff_time)) -> df_16882_2020_11
+  mutate(J = as.numeric(diff_depth)/as.numeric(diff_time)) -> df_16882_2020_12
 
 
 
@@ -621,74 +685,89 @@ iqplus_df %>%
 ```{r message=FALSE, warning=FALSE}
 ## estimate parameters for each dataset
 
-jones_form <- formula(as.numeric(Flow) ~ K*exponent(x = as.numeric(Depth) - a, pow = n) * exponent(x = (1 + x * J), pow = (1/2)))
-start_lower <- list(K = 0.0001, a = 0, n = 0.00001, x = -10)
-start_upper <- list(K = 200, a = 20, n = 10, x = 50)
+## set parameter starting limits
+start_lower <- list(K = 0, a = 0, n = 0, x = -5000)
+start_upper <- list(K = 100, a = 1000, n = 50, x = 5000)
+
 rc_16882_2020_03 <- nls_multstart(jones_form,
               data = df_16882_2020_03,
               iter = 1000,
               start_lower = start_lower,
               start_upper = start_upper,
+              convergence_count = FALSE,
               supp_errors = "Y")
 
-rc_16882_2020_06 <- nls_multstart(jones_form,
-              data = df_16882_2020_06,
+## set parameter starting limits
+start_lower <- list(K = -100, a = 0, n = 0, x = -5000)
+start_upper <- list(K = 100, a = 1000, n = 50, x = 5000)
+rc_16882_2020_10 <- nls_multstart(jones_form,
+              data = df_16882_2020_10,
               iter = 1000,
               start_lower = start_lower,
               start_upper = start_upper,
+              convergence_count = FALSE,
               supp_errors = "Y")
 
-rc_16882_2020_11 <- nls_multstart(jones_form,
-              data = df_16882_2020_11,
+## set parameter starting limits
+start_lower <- list(K = 0, a = 0, n = 0, x = -5000)
+start_upper <- list(K = 100, a = 1000, n = 50, x = 5000)
+rc_16882_2020_12 <- nls_multstart(jones_form,
+              data = df_16882_2020_12,
               iter = 1000,
               start_lower = start_lower,
               start_upper = start_upper,
+              convergence_count = FALSE,
               supp_errors = "Y")
 ```
+
+
+
+
 
 ```{r results16882}
 ## setup dataframe with parameter results. Will use this later to report parameters and GOF metrics
 df_results_16882 <- tibble(Site = c("16882", "16882", "16882"),
-                           Period = c("2020-03-01 : 2020-05-31",
-                                      "2020-06-01 : 2020-10-31",
-                                      "2020-11-01 : 2021-01-31"),
+                           Period = c("2020-03-01 : 2020-09-30",
+                                      "2020-10-01 : 2020-11-30",
+                                      "2020-12-01 : 2021-01-31"),
                            K = c(coefficients(rc_16882_2020_03)[["K"]],
-                                 coefficients(rc_16882_2020_06)[["K"]],
-                                 coefficients(rc_16882_2020_11)[["K"]]),
+                                 coefficients(rc_16882_2020_10)[["K"]],
+                                 coefficients(rc_16882_2020_12)[["K"]]),
                            a = c(coefficients(rc_16882_2020_03)[["a"]],
-                                 coefficients(rc_16882_2020_06)[["a"]],
-                                 coefficients(rc_16882_2020_11)[["a"]]),
+                                 coefficients(rc_16882_2020_10)[["a"]],
+                                 coefficients(rc_16882_2020_12)[["a"]]),
                            n = c(coefficients(rc_16882_2020_03)[["n"]],
-                                 coefficients(rc_16882_2020_06)[["n"]],
-                                 coefficients(rc_16882_2020_11)[["n"]]),
+                                 coefficients(rc_16882_2020_10)[["n"]],
+                                 coefficients(rc_16882_2020_12)[["n"]]),
                            x = c(coefficients(rc_16882_2020_03)[["x"]],
-                                 coefficients(rc_16882_2020_06)[["x"]],
-                                 coefficients(rc_16882_2020_11)[["x"]]))
+                                 coefficients(rc_16882_2020_10)[["x"]],
+                                 coefficients(rc_16882_2020_12)[["x"]]))
 
 ## Develop rating curve predictions and
 ## create table with GOF metrics
 
+
 df_16882_2020_03 %>%
   filter(!is.na(J)) %>%
-  mutate(predicted = predict(rc_16882_2020_03, data = .)) -> df_16882_2020_03
+  mutate(predicted = exp(predict(rc_16882_2020_03, data = .))) -> df_16882_2020_03
 
-df_16882_2020_06 %>%
+df_16882_2020_10 %>%
   filter(!is.na(J)) %>%
-  mutate(predicted = predict(rc_16882_2020_06, data = .)) -> df_16882_2020_06
+  mutate(predicted = exp(predict(rc_16882_2020_10, data = .))) -> df_16882_2020_10
 
-df_16882_2020_11 %>%
+df_16882_2020_12 %>%
   filter(!is.na(J)) %>%
-  mutate(predicted = predict(rc_16882_2020_11, data = .)) -> df_16882_2020_11
+  mutate(predicted = exp(predict(rc_16882_2020_12, data = .))) -> df_16882_2020_12
 
 
 df_results_16882 %>%
   mutate(NSE = c(
     hydroGOF::NSE(df_16882_2020_03$predicted, as.numeric(df_16882_2020_03$Flow)),
-    hydroGOF::NSE(df_16882_2020_06$predicted, as.numeric(df_16882_2020_06$Flow)),
-    hydroGOF::NSE(df_16882_2020_11$predicted, as.numeric(df_16882_2020_11$Flow))),
+    hydroGOF::NSE(df_16882_2020_10$predicted, as.numeric(df_16882_2020_10$Flow)),
+    hydroGOF::NSE(df_16882_2020_12$predicted, as.numeric(df_16882_2020_12$Flow))),
     nRMSE = c(hydroGOF::nrmse(df_16882_2020_03$predicted, as.numeric(df_16882_2020_03$Flow), norm = "maxmin"),
-              hydroGOF::nrmse(df_16882_2020_06$predicted, as.numeric(df_16882_2020_06$Flow), norm = "maxmin"),
-              hydroGOF::nrmse(df_16882_2020_11$predicted, as.numeric(df_16882_2020_11$Flow), norm = "maxmin"))
+              hydroGOF::nrmse(df_16882_2020_10$predicted, as.numeric(df_16882_2020_10$Flow), norm = "maxmin"),
+              hydroGOF::nrmse(df_16882_2020_12$predicted, as.numeric(df_16882_2020_12$Flow), norm = "maxmin"))
     ) -> df_results_16882
 
 ##display table
@@ -697,18 +776,70 @@ kable(df_results_16882,
 
 ```
 
-```{r metricplot16882, fig.cap="Scatter plot of rating curve estimated flows against measured flows at station 16882"}
+```{r metricplot16882, fig.cap="Scatter plot of rating curve estimated flows against measured flows (A, C, E) and stage discharge predictions (B, D, F) for each rating curve period at station 16882.", out.width="100%", fig.asp = 1}
 ## plot rating curve results
-df_16882_2020_03 %>%
-  bind_rows(df_16882_2020_11) %>%
-  mutate(predicted = set_units(predicted, "ft^3/s")) %>%
-  ggplot() +
-  geom_point(aes(as.numeric(predicted), as.numeric(Flow), color = "Rating curve prediction against measured flow"), alpha = 0.25) +
+
+p1 <- ggplot(df_16882_2020_03) +
+    geom_point(aes(as.numeric(predicted), as.numeric(Flow), color = "Rating curve prediction against measured flow"), alpha = 0.25) +
   geom_abline(aes(slope = 1, intercept = 0, linetype = "1:1 line")) +
   scale_x_continuous(name = "Rating curve flow estimate [cfs]", trans = "log10") +
   scale_y_continuous(name = "Measured flow [cfs]", trans = "log10") +
-  theme_ms() +
+  theme_ms() + labs(subtitle = "March-September") +
+  theme(legend.title = element_blank(),
+        legend.position = "none")
+
+p2 <- ggplot(df_16882_2020_03) +
+  geom_point(aes(as.numeric(Flow), Depth, color = "Measured")) +
+  geom_path(aes(as.numeric(Flow), Depth, color = "Measured", linetype = "Measured"),
+            alpha = 0.5) +
+  geom_point(aes(as.numeric(predicted), Depth, color = "Predicted")) +
+  geom_path(aes(as.numeric(predicted), Depth, color = "Predicted", linetype = "Predicted"),
+            alpha = 0.5) +
+  scale_color_discrete("") + scale_linetype_discrete("") +
+  scale_x_continuous("Flow [cfs]", trans = "log10") +
+  labs(subtitle = "March-September") + theme_ms() + theme(legend.position = "none")
+
+p3 <- ggplot(df_16882_2020_10) +
+    geom_point(aes(as.numeric(predicted), as.numeric(Flow), color = "Rating curve prediction against measured flow"), alpha = 0.25) +
+  geom_abline(aes(slope = 1, intercept = 0, linetype = "1:1 line")) +
+  scale_x_continuous(name = "Rating curve flow estimate [cfs]", trans = "log10") +
+  scale_y_continuous(name = "Measured flow [cfs]", trans = "log10") +
+  theme_ms() + labs(subtitle = "October-November") +
+  theme(legend.title = element_blank(),
+        legend.position = "none")
+
+p4 <- ggplot(df_16882_2020_10) +
+  geom_point(aes(as.numeric(Flow), Depth, color = "Measured")) +
+  geom_path(aes(as.numeric(Flow), Depth, color = "Measured", linetype = "Measured"),
+            alpha = 0.5) +
+  geom_point(aes(as.numeric(predicted), Depth, color = "Predicted")) +
+  geom_path(aes(as.numeric(predicted), Depth, color = "Predicted", linetype = "Predicted"),
+            alpha = 0.5) +
+  scale_color_discrete("") + scale_linetype_discrete("") +
+  scale_x_continuous("Flow [cfs]", trans = "log10") +
+  labs(subtitle = "October-November") + theme_ms() + theme(legend.position = "none")
+
+p5 <- ggplot(df_16882_2020_12) +
+    geom_point(aes(as.numeric(predicted), as.numeric(Flow), color = "Rating curve prediction against measured flow"), alpha = 0.25) +
+  geom_abline(aes(slope = 1, intercept = 0, linetype = "1:1 line")) +
+  scale_x_continuous(name = "Rating curve flow estimate [cfs]", trans = "log10") +
+  scale_y_continuous(name = "Measured flow [cfs]", trans = "log10") +
+  theme_ms() + labs(subtitle = "December-January") +
   theme(legend.title = element_blank())
+
+p6 <- ggplot(df_16882_2020_12) +
+  geom_point(aes(as.numeric(Flow), Depth, color = "Measured")) +
+  geom_path(aes(as.numeric(Flow), Depth, color = "Measured", linetype = "Measured"),
+            alpha = 0.5) +
+  geom_point(aes(as.numeric(predicted), Depth, color = "Predicted")) +
+  geom_path(aes(as.numeric(predicted), Depth, color = "Predicted", linetype = "Predicted"),
+            alpha = 0.5) +
+  scale_color_discrete("") + scale_linetype_discrete("") +
+  scale_x_continuous("Flow [cfs]", trans = "log10") +
+  labs(subtitle = "December-January") + theme_ms()
+
+(p1 + p2) / (p3 + p4) / (p5 + p6) + plot_annotation(tag_levels = "A")
+
 
 ```
 

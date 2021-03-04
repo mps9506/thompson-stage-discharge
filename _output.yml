@@ -1,5 +1,6 @@
 bookdown::gitbook:
   number_sections: FALSE
+  code_folding: hide
   split_by: none
   css: style.css
   includes:
