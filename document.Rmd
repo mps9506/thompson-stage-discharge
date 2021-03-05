@@ -17,6 +17,7 @@ knitr::opts_chunk$set(echo = TRUE,
 ```{r library, echo=TRUE, message=FALSE, warning=FALSE}
 ## readr imports data
 library(readr)
+library(tidyr)
 ## tibbles are advanced fancy dataframes
 library(tibble)
 ## dplyr for data handling and piping functions
@@ -109,13 +110,13 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
 \end{equation} 
 
 where:
-$X$ is the measured value and $Y$ is the predicted value. Nonlinear optimization methods search though parameter combinations to minimize the objective function (residual SSE in this case). @petersen2006modelling applied the Nelder-Mead algorithm to solve the Jones formula. @zakwan_spreadsheet-based_2018 present spreadsheet based nonlinear optimization methods using generalized reduced gradient and genetic algorithm. Most methods require careful planning for parameter starting values that are somewhat near the global minimum value or risk identifying a alternative local minimum values. To reduce the likelihood of convergance on local minimum, the `nls.multstart` package in `R` provides functionality to iterate non-linear least squares optimization over many different starting values [@padfield_2020]. 
+$X$ is the measured value and $Y$ is the predicted value. Nonlinear optimization methods search though parameter combinations to minimize the objective function (residual SSE in this case). @petersen2006modelling applied the Nelder-Mead algorithm to solve the Jones formula. @zakwan_spreadsheet-based_2018 present spreadsheet based nonlinear optimization methods using generalized reduced gradient and genetic algorithm. Most methods require careful planning for parameter starting values that are somewhat near the global minimum value or risk identifying a alternative local minimum values. To reduce the likelihood of convergence on local minimum, the `nls.multstart` package in `R` provides functionality to iterate non-linear least squares optimization over many different starting values [@padfield_2020]. 
 
 ## Method
 
 ### Data collection
 
-Water level data loggers (HOBO U20 Series Water Level Data Loggers) were deployed at TCEQ SWQM stations 16396, 16397, and 16882 (Table \@ref(tab:hoboimport)). An additional data logger was deployed at ... to provide ambient atmospheric pressure corrections for the data loggers deployed underwater. Water level data loggers were deployed near continuously from 2020-03-02 through 2021-..-... and setup to record water level at 15-minute intervals.
+Water level data loggers (HOBO U20 Series Water Level Data Loggers) were deployed at TCEQ SWQM stations 16396, 16397, and 16882 (Table \@ref(tab:hoboimport), Figure \@ref(fig:hoboplot)). An additional data logger was deployed at ... to provide ambient atmospheric pressure corrections for the data loggers deployed underwater. Water level data loggers were deployed near continuously from 2020-03-02 through 2021-..-... and setup to record water level at 15-minute intervals.
 
 ```{r hoboimport}
 
@@ -264,32 +265,32 @@ iqplus_df %>%
          #as.numeric(Depth) >= 0.26, ## minimum operating depth
          as.numeric(Flow) > 0) %>%
   filter(Site == "16396" &
-           Date_Time >= as.POSIXct("2020-05-03") &
-           Date_Time <= as.POSIXct("2020-05-31") &
+           Date_Time >= as.POSIXct("2020-05-03", tz = "Etc/GMT-6") &
+           Date_Time <= as.POSIXct("2020-05-31", tz = "Etc/GMT-6") &
            as.numeric(Depth) >= 0.875 |
            Site == "16396" &
-           Date_Time >= as.POSIXct("2020-12-01") &
-           Date_Time <= as.POSIXct("2021-01-31") &
+           Date_Time >= as.POSIXct("2020-12-01", tz = "Etc/GMT-6") &
+           Date_Time <= as.POSIXct("2021-01-31", tz = "Etc/GMT-6") &
            as.numeric(Depth) >= 0.875 |
            Site == "16397" &
-           Date_Time >= as.POSIXct("2020-12-15") &
-           Date_Time <= as.POSIXct("2020-12-31") &
+           Date_Time >= as.POSIXct("2020-12-15", tz = "Etc/GMT-6") &
+           Date_Time <= as.POSIXct("2020-12-31", tz = "Etc/GMT-6") &
            as.numeric(Depth) >= 0.875 |
            Site == "16397" &
-           Date_Time >= as.POSIXct("2021-01-05") &
+           Date_Time >= as.POSIXct("2021-01-05", tz = "Etc/GMT-6") &
            as.numeric(Depth) >= 0.875 |
            # as.numeric(Depth) > 2 |
            Site == "16882" &## possible sedimentation at low flows, removing low flow measurements.
-           Date_Time >= as.POSIXct("2020-05-01") &
-           Date_Time < as.POSIXct("2020-06-01") &
+           Date_Time >= as.POSIXct("2020-05-01", tz = "Etc/GMT-6") &
+           Date_Time < as.POSIXct("2020-06-01", tz = "Etc/GMT-6") &
            as.numeric(Depth) >= 0.875 |
            Site == "16882" & ## possible sedimentation at low flows, removing low flow measurements.
-           Date_Time >= as.POSIXct("2020-10-11") &
-           Date_Time < as.POSIXct("2020-10-31") & 
+           Date_Time >= as.POSIXct("2020-10-11", tz = "Etc/GMT-6") &
+           Date_Time < as.POSIXct("2020-10-31", tz = "Etc/GMT-6") & 
            as.numeric(Depth) >= 0.875 |
            Site == "16882" &
-           Date_Time >= as.POSIXct("2020-12-10") &
-           Date_Time < as.POSIXct("2020-12-31")) -> iqplus_df
+           Date_Time >= as.POSIXct("2020-12-10", tz = "Etc/GMT-6") &
+           Date_Time < as.POSIXct("2020-12-31", tz = "Etc/GMT-6")) -> iqplus_df
 
 
 
@@ -371,7 +372,7 @@ Based on exploratory analysis, two rating curves were developed for site 16396. 
 
 iqplus_df %>%
   filter(Site == "16396",
-         Date_Time < as.Date("2020-12-01")) %>%
+         Date_Time < as.POSIXct("2020-12-01", tz = "Etc/GMT-6")) %>%
   arrange(Date_Time) %>%
   mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
          diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours"))) %>%
@@ -392,8 +393,8 @@ iqplus_df %>%
 ## Make dataframe for site 16396 Dec 2020 through January 2021
 iqplus_df %>%
   filter(Site == "16396",
-         Date_Time >= as.Date("2020-12-01") &
-           Date_Time <= as.Date("2021-02-01")) %>%
+         Date_Time >= as.POSIXct("2020-12-01", tz = "Etc/GMT-6") &
+            Date_Time < as.POSIXct("2021-02-01", tz = "Etc/GMT-6")) %>%
   arrange(Date_Time) %>%
   mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
          diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours"))) %>%
@@ -637,8 +638,8 @@ Based on exploratory analysis, three rating curves were developed for site 16396
 
 iqplus_df %>%
   filter(Site == "16882") %>%
-    filter(Date_Time > as.POSIXct("2020-05-01") &
-           Date_Time < as.POSIXct("2020-05-31")) %>%
+    filter(Date_Time > as.POSIXct("2020-05-01", tz = "Etc/GMT-6") &
+           Date_Time < as.POSIXct("2020-05-31", tz = "Etc/GMT-6")) %>%
   arrange(Date_Time) %>%
   mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
          diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours"))) %>%
@@ -659,8 +660,8 @@ iqplus_df %>%
 
 iqplus_df %>%
   filter(Site == "16882") %>%
-    filter(Date_Time > as.POSIXct("2020-10-01") &
-           Date_Time < as.POSIXct("2020-10-31")) %>%
+    filter(Date_Time > as.POSIXct("2020-10-01", tz = "Etc/GMT-6") &
+           Date_Time < as.POSIXct("2020-10-31", tz = "Etc/GMT-6")) %>%
   arrange(Date_Time) %>%
   mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
          diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours"))) %>%
@@ -681,8 +682,8 @@ iqplus_df %>%
 
 iqplus_df %>%
   filter(Site == "16882") %>%
-    filter(Date_Time >= as.POSIXct("2020-11-01") &
-           Date_Time < as.POSIXct("2021-01-31")) %>%
+    filter(Date_Time >= as.POSIXct("2020-11-01", tz = "Etc/GMT-6") &
+           Date_Time < as.POSIXct("2021-01-31", tz = "Etc/GMT-6")) %>%
   arrange(Date_Time) %>%
   mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
          diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours"))) %>%
@@ -870,26 +871,57 @@ p6 <- ggplot(df_16882_2020_12) +
 
 ### Daily flow estimation
 
-```{r}
-## use original hobo dataset
-## clean up obvious flows where it was pulled out of the water
-## estimate flows using rating curves by date
-## aggregate to mean daily flows, report summary stats.
+```{r instantresults, out.width="100%", fig.asp = 1, fig.cap="Fifteen minute streamflow estimates with overlaid measured streamflow values"}
+# use original hobo dataset
+# estimate flows using rating curves by date
+# aggregate to mean daily flows, report summary stats.
+
 hobo_df %>%
-  group_by(Site) %>%
-  filter(
-    Site == "16882" & Date_Time >= as.POSIXct("2020-03-03 10:19:16", tz = "Etc/GMT-6") & 
-      Date_Time != as.POSIXct("2020-07-30 10:19:16", tz = "Etc/GMT-6") |
-      Site == "16397" & Date_Time >= as.POSIXct("2020-03-03 09:43:57",tz = "Etc/GMT-6")  &
-      Date_Time != as.POSIXct("2021-01-14 09:13:57", tz = "Etc/GMT-6") |
-      Site == "16396" & Date_Time >= as.POSIXct("2020-03-03 09:02:19", tz = "Etc/GMT-6") &
-      Date_Time != as.POSIXct("2021-01-14 08:17:19", tz = "Etc/GMT-6")
-  ) %>%
-  ggplot() +
-  geom_line(aes(Date_Time, Water_Level)) +
-  facet_wrap(~Site, ncol = 1) +
-  scale_x_datetime(date_breaks = "1 month",
-                   date_labels = "%F")
+  select(Site, Depth = Water_Level, Date_Time) %>%
+  group_split(Site) %>%
+  map(~mutate(.x,
+              time_lag = lag(Date_Time, default = Date_Time[1]),
+              time_lead = lead(Date_Time),
+              diff_time = as.numeric(difftime(time_lead,time_lag, units = "hours")),
+              diff_depth = lead(Depth) - lag(Depth))) %>%
+  map(~filter(.x, !is.na(diff_depth))) %>%
+  map(~mutate(.x,
+              J = as.numeric(diff_depth)/as.numeric(diff_time))) %>%
+  bind_rows() -> estimated_data
+
+## make dataframe of models, prediction data, then map predict function, and unnest datframes.
+tibble(rating_curve = list(rc_16396_2020_03, rc_16396_2020_12,
+                                          rc_16397,
+                                          rc_16882_2020_03, rc_16882_2020_10, rc_16882_2020_12),
+       data = list(
+         estimated_data %>% filter(Site == "16396" & Date_Time < as.POSIXct("2020-12-01", tz = "Etc/GMT-6")),
+         estimated_data %>% filter(Site == "16396" & Date_Time >= as.POSIXct("2020-12-01", tz = "Etc/GMT-6") & Date_Time < as.POSIXct("2021-02-01", tz = "Etc/GMT-6")),
+         estimated_data %>% filter(Site == "16397"),
+         estimated_data %>% filter(Site == "16882" & Date_Time < as.POSIXct("2020-10-01", tz = "Etc/GMT-6")),
+         estimated_data %>% filter(Site == "16882" & Date_Time >= as.POSIXct("2020-10-01", tz = "Etc/GMT-6") & Date_Time < as.POSIXct("2020-12-01", tz = "Etc/GMT-6")),
+         estimated_data %>% filter(Site == "16882" & Date_Time >= as.POSIXct("2020-12-01", tz = "Etc/GMT-6"))
+       )
+) %>%
+  mutate(predicted = map2(rating_curve, data,
+    ~exp(predict(.x, newdata = .y))
+  )) %>%
+  tidyr::unnest(c(data, predicted)) -> estimated_data
+
+## plot the data
+ggplot() +
+  geom_line(data = estimated_data, aes(Date_Time, predicted, color = "Rating curve estimate")) +
+  geom_point(data = iqplus_df, aes(Date_Time, as.numeric(Flow), color = "Measured streamflow"), alpha = 0.1) +
+  facet_wrap(~Site, ncol = 1, scales = "free_y") +
+  scale_y_continuous("Flow [cfs]") +
+  scale_x_datetime("Date", date_breaks = "1 month",
+                   date_labels = "%F") +
+  guides(x = guide_axis(angle = 90),
+         color = guide_legend("", override.aes = list(linetype = c(0, 1),
+                                                  shape = c(16, NA),
+                                                  alpha = 1))) +
+  theme_ms() +
+  theme(axis.text.x = element_text(size = 8))
+
 ```
 
 
