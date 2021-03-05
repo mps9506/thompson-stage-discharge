@@ -2,6 +2,7 @@ eq:powerfunction
 eq:Jonesformula
 eq:finitediff
 eq:sseformula
+fig:hoboplot
 fig:iqimport
 eq:nseformula
 eq:nRMSE
@@ -11,3 +12,4 @@ tab:results16397
 fig:metricplot16397
 tab:results16882
 fig:metricplot16882
+fig:instantresults

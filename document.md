@@ -1,6 +1,6 @@
 ---
 title: "Exploring Thompsons Creek Stage Discharge Data"
-date: "2021-03-04"
+date: "2021-03-05"
 github-repo: https://github.com/mps9506/thompson-stage-discharge
 bibliography: bibliography.bib
 biblio-style: "apalike"
@@ -13,6 +13,7 @@ link-citations: true
 ```r
 ## readr imports data
 library(readr)
+library(tidyr)
 ## tibbles are advanced fancy dataframes
 library(tibble)
 ## dplyr for data handling and piping functions
@@ -105,13 +106,13 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
 \end{equation} 
 
 where:
-$X$ is the measured value and $Y$ is the predicted value. Nonlinear optimization methods search though parameter combinations to minimize the objective function (residual SSE in this case). @petersen2006modelling applied the Nelder-Mead algorithm to solve the Jones formula. @zakwan_spreadsheet-based_2018 present spreadsheet based nonlinear optimization methods using generalized reduced gradient and genetic algorithm. Most methods require careful planning for parameter starting values that are somewhat near the global minimum value or risk identifying a alternative local minimum values. To reduce the likelihood of convergance on local minimum, the `nls.multstart` package in `R` provides functionality to iterate non-linear least squares optimization over many different starting values [@padfield_2020]. 
+$X$ is the measured value and $Y$ is the predicted value. Nonlinear optimization methods search though parameter combinations to minimize the objective function (residual SSE in this case). @petersen2006modelling applied the Nelder-Mead algorithm to solve the Jones formula. @zakwan_spreadsheet-based_2018 present spreadsheet based nonlinear optimization methods using generalized reduced gradient and genetic algorithm. Most methods require careful planning for parameter starting values that are somewhat near the global minimum value or risk identifying a alternative local minimum values. To reduce the likelihood of convergence on local minimum, the `nls.multstart` package in `R` provides functionality to iterate non-linear least squares optimization over many different starting values [@padfield_2020]. 
 
 ## Method
 
 ### Data collection
 
-Water level data loggers (HOBO U20 Series Water Level Data Loggers) were deployed at TCEQ SWQM stations 16396, 16397, and 16882 (Table \@ref(tab:hoboimport)). An additional data logger was deployed at ... to provide ambient atmospheric pressure corrections for the data loggers deployed underwater. Water level data loggers were deployed near continuously from 2020-03-02 through 2021-..-... and setup to record water level at 15-minute intervals.
+Water level data loggers (HOBO U20 Series Water Level Data Loggers) were deployed at TCEQ SWQM stations 16396, 16397, and 16882 (Table \@ref(tab:hoboimport), Figure \@ref(fig:hoboplot)). An additional data logger was deployed at ... to provide ambient atmospheric pressure corrections for the data loggers deployed underwater. Water level data loggers were deployed near continuously from 2020-03-02 through 2021-..-... and setup to record water level at 15-minute intervals.
 
 
 ```r
@@ -165,7 +166,16 @@ hobo_df <- hobo_df %>%
   ## select the columns we need to keep
   dplyr::select(Abs_Pres, Temp, Water_Level, Site, Date_Time) %>%
   ## filter rows without water_level
-  dplyr::filter(!is.na(Water_Level))
+  dplyr::filter(!is.na(Water_Level)) %>%
+  ## filter records that are from when unit was placed or removed from water
+  filter(
+    Site == "16882" & Date_Time >= as.POSIXct("2020-03-03 10:19:16", tz = "Etc/GMT-6") & 
+      Date_Time != as.POSIXct("2020-07-30 10:19:16", tz = "Etc/GMT-6") |
+      Site == "16397" & Date_Time >= as.POSIXct("2020-03-03 09:43:57",tz = "Etc/GMT-6")  &
+      Date_Time != as.POSIXct("2021-01-14 09:13:57", tz = "Etc/GMT-6") |
+      Site == "16396" & Date_Time >= as.POSIXct("2020-03-03 09:02:19", tz = "Etc/GMT-6") &
+      Date_Time != as.POSIXct("2021-01-14 08:17:19", tz = "Etc/GMT-6")
+  ) 
   
 ## attach units to our columns
 units(hobo_df$Water_Level) <- as_units("ft")
@@ -186,7 +196,7 @@ hobo_df %>%
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
 }
 
-#gzunngywdc .gt_table {
+#lsmvmxvlpq .gt_table {
   display: table;
   border-collapse: collapse;
   margin-left: auto;
@@ -211,7 +221,7 @@ hobo_df %>%
   border-left-color: #D3D3D3;
 }
 
-#gzunngywdc .gt_heading {
+#lsmvmxvlpq .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -223,7 +233,7 @@ hobo_df %>%
   border-right-color: #D3D3D3;
 }
 
-#gzunngywdc .gt_title {
+#lsmvmxvlpq .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -233,7 +243,7 @@ hobo_df %>%
   border-bottom-width: 0;
 }
 
-#gzunngywdc .gt_subtitle {
+#lsmvmxvlpq .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -243,13 +253,13 @@ hobo_df %>%
   border-top-width: 0;
 }
 
-#gzunngywdc .gt_bottom_border {
+#lsmvmxvlpq .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#gzunngywdc .gt_col_headings {
+#lsmvmxvlpq .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -264,7 +274,7 @@ hobo_df %>%
   border-right-color: #D3D3D3;
 }
 
-#gzunngywdc .gt_col_heading {
+#lsmvmxvlpq .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -284,7 +294,7 @@ hobo_df %>%
   overflow-x: hidden;
 }
 
-#gzunngywdc .gt_column_spanner_outer {
+#lsmvmxvlpq .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -296,15 +306,15 @@ hobo_df %>%
   padding-right: 4px;
 }
 
-#gzunngywdc .gt_column_spanner_outer:first-child {
+#lsmvmxvlpq .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#gzunngywdc .gt_column_spanner_outer:last-child {
+#lsmvmxvlpq .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#gzunngywdc .gt_column_spanner {
+#lsmvmxvlpq .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -316,7 +326,7 @@ hobo_df %>%
   width: 100%;
 }
 
-#gzunngywdc .gt_group_heading {
+#lsmvmxvlpq .gt_group_heading {
   padding: 8px;
   color: #333333;
   background-color: #FFFFFF;
@@ -338,7 +348,7 @@ hobo_df %>%
   vertical-align: middle;
 }
 
-#gzunngywdc .gt_empty_group_heading {
+#lsmvmxvlpq .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -353,15 +363,15 @@ hobo_df %>%
   vertical-align: middle;
 }
 
-#gzunngywdc .gt_from_md > :first-child {
+#lsmvmxvlpq .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#gzunngywdc .gt_from_md > :last-child {
+#lsmvmxvlpq .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#gzunngywdc .gt_row {
+#lsmvmxvlpq .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -380,7 +390,7 @@ hobo_df %>%
   overflow-x: hidden;
 }
 
-#gzunngywdc .gt_stub {
+#lsmvmxvlpq .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -392,7 +402,7 @@ hobo_df %>%
   padding-left: 12px;
 }
 
-#gzunngywdc .gt_summary_row {
+#lsmvmxvlpq .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -402,7 +412,7 @@ hobo_df %>%
   padding-right: 5px;
 }
 
-#gzunngywdc .gt_first_summary_row {
+#lsmvmxvlpq .gt_first_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -412,7 +422,7 @@ hobo_df %>%
   border-top-color: #D3D3D3;
 }
 
-#gzunngywdc .gt_grand_summary_row {
+#lsmvmxvlpq .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -422,7 +432,7 @@ hobo_df %>%
   padding-right: 5px;
 }
 
-#gzunngywdc .gt_first_grand_summary_row {
+#lsmvmxvlpq .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -432,11 +442,11 @@ hobo_df %>%
   border-top-color: #D3D3D3;
 }
 
-#gzunngywdc .gt_striped {
+#lsmvmxvlpq .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#gzunngywdc .gt_table_body {
+#lsmvmxvlpq .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -445,7 +455,7 @@ hobo_df %>%
   border-bottom-color: #D3D3D3;
 }
 
-#gzunngywdc .gt_footnotes {
+#lsmvmxvlpq .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -459,13 +469,13 @@ hobo_df %>%
   border-right-color: #D3D3D3;
 }
 
-#gzunngywdc .gt_footnote {
+#lsmvmxvlpq .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding: 4px;
 }
 
-#gzunngywdc .gt_sourcenotes {
+#lsmvmxvlpq .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -479,60 +489,60 @@ hobo_df %>%
   border-right-color: #D3D3D3;
 }
 
-#gzunngywdc .gt_sourcenote {
+#lsmvmxvlpq .gt_sourcenote {
   font-size: 90%;
   padding: 4px;
 }
 
-#gzunngywdc .gt_left {
+#lsmvmxvlpq .gt_left {
   text-align: left;
 }
 
-#gzunngywdc .gt_center {
+#lsmvmxvlpq .gt_center {
   text-align: center;
 }
 
-#gzunngywdc .gt_right {
+#lsmvmxvlpq .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#gzunngywdc .gt_font_normal {
+#lsmvmxvlpq .gt_font_normal {
   font-weight: normal;
 }
 
-#gzunngywdc .gt_font_bold {
+#lsmvmxvlpq .gt_font_bold {
   font-weight: bold;
 }
 
-#gzunngywdc .gt_font_italic {
+#lsmvmxvlpq .gt_font_italic {
   font-style: italic;
 }
 
-#gzunngywdc .gt_super {
+#lsmvmxvlpq .gt_super {
   font-size: 65%;
 }
 
-#gzunngywdc .gt_footnote_marks {
+#lsmvmxvlpq .gt_footnote_marks {
   font-style: italic;
   font-size: 65%;
 }
 </style>
-<div id="gzunngywdc" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
+<div id="lsmvmxvlpq" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
   
   <thead class="gt_col_headings">
     <tr>
       <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1"><strong>Variable</strong></th>
       <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>N</strong></th>
-      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>16396</strong>, N = 29,821<sup class="gt_footnote_marks">1</sup></th>
-      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>16397</strong>, N = 29,823<sup class="gt_footnote_marks">1</sup></th>
-      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>16882</strong>, N = 30,505<sup class="gt_footnote_marks">1</sup></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>16396</strong>, N = 29,749<sup class="gt_footnote_marks">1</sup></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>16397</strong>, N = 29,748<sup class="gt_footnote_marks">1</sup></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>16882</strong>, N = 30,428<sup class="gt_footnote_marks">1</sup></th>
     </tr>
   </thead>
   <tbody class="gt_table_body">
     <tr>
       <td class="gt_row gt_left">Water_Level</td>
-      <td class="gt_row gt_center">90,149</td>
+      <td class="gt_row gt_center">89,925</td>
       <td class="gt_row gt_center">1.72 (1.66, 1.82)</td>
       <td class="gt_row gt_center">1.42 (1.06, 1.79)</td>
       <td class="gt_row gt_center">2.39 (2.35, 2.44)</td>
@@ -555,6 +565,26 @@ hobo_df %>%
   </tfoot>
 </table></div>
 ```
+
+
+
+```r
+ggplot(hobo_df) +
+  geom_line(aes(Date_Time, Water_Level)) +
+  facet_wrap(~Site, ncol = 1, scales = "free_y") +
+  scale_x_datetime("Date", date_breaks = "1 month",
+                   date_labels = "%F") +
+  scale_y_unit("Depth") +
+  guides(x = guide_axis(angle = 90)) +
+  theme_ms() +
+  theme(axis.text.x = element_text(size = 8))
+```
+
+<div class="figure">
+<img src="document_files/figure-html/hoboplot-1.png" alt="Fifteen minute interval stream depth records at each site." width="100%" />
+<p class="caption">(\#fig:hoboplot)Fifteen minute interval stream depth records at each site.</p>
+</div>
+
 
 Periodic streamflow measurements were made at each SWQM site using a bottom-mounted multi-beam Doppler flow meter (Son-Tek IQ Plus) (Figure \@ref(iqimport)). The Son-Tek IQ Plus measures cross sectional area, stream height, and velocity. Using these measurements, the device utilizes an index velocity method to report instantaneous discharge. The streamflow measurement device were deployed for a few days at a time to capture the full hydrograph under varying flow conditions at each SWQM station. Only two Doppler flow meters were available, so deployments rotated between stations. Additionally, one device stopped working and was under repair for a few months. Streamflow was recorded at 15-minute intervals.
 
@@ -613,32 +643,32 @@ iqplus_df %>%
          #as.numeric(Depth) >= 0.26, ## minimum operating depth
          as.numeric(Flow) > 0) %>%
   filter(Site == "16396" &
-           Date_Time >= as.POSIXct("2020-05-03") &
-           Date_Time <= as.POSIXct("2020-05-31") &
+           Date_Time >= as.POSIXct("2020-05-03", tz = "Etc/GMT-6") &
+           Date_Time <= as.POSIXct("2020-05-31", tz = "Etc/GMT-6") &
            as.numeric(Depth) >= 0.875 |
            Site == "16396" &
-           Date_Time >= as.POSIXct("2020-12-01") &
-           Date_Time <= as.POSIXct("2021-01-31") &
+           Date_Time >= as.POSIXct("2020-12-01", tz = "Etc/GMT-6") &
+           Date_Time <= as.POSIXct("2021-01-31", tz = "Etc/GMT-6") &
            as.numeric(Depth) >= 0.875 |
            Site == "16397" &
-           Date_Time >= as.POSIXct("2020-12-15") &
-           Date_Time <= as.POSIXct("2020-12-31") &
+           Date_Time >= as.POSIXct("2020-12-15", tz = "Etc/GMT-6") &
+           Date_Time <= as.POSIXct("2020-12-31", tz = "Etc/GMT-6") &
            as.numeric(Depth) >= 0.875 |
            Site == "16397" &
-           Date_Time >= as.POSIXct("2021-01-05") &
+           Date_Time >= as.POSIXct("2021-01-05", tz = "Etc/GMT-6") &
            as.numeric(Depth) >= 0.875 |
            # as.numeric(Depth) > 2 |
            Site == "16882" &## possible sedimentation at low flows, removing low flow measurements.
-           Date_Time >= as.POSIXct("2020-05-01") &
-           Date_Time < as.POSIXct("2020-06-01") &
+           Date_Time >= as.POSIXct("2020-05-01", tz = "Etc/GMT-6") &
+           Date_Time < as.POSIXct("2020-06-01", tz = "Etc/GMT-6") &
            as.numeric(Depth) >= 0.875 |
            Site == "16882" & ## possible sedimentation at low flows, removing low flow measurements.
-           Date_Time >= as.POSIXct("2020-10-11") &
-           Date_Time < as.POSIXct("2020-10-31") & 
+           Date_Time >= as.POSIXct("2020-10-11", tz = "Etc/GMT-6") &
+           Date_Time < as.POSIXct("2020-10-31", tz = "Etc/GMT-6") & 
            as.numeric(Depth) >= 0.875 |
            Site == "16882" &
-           Date_Time >= as.POSIXct("2020-12-10") &
-           Date_Time < as.POSIXct("2020-12-31")) -> iqplus_df
+           Date_Time >= as.POSIXct("2020-12-10", tz = "Etc/GMT-6") &
+           Date_Time < as.POSIXct("2020-12-31", tz = "Etc/GMT-6")) -> iqplus_df
 
 
 
@@ -710,7 +740,7 @@ nRMSE = \frac{RMSE}{Q_{max}-Q_{min}}, \quad \textrm{where} \quad RMSE = \sqrt{\f
   (\#eq:nRMSE)
 \end{equation}
 
-Where $Q_i$ is the observed discharge at time $t$, $\hat{Q}_t$ is the estimated discharge at time $t$, $n$ is the number of samples, $Q_max$ and $Q_min$ are the maximum and minimum observed discharges. The resulting nRMSE calculation is a percentage value.
+Where $Q_i$ is the observed discharge at time $t$, $\hat{Q}_t$ is the estimated discharge at time $t$, $n$ is the number of samples, $Q_{max}$ and $Q_{min}$ are the maximum and minimum observed discharges. The resulting nRMSE calculation is a percentage value.
 
 ## Results
 
@@ -724,7 +754,7 @@ Based on exploratory analysis, two rating curves were developed for site 16396. 
 
 iqplus_df %>%
   filter(Site == "16396",
-         Date_Time < as.Date("2020-12-01")) %>%
+         Date_Time < as.POSIXct("2020-12-01", tz = "Etc/GMT-6")) %>%
   arrange(Date_Time) %>%
   mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
          diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours"))) %>%
@@ -745,8 +775,8 @@ iqplus_df %>%
 ## Make dataframe for site 16396 Dec 2020 through January 2021
 iqplus_df %>%
   filter(Site == "16396",
-         Date_Time >= as.Date("2020-12-01") &
-           Date_Time <= as.Date("2021-02-01")) %>%
+         Date_Time >= as.POSIXct("2020-12-01", tz = "Etc/GMT-6") &
+            Date_Time < as.POSIXct("2021-02-01", tz = "Etc/GMT-6")) %>%
   arrange(Date_Time) %>%
   mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
          diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours"))) %>%
@@ -849,7 +879,7 @@ Table: (\#tab:results16369)Rating curve parameter estimates and goodness-of-fit 
 |Site  |Period                  |        K|         a|         n|          x|       NSE| nRMSE|
 |:-----|:-----------------------|--------:|---------:|---------:|----------:|---------:|-----:|
 |16396 |2020-03-01 : 2020-11-30 | 4.700924| 0.3324034| 0.5018387| -0.1250084| 0.9793704|   1.7|
-|16396 |2020-12-01 : 2021-01-31 | 4.393197| 0.1780423| 0.6565699|  0.0975950| 0.9779719|   2.0|
+|16396 |2020-12-01 : 2021-01-31 | 4.393037| 0.1779943| 0.6566228|  0.0979444| 0.9779388|   2.0|
 
 
 ```r
@@ -906,7 +936,7 @@ p4 <- ggplot(df_16396_2020_12) +
 
 ### Site 16397
 
-Exploratory analysis indicated pooled conditions when during doppler flow meter deployment from August 2020 through November 2020. A single rating curve was developed at this site using the power function (Formula \@ref(eq:powerfunction)) since unsteady flow conditions were not observed in the hydrographs. Rating curve predictions resulted in NSE greater than 0.94 indicating excellent fit (Table \@ref(tab:results16369)). The nRMSE was less than 6%, which is likely a good result for the smaller sample sized obtained at this station and probably influenced by the observed low flow variance (Table \@ref(tab:results16369); Figure \@ref(fig:metricplot16396)).
+Exploratory analysis indicated pooled conditions when during doppler flow meter deployment from August 2020 through November 2020. A single rating curve was developed at this site using the power function (Formula \@ref(eq:powerfunction)) since unsteady flow conditions were not observed in the hydrographs. Rating curve predictions resulted in NSE greater than 0.95 indicating excellent fit (Table \@ref(tab:results16369)). The nRMSE was less than 5%, which is likely a good result for the smaller sample sized obtained at this station and probably influenced by the observed low flow variance (Table \@ref(tab:results16369); Figure \@ref(fig:metricplot16396)).
 
 
 
@@ -978,7 +1008,7 @@ Table: (\#tab:results16397)Rating curve parameter estimates and goodness-of-fit 
 
 |Site  |Period                  |         K|       H_0|        Z|       NSE| nRMSE|
 |:-----|:-----------------------|---------:|---------:|--------:|---------:|-----:|
-|16397 |2020-03-01 : 2020-01-30 | 0.0008266| -2.404998| 5.660803| 0.9517189|   4.9|
+|16397 |2020-03-01 : 2020-01-30 | 0.0010324| -2.340222| 5.566501| 0.9517108|   4.9|
 
 
 
@@ -1010,7 +1040,7 @@ p1 + p2 + plot_annotation(tag_levels = "A")
 
 ### Site 16882
 
-Based on exploratory analysis, three rating curves were developed for site 16396. The rating curve periods were 2020-03-03 through 2020-05-30; 2020-06-01 through 2020-10-31; and 2020-11-01 through 2021-01-31. Due to apparent unsteady flow in the observed hydrogaphs, we applied the Jones formula (Formula\@ref(eq:Jonesformula)).
+Based on exploratory analysis, three rating curves were developed for site 16396. The rating curve periods were 2020-03-03 through 2020-05-30; 2020-06-01 through 2020-10-31; and 2020-11-01 through 2021-01-31. Due to apparent unsteady flow in the observed hydrogaphs, we applied the Jones formula (Formula\@ref(eq:Jonesformula)). Results for March through September indicate the rating curve had a very good fit (NSE > 0.96, nRMSE <6%; Table \@ref(tab:results16882)). The high variance between observed and predicted values at low flows is attributable to an event with an extremely fast stream height change (> 1.5 feet per hour) that parameter estimation had difficulty accommodating (Figure \@ref(fig:metricplot16882)). Goodness of fit metrics for the remaining rating curves decreased but at still indicate good performance (Table \@ref(tab:results16882)). High variance in the measured low and mid streamflow values impact rating curve performance (Figure \@ref(fig:metricplot16882)).
 
 
 ```r
@@ -1018,8 +1048,8 @@ Based on exploratory analysis, three rating curves were developed for site 16396
 
 iqplus_df %>%
   filter(Site == "16882") %>%
-    filter(Date_Time > as.POSIXct("2020-05-01") &
-           Date_Time < as.POSIXct("2020-05-31")) %>%
+    filter(Date_Time > as.POSIXct("2020-05-01", tz = "Etc/GMT-6") &
+           Date_Time < as.POSIXct("2020-05-31", tz = "Etc/GMT-6")) %>%
   arrange(Date_Time) %>%
   mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
          diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours"))) %>%
@@ -1040,8 +1070,8 @@ iqplus_df %>%
 
 iqplus_df %>%
   filter(Site == "16882") %>%
-    filter(Date_Time > as.POSIXct("2020-10-01") &
-           Date_Time < as.POSIXct("2020-10-31")) %>%
+    filter(Date_Time > as.POSIXct("2020-10-01", tz = "Etc/GMT-6") &
+           Date_Time < as.POSIXct("2020-10-31", tz = "Etc/GMT-6")) %>%
   arrange(Date_Time) %>%
   mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
          diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours"))) %>%
@@ -1062,8 +1092,8 @@ iqplus_df %>%
 
 iqplus_df %>%
   filter(Site == "16882") %>%
-    filter(Date_Time >= as.POSIXct("2020-11-01") &
-           Date_Time < as.POSIXct("2021-01-31")) %>%
+    filter(Date_Time >= as.POSIXct("2020-11-01", tz = "Etc/GMT-6") &
+           Date_Time < as.POSIXct("2021-01-31", tz = "Etc/GMT-6")) %>%
   arrange(Date_Time) %>%
   mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
          diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours"))) %>%
@@ -1185,8 +1215,8 @@ Table: (\#tab:results16882)Rating curve parameter estimates and goodness-of-fit 
 |Site  |Period                  |        K|         a|         n|          x|       NSE| nRMSE|
 |:-----|:-----------------------|--------:|---------:|---------:|----------:|---------:|-----:|
 |16882 |2020-03-01 : 2020-09-30 | 4.520613| 0.9598066| 0.1515910| -0.5764236| 0.9674766|   5.5|
-|16882 |2020-10-01 : 2020-11-30 | 4.429873| 0.8771891| 0.2634828| -3.6730614| 0.9256386|   8.0|
-|16882 |2020-12-01 : 2021-01-31 | 3.862130| 0.5454953| 0.7893605|  0.3827598| 0.8827666|   2.0|
+|16882 |2020-10-01 : 2020-11-30 | 4.429873| 0.8771891| 0.2634828| -3.6730615| 0.9256386|   8.0|
+|16882 |2020-12-01 : 2021-01-31 | 3.855323| 0.5431169| 0.7936082|  0.3829932| 0.8833268|   1.9|
 
 
 ```r
@@ -1260,3 +1290,67 @@ p6 <- ggplot(df_16882_2020_12) +
 </div>
 
 
+
+### Daily flow estimation
+
+
+```r
+# use original hobo dataset
+# estimate flows using rating curves by date
+# aggregate to mean daily flows, report summary stats.
+
+hobo_df %>%
+  select(Site, Depth = Water_Level, Date_Time) %>%
+  group_split(Site) %>%
+  map(~mutate(.x,
+              time_lag = lag(Date_Time, default = Date_Time[1]),
+              time_lead = lead(Date_Time),
+              diff_time = as.numeric(difftime(time_lead,time_lag, units = "hours")),
+              diff_depth = lead(Depth) - lag(Depth))) %>%
+  map(~filter(.x, !is.na(diff_depth))) %>%
+  map(~mutate(.x,
+              J = as.numeric(diff_depth)/as.numeric(diff_time))) %>%
+  bind_rows() -> estimated_data
+
+## make dataframe of models, prediction data, then map predict function, and unnest datframes.
+tibble(rating_curve = list(rc_16396_2020_03, rc_16396_2020_12,
+                                          rc_16397,
+                                          rc_16882_2020_03, rc_16882_2020_10, rc_16882_2020_12),
+       data = list(
+         estimated_data %>% filter(Site == "16396" & Date_Time < as.POSIXct("2020-12-01", tz = "Etc/GMT-6")),
+         estimated_data %>% filter(Site == "16396" & Date_Time >= as.POSIXct("2020-12-01", tz = "Etc/GMT-6") & Date_Time < as.POSIXct("2021-02-01", tz = "Etc/GMT-6")),
+         estimated_data %>% filter(Site == "16397"),
+         estimated_data %>% filter(Site == "16882" & Date_Time < as.POSIXct("2020-10-01", tz = "Etc/GMT-6")),
+         estimated_data %>% filter(Site == "16882" & Date_Time >= as.POSIXct("2020-10-01", tz = "Etc/GMT-6") & Date_Time < as.POSIXct("2020-12-01", tz = "Etc/GMT-6")),
+         estimated_data %>% filter(Site == "16882" & Date_Time >= as.POSIXct("2020-12-01", tz = "Etc/GMT-6"))
+       )
+) %>%
+  mutate(predicted = map2(rating_curve, data,
+    ~exp(predict(.x, newdata = .y))
+  )) %>%
+  tidyr::unnest(c(data, predicted)) -> estimated_data
+
+## plot the data
+ggplot() +
+  geom_line(data = estimated_data, aes(Date_Time, predicted, color = "Rating curve estimate")) +
+  geom_point(data = iqplus_df, aes(Date_Time, as.numeric(Flow), color = "Measured streamflow"), alpha = 0.1) +
+  facet_wrap(~Site, ncol = 1, scales = "free_y") +
+  scale_y_continuous("Flow [cfs]") +
+  scale_x_datetime("Date", date_breaks = "1 month",
+                   date_labels = "%F") +
+  guides(x = guide_axis(angle = 90),
+         color = guide_legend("", override.aes = list(linetype = c(0, 1),
+                                                  shape = c(16, NA),
+                                                  alpha = 1))) +
+  theme_ms() +
+  theme(axis.text.x = element_text(size = 8))
+```
+
+<div class="figure">
+<img src="document_files/figure-html/instantresults-1.png" alt="Fifteen minute streamflow estimates with overlaid measured streamflow values" width="100%" />
+<p class="caption">(\#fig:instantresults)Fifteen minute streamflow estimates with overlaid measured streamflow values</p>
+</div>
+
+
+
+## References
