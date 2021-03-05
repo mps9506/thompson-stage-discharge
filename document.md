@@ -186,9 +186,13 @@ units(hobo_df$Abs_Pres) <- as_units("psi")
 hobo_df %>% 
   select(Site, Water_Level) %>%
   mutate(Water_Level = as.numeric(Water_Level)) %>%
-  tbl_summary(by = Site) %>%
-  add_n() %>%
-  modify_header(label = "**Variable**")
+  tbl_summary(by = Site,
+              label = list(Water_Level = "Stream Height"),
+              digits = list(Water_Level = 2),
+              statistic = list(all_continuous() ~ "{mean} ({sd})")) %>%
+  modify_header(label = "**Variable**") %>%
+  modify_spanning_header(all_stat_cols() ~ "**Sites**") %>%
+  modify_caption("Summary statistics of 15 minute stream levels measured at each site.")
 ```
 
 ```{=html}
@@ -196,7 +200,7 @@ hobo_df %>%
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
 }
 
-#lsmvmxvlpq .gt_table {
+#conskutojc .gt_table {
   display: table;
   border-collapse: collapse;
   margin-left: auto;
@@ -221,7 +225,7 @@ hobo_df %>%
   border-left-color: #D3D3D3;
 }
 
-#lsmvmxvlpq .gt_heading {
+#conskutojc .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -233,7 +237,7 @@ hobo_df %>%
   border-right-color: #D3D3D3;
 }
 
-#lsmvmxvlpq .gt_title {
+#conskutojc .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -243,7 +247,7 @@ hobo_df %>%
   border-bottom-width: 0;
 }
 
-#lsmvmxvlpq .gt_subtitle {
+#conskutojc .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -253,13 +257,13 @@ hobo_df %>%
   border-top-width: 0;
 }
 
-#lsmvmxvlpq .gt_bottom_border {
+#conskutojc .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#lsmvmxvlpq .gt_col_headings {
+#conskutojc .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -274,7 +278,7 @@ hobo_df %>%
   border-right-color: #D3D3D3;
 }
 
-#lsmvmxvlpq .gt_col_heading {
+#conskutojc .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -294,7 +298,7 @@ hobo_df %>%
   overflow-x: hidden;
 }
 
-#lsmvmxvlpq .gt_column_spanner_outer {
+#conskutojc .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -306,15 +310,15 @@ hobo_df %>%
   padding-right: 4px;
 }
 
-#lsmvmxvlpq .gt_column_spanner_outer:first-child {
+#conskutojc .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#lsmvmxvlpq .gt_column_spanner_outer:last-child {
+#conskutojc .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#lsmvmxvlpq .gt_column_spanner {
+#conskutojc .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -326,7 +330,7 @@ hobo_df %>%
   width: 100%;
 }
 
-#lsmvmxvlpq .gt_group_heading {
+#conskutojc .gt_group_heading {
   padding: 8px;
   color: #333333;
   background-color: #FFFFFF;
@@ -348,7 +352,7 @@ hobo_df %>%
   vertical-align: middle;
 }
 
-#lsmvmxvlpq .gt_empty_group_heading {
+#conskutojc .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -363,15 +367,15 @@ hobo_df %>%
   vertical-align: middle;
 }
 
-#lsmvmxvlpq .gt_from_md > :first-child {
+#conskutojc .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#lsmvmxvlpq .gt_from_md > :last-child {
+#conskutojc .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#lsmvmxvlpq .gt_row {
+#conskutojc .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -390,7 +394,7 @@ hobo_df %>%
   overflow-x: hidden;
 }
 
-#lsmvmxvlpq .gt_stub {
+#conskutojc .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -402,7 +406,7 @@ hobo_df %>%
   padding-left: 12px;
 }
 
-#lsmvmxvlpq .gt_summary_row {
+#conskutojc .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -412,7 +416,7 @@ hobo_df %>%
   padding-right: 5px;
 }
 
-#lsmvmxvlpq .gt_first_summary_row {
+#conskutojc .gt_first_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -422,7 +426,7 @@ hobo_df %>%
   border-top-color: #D3D3D3;
 }
 
-#lsmvmxvlpq .gt_grand_summary_row {
+#conskutojc .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -432,7 +436,7 @@ hobo_df %>%
   padding-right: 5px;
 }
 
-#lsmvmxvlpq .gt_first_grand_summary_row {
+#conskutojc .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -442,11 +446,11 @@ hobo_df %>%
   border-top-color: #D3D3D3;
 }
 
-#lsmvmxvlpq .gt_striped {
+#conskutojc .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#lsmvmxvlpq .gt_table_body {
+#conskutojc .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -455,7 +459,7 @@ hobo_df %>%
   border-bottom-color: #D3D3D3;
 }
 
-#lsmvmxvlpq .gt_footnotes {
+#conskutojc .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -469,13 +473,13 @@ hobo_df %>%
   border-right-color: #D3D3D3;
 }
 
-#lsmvmxvlpq .gt_footnote {
+#conskutojc .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding: 4px;
 }
 
-#lsmvmxvlpq .gt_sourcenotes {
+#conskutojc .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -489,51 +493,55 @@ hobo_df %>%
   border-right-color: #D3D3D3;
 }
 
-#lsmvmxvlpq .gt_sourcenote {
+#conskutojc .gt_sourcenote {
   font-size: 90%;
   padding: 4px;
 }
 
-#lsmvmxvlpq .gt_left {
+#conskutojc .gt_left {
   text-align: left;
 }
 
-#lsmvmxvlpq .gt_center {
+#conskutojc .gt_center {
   text-align: center;
 }
 
-#lsmvmxvlpq .gt_right {
+#conskutojc .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#lsmvmxvlpq .gt_font_normal {
+#conskutojc .gt_font_normal {
   font-weight: normal;
 }
 
-#lsmvmxvlpq .gt_font_bold {
+#conskutojc .gt_font_bold {
   font-weight: bold;
 }
 
-#lsmvmxvlpq .gt_font_italic {
+#conskutojc .gt_font_italic {
   font-style: italic;
 }
 
-#lsmvmxvlpq .gt_super {
+#conskutojc .gt_super {
   font-size: 65%;
 }
 
-#lsmvmxvlpq .gt_footnote_marks {
+#conskutojc .gt_footnote_marks {
   font-style: italic;
   font-size: 65%;
 }
 </style>
-<div id="lsmvmxvlpq" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
+<div id="conskutojc" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
   
   <thead class="gt_col_headings">
     <tr>
-      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1"><strong>Variable</strong></th>
-      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>N</strong></th>
+      <th class="gt_col_heading gt_center gt_columns_bottom_border" rowspan="2" colspan="1"><strong>Variable</strong></th>
+      <th class="gt_center gt_columns_top_border gt_column_spanner_outer" rowspan="1" colspan="3">
+        <span class="gt_column_spanner"><strong>Sites</strong></span>
+      </th>
+    </tr>
+    <tr>
       <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>16396</strong>, N = 29,749<sup class="gt_footnote_marks">1</sup></th>
       <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>16397</strong>, N = 29,748<sup class="gt_footnote_marks">1</sup></th>
       <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>16882</strong>, N = 30,428<sup class="gt_footnote_marks">1</sup></th>
@@ -541,23 +549,22 @@ hobo_df %>%
   </thead>
   <tbody class="gt_table_body">
     <tr>
-      <td class="gt_row gt_left">Water_Level</td>
-      <td class="gt_row gt_center">89,925</td>
-      <td class="gt_row gt_center">1.72 (1.66, 1.82)</td>
-      <td class="gt_row gt_center">1.42 (1.06, 1.79)</td>
-      <td class="gt_row gt_center">2.39 (2.35, 2.44)</td>
+      <td class="gt_row gt_left">Stream Height</td>
+      <td class="gt_row gt_center">1.90 (0.74)</td>
+      <td class="gt_row gt_center">1.53 (0.85)</td>
+      <td class="gt_row gt_center">2.46 (0.41)</td>
     </tr>
   </tbody>
   
   <tfoot>
     <tr class="gt_footnotes">
-      <td colspan="5">
+      <td colspan="4">
         <p class="gt_footnote">
           <sup class="gt_footnote_marks">
             <em>1</em>
           </sup>
            
-          Median (IQR)
+          Mean (SD)
           <br />
         </p>
       </td>
@@ -1008,7 +1015,7 @@ Table: (\#tab:results16397)Rating curve parameter estimates and goodness-of-fit 
 
 |Site  |Period                  |         K|       H_0|        Z|       NSE| nRMSE|
 |:-----|:-----------------------|---------:|---------:|--------:|---------:|-----:|
-|16397 |2020-03-01 : 2020-01-30 | 0.0010324| -2.340222| 5.566501| 0.9517108|   4.9|
+|16397 |2020-03-01 : 2020-01-30 | 0.0001475| -2.891489| 6.374075| 0.9522081|   4.9|
 
 
 
@@ -1215,7 +1222,7 @@ Table: (\#tab:results16882)Rating curve parameter estimates and goodness-of-fit 
 |Site  |Period                  |        K|         a|         n|          x|       NSE| nRMSE|
 |:-----|:-----------------------|--------:|---------:|---------:|----------:|---------:|-----:|
 |16882 |2020-03-01 : 2020-09-30 | 4.520613| 0.9598066| 0.1515910| -0.5764236| 0.9674766|   5.5|
-|16882 |2020-10-01 : 2020-11-30 | 4.429873| 0.8771891| 0.2634828| -3.6730615| 0.9256386|   8.0|
+|16882 |2020-10-01 : 2020-11-30 | 4.429873| 0.8771891| 0.2634828| -3.6730616| 0.9256386|   8.0|
 |16882 |2020-12-01 : 2021-01-31 | 3.855323| 0.5431169| 0.7936082|  0.3829932| 0.8833268|   1.9|
 
 
@@ -1351,6 +1358,424 @@ ggplot() +
 <p class="caption">(\#fig:instantresults)Fifteen minute streamflow estimates with overlaid measured streamflow values</p>
 </div>
 
+
+```r
+## calculate mean daily flows and report stats
+estimated_data %>%
+  select(Site, Date_Time, predicted) %>%
+  as_tsibble(key = Site, index = Date_Time) %>%
+  group_by_key() %>%
+  index_by(date = ~as_date(.)) %>%
+  summarise(mean_daily = mean(predicted, na.rm=TRUE)) -> mean_daily_flow
+
+## report summary stats
+mean_daily_flow %>% 
+  as_tibble() %>%
+  select(Site, mean_daily) %>%
+  tbl_summary(by = Site, 
+              label = list(mean_daily = "Mean Daily Flow (cfs)"),
+              digits = list(mean_daily = 2),
+              statistic = list(all_continuous() ~ "{mean} ({sd})")) %>%
+  modify_header(label = "**Variable**") %>%
+  modify_spanning_header(all_stat_cols() ~ "**Sites**") %>%
+  modify_caption("Summary statistics of mean daily flow estimates at each site.")
+```
+
+```{=html}
+<style>html {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
+}
+
+#wniglrtbym .gt_table {
+  display: table;
+  border-collapse: collapse;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#wniglrtbym .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#wniglrtbym .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#wniglrtbym .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 0;
+  padding-bottom: 4px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#wniglrtbym .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#wniglrtbym .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#wniglrtbym .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#wniglrtbym .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#wniglrtbym .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#wniglrtbym .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#wniglrtbym .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#wniglrtbym .gt_group_heading {
+  padding: 8px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#wniglrtbym .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#wniglrtbym .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#wniglrtbym .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#wniglrtbym .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#wniglrtbym .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 12px;
+}
+
+#wniglrtbym .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#wniglrtbym .gt_first_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+}
+
+#wniglrtbym .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#wniglrtbym .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#wniglrtbym .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#wniglrtbym .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#wniglrtbym .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#wniglrtbym .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding: 4px;
+}
+
+#wniglrtbym .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#wniglrtbym .gt_sourcenote {
+  font-size: 90%;
+  padding: 4px;
+}
+
+#wniglrtbym .gt_left {
+  text-align: left;
+}
+
+#wniglrtbym .gt_center {
+  text-align: center;
+}
+
+#wniglrtbym .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#wniglrtbym .gt_font_normal {
+  font-weight: normal;
+}
+
+#wniglrtbym .gt_font_bold {
+  font-weight: bold;
+}
+
+#wniglrtbym .gt_font_italic {
+  font-style: italic;
+}
+
+#wniglrtbym .gt_super {
+  font-size: 65%;
+}
+
+#wniglrtbym .gt_footnote_marks {
+  font-style: italic;
+  font-size: 65%;
+}
+</style>
+<div id="wniglrtbym" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
+  
+  <thead class="gt_col_headings">
+    <tr>
+      <th class="gt_col_heading gt_center gt_columns_bottom_border" rowspan="2" colspan="1"><strong>Variable</strong></th>
+      <th class="gt_center gt_columns_top_border gt_column_spanner_outer" rowspan="1" colspan="3">
+        <span class="gt_column_spanner"><strong>Sites</strong></span>
+      </th>
+    </tr>
+    <tr>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>16396</strong>, N = 312<sup class="gt_footnote_marks">1</sup></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>16397</strong>, N = 312<sup class="gt_footnote_marks">1</sup></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>16882</strong>, N = 318<sup class="gt_footnote_marks">1</sup></th>
+    </tr>
+  </thead>
+  <tbody class="gt_table_body">
+    <tr>
+      <td class="gt_row gt_left">Mean Daily Flow (cfs)</td>
+      <td class="gt_row gt_center">19.65 (44.20)</td>
+      <td class="gt_row gt_center">1.70 (2.06)</td>
+      <td class="gt_row gt_center">3.27 (8.84)</td>
+    </tr>
+  </tbody>
+  
+  <tfoot>
+    <tr class="gt_footnotes">
+      <td colspan="4">
+        <p class="gt_footnote">
+          <sup class="gt_footnote_marks">
+            <em>1</em>
+          </sup>
+           
+          Mean (SD)
+          <br />
+        </p>
+      </td>
+    </tr>
+  </tfoot>
+</table></div>
+```
+
+
+```r
+ggplot(mean_daily_flow) + 
+  geom_line(aes(date, mean_daily)) +
+  facet_wrap(~Site, ncol = 1, scales = "free_y") +
+  scale_x_date("Date", date_breaks = "1 month",
+                   date_labels = "%F") +
+  labs(y = "Mean daily streamflow [cfs]") +
+  theme_ms() +
+  guides(x = guide_axis(angle = 90)) +
+  theme(axis.text.x = element_text(size = 8)) 
+```
+
+<div class="figure">
+<img src="document_files/figure-html/meandailyresults-1.png" alt="Mean daily streamflow estimates." width="100%" />
+<p class="caption">(\#fig:meandailyresults)Mean daily streamflow estimates.</p>
+</div>
 
 
 ## References

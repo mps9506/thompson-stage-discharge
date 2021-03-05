@@ -1067,14 +1067,18 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
 <span id="cb2-68"><a href="#cb2-68"></a>hobo_df <span class="op">%&gt;%</span><span class="st"> </span></span>
 <span id="cb2-69"><a href="#cb2-69"></a><span class="st">  </span><span class="kw">select</span>(Site, Water_Level) <span class="op">%&gt;%</span></span>
 <span id="cb2-70"><a href="#cb2-70"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">Water_Level =</span> <span class="kw">as.numeric</span>(Water_Level)) <span class="op">%&gt;%</span></span>
-<span id="cb2-71"><a href="#cb2-71"></a><span class="st">  </span><span class="kw">tbl_summary</span>(<span class="dt">by =</span> Site) <span class="op">%&gt;%</span></span>
-<span id="cb2-72"><a href="#cb2-72"></a><span class="st">  </span><span class="kw">add_n</span>() <span class="op">%&gt;%</span></span>
-<span id="cb2-73"><a href="#cb2-73"></a><span class="st">  </span><span class="kw">modify_header</span>(<span class="dt">label =</span> <span class="st">&quot;**Variable**&quot;</span>)</span></code></pre></div>
+<span id="cb2-71"><a href="#cb2-71"></a><span class="st">  </span><span class="kw">tbl_summary</span>(<span class="dt">by =</span> Site,</span>
+<span id="cb2-72"><a href="#cb2-72"></a>              <span class="dt">label =</span> <span class="kw">list</span>(<span class="dt">Water_Level =</span> <span class="st">&quot;Stream Height&quot;</span>),</span>
+<span id="cb2-73"><a href="#cb2-73"></a>              <span class="dt">digits =</span> <span class="kw">list</span>(<span class="dt">Water_Level =</span> <span class="dv">2</span>),</span>
+<span id="cb2-74"><a href="#cb2-74"></a>              <span class="dt">statistic =</span> <span class="kw">list</span>(<span class="kw">all_continuous</span>() <span class="op">~</span><span class="st"> &quot;{mean} ({sd})&quot;</span>)) <span class="op">%&gt;%</span></span>
+<span id="cb2-75"><a href="#cb2-75"></a><span class="st">  </span><span class="kw">modify_header</span>(<span class="dt">label =</span> <span class="st">&quot;**Variable**&quot;</span>) <span class="op">%&gt;%</span></span>
+<span id="cb2-76"><a href="#cb2-76"></a><span class="st">  </span><span class="kw">modify_spanning_header</span>(<span class="kw">all_stat_cols</span>() <span class="op">~</span><span class="st"> &quot;**Sites**&quot;</span>) <span class="op">%&gt;%</span></span>
+<span id="cb2-77"><a href="#cb2-77"></a><span class="st">  </span><span class="kw">modify_caption</span>(<span class="st">&quot;Summary statistics of 15 minute stream levels measured at each site.&quot;</span>)</span></code></pre></div>
 <style>html {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
 }
 
-#lsmvmxvlpq .gt_table {
+#conskutojc .gt_table {
   display: table;
   border-collapse: collapse;
   margin-left: auto;
@@ -1099,7 +1103,7 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   border-left-color: #D3D3D3;
 }
 
-#lsmvmxvlpq .gt_heading {
+#conskutojc .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -1111,7 +1115,7 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   border-right-color: #D3D3D3;
 }
 
-#lsmvmxvlpq .gt_title {
+#conskutojc .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -1121,7 +1125,7 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   border-bottom-width: 0;
 }
 
-#lsmvmxvlpq .gt_subtitle {
+#conskutojc .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -1131,13 +1135,13 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   border-top-width: 0;
 }
 
-#lsmvmxvlpq .gt_bottom_border {
+#conskutojc .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#lsmvmxvlpq .gt_col_headings {
+#conskutojc .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1152,7 +1156,7 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   border-right-color: #D3D3D3;
 }
 
-#lsmvmxvlpq .gt_col_heading {
+#conskutojc .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1172,7 +1176,7 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   overflow-x: hidden;
 }
 
-#lsmvmxvlpq .gt_column_spanner_outer {
+#conskutojc .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1184,15 +1188,15 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   padding-right: 4px;
 }
 
-#lsmvmxvlpq .gt_column_spanner_outer:first-child {
+#conskutojc .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#lsmvmxvlpq .gt_column_spanner_outer:last-child {
+#conskutojc .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#lsmvmxvlpq .gt_column_spanner {
+#conskutojc .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -1204,7 +1208,7 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   width: 100%;
 }
 
-#lsmvmxvlpq .gt_group_heading {
+#conskutojc .gt_group_heading {
   padding: 8px;
   color: #333333;
   background-color: #FFFFFF;
@@ -1226,7 +1230,7 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   vertical-align: middle;
 }
 
-#lsmvmxvlpq .gt_empty_group_heading {
+#conskutojc .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -1241,15 +1245,15 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   vertical-align: middle;
 }
 
-#lsmvmxvlpq .gt_from_md > :first-child {
+#conskutojc .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#lsmvmxvlpq .gt_from_md > :last-child {
+#conskutojc .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#lsmvmxvlpq .gt_row {
+#conskutojc .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1268,7 +1272,7 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   overflow-x: hidden;
 }
 
-#lsmvmxvlpq .gt_stub {
+#conskutojc .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1280,7 +1284,7 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   padding-left: 12px;
 }
 
-#lsmvmxvlpq .gt_summary_row {
+#conskutojc .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1290,7 +1294,7 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   padding-right: 5px;
 }
 
-#lsmvmxvlpq .gt_first_summary_row {
+#conskutojc .gt_first_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1300,7 +1304,7 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   border-top-color: #D3D3D3;
 }
 
-#lsmvmxvlpq .gt_grand_summary_row {
+#conskutojc .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1310,7 +1314,7 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   padding-right: 5px;
 }
 
-#lsmvmxvlpq .gt_first_grand_summary_row {
+#conskutojc .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1320,11 +1324,11 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   border-top-color: #D3D3D3;
 }
 
-#lsmvmxvlpq .gt_striped {
+#conskutojc .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#lsmvmxvlpq .gt_table_body {
+#conskutojc .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1333,7 +1337,7 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   border-bottom-color: #D3D3D3;
 }
 
-#lsmvmxvlpq .gt_footnotes {
+#conskutojc .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1347,13 +1351,13 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   border-right-color: #D3D3D3;
 }
 
-#lsmvmxvlpq .gt_footnote {
+#conskutojc .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding: 4px;
 }
 
-#lsmvmxvlpq .gt_sourcenotes {
+#conskutojc .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1367,51 +1371,55 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   border-right-color: #D3D3D3;
 }
 
-#lsmvmxvlpq .gt_sourcenote {
+#conskutojc .gt_sourcenote {
   font-size: 90%;
   padding: 4px;
 }
 
-#lsmvmxvlpq .gt_left {
+#conskutojc .gt_left {
   text-align: left;
 }
 
-#lsmvmxvlpq .gt_center {
+#conskutojc .gt_center {
   text-align: center;
 }
 
-#lsmvmxvlpq .gt_right {
+#conskutojc .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#lsmvmxvlpq .gt_font_normal {
+#conskutojc .gt_font_normal {
   font-weight: normal;
 }
 
-#lsmvmxvlpq .gt_font_bold {
+#conskutojc .gt_font_bold {
   font-weight: bold;
 }
 
-#lsmvmxvlpq .gt_font_italic {
+#conskutojc .gt_font_italic {
   font-style: italic;
 }
 
-#lsmvmxvlpq .gt_super {
+#conskutojc .gt_super {
   font-size: 65%;
 }
 
-#lsmvmxvlpq .gt_footnote_marks {
+#conskutojc .gt_footnote_marks {
   font-style: italic;
   font-size: 65%;
 }
 </style>
-<div id="lsmvmxvlpq" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
+<div id="conskutojc" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
   
   <thead class="gt_col_headings">
     <tr>
-      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1"><strong>Variable</strong></th>
-      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>N</strong></th>
+      <th class="gt_col_heading gt_center gt_columns_bottom_border" rowspan="2" colspan="1"><strong>Variable</strong></th>
+      <th class="gt_center gt_columns_top_border gt_column_spanner_outer" rowspan="1" colspan="3">
+        <span class="gt_column_spanner"><strong>Sites</strong></span>
+      </th>
+    </tr>
+    <tr>
       <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>16396</strong>, N = 29,749<sup class="gt_footnote_marks">1</sup></th>
       <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>16397</strong>, N = 29,748<sup class="gt_footnote_marks">1</sup></th>
       <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>16882</strong>, N = 30,428<sup class="gt_footnote_marks">1</sup></th>
@@ -1419,23 +1427,22 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   </thead>
   <tbody class="gt_table_body">
     <tr>
-      <td class="gt_row gt_left">Water_Level</td>
-      <td class="gt_row gt_center">89,925</td>
-      <td class="gt_row gt_center">1.72 (1.66, 1.82)</td>
-      <td class="gt_row gt_center">1.42 (1.06, 1.79)</td>
-      <td class="gt_row gt_center">2.39 (2.35, 2.44)</td>
+      <td class="gt_row gt_left">Stream Height</td>
+      <td class="gt_row gt_center">1.90 (0.74)</td>
+      <td class="gt_row gt_center">1.53 (0.85)</td>
+      <td class="gt_row gt_center">2.46 (0.41)</td>
     </tr>
   </tbody>
   
   <tfoot>
     <tr class="gt_footnotes">
-      <td colspan="5">
+      <td colspan="4">
         <p class="gt_footnote">
           <sup class="gt_footnote_marks">
             <em>1</em>
           </sup>
            
-          Median (IQR)
+          Mean (SD)
           <br />
         </p>
       </td>
@@ -1872,10 +1879,10 @@ Figure 3: Scatter plot of rating curve estimated flows against measured flows (A
 <tr class="odd">
 <td align="left">16397</td>
 <td align="left">2020-03-01 : 2020-01-30</td>
-<td align="right">0.0010324</td>
-<td align="right">-2.340222</td>
-<td align="right">5.566501</td>
-<td align="right">0.9517108</td>
+<td align="right">0.0001475</td>
+<td align="right">-2.891489</td>
+<td align="right">6.374075</td>
+<td align="right">0.9522081</td>
 <td align="right">4.9</td>
 </tr>
 </tbody>
@@ -2098,7 +2105,7 @@ Figure 4: Scatter plot of rating curve estimated flows against measured flows (A
 <td align="right">4.429873</td>
 <td align="right">0.8771891</td>
 <td align="right">0.2634828</td>
-<td align="right">-3.6730615</td>
+<td align="right">-3.6730616</td>
 <td align="right">0.9256386</td>
 <td align="right">8.0</td>
 </tr>
@@ -2238,6 +2245,415 @@ Figure 5: Scatter plot of rating curve estimated flows against measured flows (A
 <img src="document_files/figure-html/instantresults-1.png" alt="Fifteen minute streamflow estimates with overlaid measured streamflow values" width="100%" />
 <p class="caption">
 Figure 6: Fifteen minute streamflow estimates with overlaid measured streamflow values
+</p>
+</div>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1"></a><span class="co">## calculate mean daily flows and report stats</span></span>
+<span id="cb20-2"><a href="#cb20-2"></a>estimated_data <span class="op">%&gt;%</span></span>
+<span id="cb20-3"><a href="#cb20-3"></a><span class="st">  </span><span class="kw">select</span>(Site, Date_Time, predicted) <span class="op">%&gt;%</span></span>
+<span id="cb20-4"><a href="#cb20-4"></a><span class="st">  </span><span class="kw">as_tsibble</span>(<span class="dt">key =</span> Site, <span class="dt">index =</span> Date_Time) <span class="op">%&gt;%</span></span>
+<span id="cb20-5"><a href="#cb20-5"></a><span class="st">  </span><span class="kw">group_by_key</span>() <span class="op">%&gt;%</span></span>
+<span id="cb20-6"><a href="#cb20-6"></a><span class="st">  </span><span class="kw">index_by</span>(<span class="dt">date =</span> <span class="op">~</span><span class="kw">as_date</span>(.)) <span class="op">%&gt;%</span></span>
+<span id="cb20-7"><a href="#cb20-7"></a><span class="st">  </span><span class="kw">summarise</span>(<span class="dt">mean_daily =</span> <span class="kw">mean</span>(predicted, <span class="dt">na.rm=</span><span class="ot">TRUE</span>)) -&gt;<span class="st"> </span>mean_daily_flow</span>
+<span id="cb20-8"><a href="#cb20-8"></a></span>
+<span id="cb20-9"><a href="#cb20-9"></a><span class="co">## report summary stats</span></span>
+<span id="cb20-10"><a href="#cb20-10"></a>mean_daily_flow <span class="op">%&gt;%</span><span class="st"> </span></span>
+<span id="cb20-11"><a href="#cb20-11"></a><span class="st">  </span><span class="kw">as_tibble</span>() <span class="op">%&gt;%</span></span>
+<span id="cb20-12"><a href="#cb20-12"></a><span class="st">  </span><span class="kw">select</span>(Site, mean_daily) <span class="op">%&gt;%</span></span>
+<span id="cb20-13"><a href="#cb20-13"></a><span class="st">  </span><span class="kw">tbl_summary</span>(<span class="dt">by =</span> Site, </span>
+<span id="cb20-14"><a href="#cb20-14"></a>              <span class="dt">label =</span> <span class="kw">list</span>(<span class="dt">mean_daily =</span> <span class="st">&quot;Mean Daily Flow (cfs)&quot;</span>),</span>
+<span id="cb20-15"><a href="#cb20-15"></a>              <span class="dt">digits =</span> <span class="kw">list</span>(<span class="dt">mean_daily =</span> <span class="dv">2</span>),</span>
+<span id="cb20-16"><a href="#cb20-16"></a>              <span class="dt">statistic =</span> <span class="kw">list</span>(<span class="kw">all_continuous</span>() <span class="op">~</span><span class="st"> &quot;{mean} ({sd})&quot;</span>)) <span class="op">%&gt;%</span></span>
+<span id="cb20-17"><a href="#cb20-17"></a><span class="st">  </span><span class="kw">modify_header</span>(<span class="dt">label =</span> <span class="st">&quot;**Variable**&quot;</span>) <span class="op">%&gt;%</span></span>
+<span id="cb20-18"><a href="#cb20-18"></a><span class="st">  </span><span class="kw">modify_spanning_header</span>(<span class="kw">all_stat_cols</span>() <span class="op">~</span><span class="st"> &quot;**Sites**&quot;</span>) <span class="op">%&gt;%</span></span>
+<span id="cb20-19"><a href="#cb20-19"></a><span class="st">  </span><span class="kw">modify_caption</span>(<span class="st">&quot;Summary statistics of mean daily flow estimates at each site.&quot;</span>)</span></code></pre></div>
+<style>html {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
+}
+
+#wniglrtbym .gt_table {
+  display: table;
+  border-collapse: collapse;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#wniglrtbym .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#wniglrtbym .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#wniglrtbym .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 0;
+  padding-bottom: 4px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#wniglrtbym .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#wniglrtbym .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#wniglrtbym .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#wniglrtbym .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#wniglrtbym .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#wniglrtbym .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#wniglrtbym .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#wniglrtbym .gt_group_heading {
+  padding: 8px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#wniglrtbym .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#wniglrtbym .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#wniglrtbym .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#wniglrtbym .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#wniglrtbym .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 12px;
+}
+
+#wniglrtbym .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#wniglrtbym .gt_first_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+}
+
+#wniglrtbym .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#wniglrtbym .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#wniglrtbym .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#wniglrtbym .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#wniglrtbym .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#wniglrtbym .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding: 4px;
+}
+
+#wniglrtbym .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#wniglrtbym .gt_sourcenote {
+  font-size: 90%;
+  padding: 4px;
+}
+
+#wniglrtbym .gt_left {
+  text-align: left;
+}
+
+#wniglrtbym .gt_center {
+  text-align: center;
+}
+
+#wniglrtbym .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#wniglrtbym .gt_font_normal {
+  font-weight: normal;
+}
+
+#wniglrtbym .gt_font_bold {
+  font-weight: bold;
+}
+
+#wniglrtbym .gt_font_italic {
+  font-style: italic;
+}
+
+#wniglrtbym .gt_super {
+  font-size: 65%;
+}
+
+#wniglrtbym .gt_footnote_marks {
+  font-style: italic;
+  font-size: 65%;
+}
+</style>
+<div id="wniglrtbym" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
+  
+  <thead class="gt_col_headings">
+    <tr>
+      <th class="gt_col_heading gt_center gt_columns_bottom_border" rowspan="2" colspan="1"><strong>Variable</strong></th>
+      <th class="gt_center gt_columns_top_border gt_column_spanner_outer" rowspan="1" colspan="3">
+        <span class="gt_column_spanner"><strong>Sites</strong></span>
+      </th>
+    </tr>
+    <tr>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>16396</strong>, N = 312<sup class="gt_footnote_marks">1</sup></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>16397</strong>, N = 312<sup class="gt_footnote_marks">1</sup></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>16882</strong>, N = 318<sup class="gt_footnote_marks">1</sup></th>
+    </tr>
+  </thead>
+  <tbody class="gt_table_body">
+    <tr>
+      <td class="gt_row gt_left">Mean Daily Flow (cfs)</td>
+      <td class="gt_row gt_center">19.65 (44.20)</td>
+      <td class="gt_row gt_center">1.70 (2.06)</td>
+      <td class="gt_row gt_center">3.27 (8.84)</td>
+    </tr>
+  </tbody>
+  
+  <tfoot>
+    <tr class="gt_footnotes">
+      <td colspan="4">
+        <p class="gt_footnote">
+          <sup class="gt_footnote_marks">
+            <em>1</em>
+          </sup>
+           
+          Mean (SD)
+          <br />
+        </p>
+      </td>
+    </tr>
+  </tfoot>
+</table></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1"></a><span class="kw">ggplot</span>(mean_daily_flow) <span class="op">+</span><span class="st"> </span></span>
+<span id="cb21-2"><a href="#cb21-2"></a><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(date, mean_daily)) <span class="op">+</span></span>
+<span id="cb21-3"><a href="#cb21-3"></a><span class="st">  </span><span class="kw">facet_wrap</span>(<span class="op">~</span>Site, <span class="dt">ncol =</span> <span class="dv">1</span>, <span class="dt">scales =</span> <span class="st">&quot;free_y&quot;</span>) <span class="op">+</span></span>
+<span id="cb21-4"><a href="#cb21-4"></a><span class="st">  </span><span class="kw">scale_x_date</span>(<span class="st">&quot;Date&quot;</span>, <span class="dt">date_breaks =</span> <span class="st">&quot;1 month&quot;</span>,</span>
+<span id="cb21-5"><a href="#cb21-5"></a>                   <span class="dt">date_labels =</span> <span class="st">&quot;%F&quot;</span>) <span class="op">+</span></span>
+<span id="cb21-6"><a href="#cb21-6"></a><span class="st">  </span><span class="kw">labs</span>(<span class="dt">y =</span> <span class="st">&quot;Mean daily streamflow [cfs]&quot;</span>) <span class="op">+</span></span>
+<span id="cb21-7"><a href="#cb21-7"></a><span class="st">  </span><span class="kw">theme_ms</span>() <span class="op">+</span></span>
+<span id="cb21-8"><a href="#cb21-8"></a><span class="st">  </span><span class="kw">guides</span>(<span class="dt">x =</span> <span class="kw">guide_axis</span>(<span class="dt">angle =</span> <span class="dv">90</span>)) <span class="op">+</span></span>
+<span id="cb21-9"><a href="#cb21-9"></a><span class="st">  </span><span class="kw">theme</span>(<span class="dt">axis.text.x =</span> <span class="kw">element_text</span>(<span class="dt">size =</span> <span class="dv">8</span>)) </span></code></pre></div>
+<div class="figure"><span id="fig:meandailyresults"></span>
+<img src="document_files/figure-html/meandailyresults-1.png" alt="Mean daily streamflow estimates." width="100%" />
+<p class="caption">
+Figure 7: Mean daily streamflow estimates.
 </p>
 </div>
 </div>

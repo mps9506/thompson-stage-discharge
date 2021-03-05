@@ -13,3 +13,4 @@ fig:metricplot16397
 tab:results16882
 fig:metricplot16882
 fig:instantresults
+fig:meandailyresults
