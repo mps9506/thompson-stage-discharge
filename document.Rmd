@@ -169,7 +169,16 @@ hobo_df <- hobo_df %>%
   ## select the columns we need to keep
   dplyr::select(Abs_Pres, Temp, Water_Level, Site, Date_Time) %>%
   ## filter rows without water_level
-  dplyr::filter(!is.na(Water_Level))
+  dplyr::filter(!is.na(Water_Level)) %>%
+  ## filter records that are from when unit was placed or removed from water
+  filter(
+    Site == "16882" & Date_Time >= as.POSIXct("2020-03-03 10:19:16", tz = "Etc/GMT-6") & 
+      Date_Time != as.POSIXct("2020-07-30 10:19:16", tz = "Etc/GMT-6") |
+      Site == "16397" & Date_Time >= as.POSIXct("2020-03-03 09:43:57",tz = "Etc/GMT-6")  &
+      Date_Time != as.POSIXct("2021-01-14 09:13:57", tz = "Etc/GMT-6") |
+      Site == "16396" & Date_Time >= as.POSIXct("2020-03-03 09:02:19", tz = "Etc/GMT-6") &
+      Date_Time != as.POSIXct("2021-01-14 08:17:19", tz = "Etc/GMT-6")
+  ) 
   
 ## attach units to our columns
 units(hobo_df$Water_Level) <- as_units("ft")
@@ -184,6 +193,20 @@ hobo_df %>%
   add_n() %>%
   modify_header(label = "**Variable**")
 ```
+
+
+```{r hoboplot, fig.cap="Fifteen minute interval stream depth records at each site.", out.width="100%", fig.asp=1}
+ggplot(hobo_df) +
+  geom_line(aes(Date_Time, Water_Level)) +
+  facet_wrap(~Site, ncol = 1, scales = "free_y") +
+  scale_x_datetime("Date", date_breaks = "1 month",
+                   date_labels = "%F") +
+  scale_y_unit("Depth") +
+  guides(x = guide_axis(angle = 90)) +
+  theme_ms() +
+  theme(axis.text.x = element_text(size = 8))
+```
+
 
 Periodic streamflow measurements were made at each SWQM site using a bottom-mounted multi-beam Doppler flow meter (Son-Tek IQ Plus) (Figure \@ref(iqimport)). The Son-Tek IQ Plus measures cross sectional area, stream height, and velocity. Using these measurements, the device utilizes an index velocity method to report instantaneous discharge. The streamflow measurement device were deployed for a few days at a time to capture the full hydrograph under varying flow conditions at each SWQM station. Only two Doppler flow meters were available, so deployments rotated between stations. Additionally, one device stopped working and was under repair for a few months. Streamflow was recorded at 15-minute intervals.
 
@@ -842,6 +865,33 @@ p6 <- ggplot(df_16882_2020_12) +
 
 
 ```
+
+
+
+### Daily flow estimation
+
+```{r}
+## use original hobo dataset
+## clean up obvious flows where it was pulled out of the water
+## estimate flows using rating curves by date
+## aggregate to mean daily flows, report summary stats.
+hobo_df %>%
+  group_by(Site) %>%
+  filter(
+    Site == "16882" & Date_Time >= as.POSIXct("2020-03-03 10:19:16", tz = "Etc/GMT-6") & 
+      Date_Time != as.POSIXct("2020-07-30 10:19:16", tz = "Etc/GMT-6") |
+      Site == "16397" & Date_Time >= as.POSIXct("2020-03-03 09:43:57",tz = "Etc/GMT-6")  &
+      Date_Time != as.POSIXct("2021-01-14 09:13:57", tz = "Etc/GMT-6") |
+      Site == "16396" & Date_Time >= as.POSIXct("2020-03-03 09:02:19", tz = "Etc/GMT-6") &
+      Date_Time != as.POSIXct("2021-01-14 08:17:19", tz = "Etc/GMT-6")
+  ) %>%
+  ggplot() +
+  geom_line(aes(Date_Time, Water_Level)) +
+  facet_wrap(~Site, ncol = 1) +
+  scale_x_datetime(date_breaks = "1 month",
+                   date_labels = "%F")
+```
+
 
 
 ## References
