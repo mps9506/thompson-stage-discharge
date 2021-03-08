@@ -3,6 +3,7 @@ eq:Jonesformula
 eq:finitediff
 eq:sseformula
 eq:dar
+tab:hoboimport
 fig:hoboplot
 fig:iqimport
 eq:nseformula
@@ -14,4 +15,5 @@ fig:metricplot16397
 tab:results16882
 fig:metricplot16882
 fig:instantresults
+tab:unnamed-chunk-9
 fig:meandailyresults

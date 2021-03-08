@@ -999,19 +999,19 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
 </div>
 <div id="ungaged-streamflow-estimation" class="section level3">
 <h3>Ungaged streamflow estimation</h3>
-<p>Rating curves allowed development of daily streamflow records for the period of time that stream depth data recorders were deployed. However, estimation of daily streamflows when sites are ungaged requires additional information. Most commonly, daily streamflow data from a nearby gaged watershed is used to estiamte flows in the ungaged watershed using a drainage area ratio or regression methods. With the drainage area ratio, daily streamflows are transferred from one basin to the other by multiplying the area ratio to daily streamflows:</p>
+<p>Rating curves allowed development of daily streamflow records for the period of time that stream depth data recorders were deployed. However, estimation of daily streamflows when sites are ungaged requires additional information. Most commonly, daily streamflow data from a nearby gaged watershed is used to estimate flows in the ungaged watershed using a drainage area ratio or regression methods. With the drainage area ratio, daily streamflows are transferred from one basin to the other by multiplying the area ratio to daily streamflows:</p>
 <p><span class="math display" id="eq:dar">\[\begin{equation}
-Q_{yt} = Q_{xt}\bigg(\frac{A_y}{A_x}\bigg)^\phi
+Q_y^t = Q_x^t\bigg(\frac{A_y}{A_x}\bigg)^\phi
   \tag{5}
 \end{equation}\]</span></p>
-<p>Where <span class="math inline">\(Q_{yt}\)</span> is streamflow at ungaged basin <span class="math inline">\(y\)</span> and time <span class="math inline">\(t\)</span>, <span class="math inline">\(Q_{xt}\)</span> is streamflow at gaged basin <span class="math inline">\(x\)</span> and time <span class="math inline">\(t\)</span>, and <span class="math inline">\(\frac{A_y}{A_x}\)</span> is the area ratio of the basins. Parameter <span class="math inline">\(\phi\)</span> is typically equal to one [@asquith_statewide_2006]. However, @asquith_statewide_2006 provides empirically estimated values of <span class="math inline">\(\phi\)</span> for use in the drainage area ratio when applied in Texas.</p>
+<p>Where <span class="math inline">\(Q_y^t\)</span> is streamflow at ungaged basin <span class="math inline">\(y\)</span> and time <span class="math inline">\(t\)</span>, <span class="math inline">\(Q_x^t\)</span> is streamflow at gaged basin <span class="math inline">\(x\)</span> and time <span class="math inline">\(t\)</span>, and <span class="math inline">\(\frac{A_y}{A_x}\)</span> is the area ratio of the basins. Parameter <span class="math inline">\(\phi\)</span> is typically equal to one <span class="citation">(Asquith, Roussel, and Vrabel <a href="#ref-asquith_statewide_2006" role="doc-biblioref">2006</a>)</span>. However, <span class="citation">Asquith, Roussel, and Vrabel (<a href="#ref-asquith_statewide_2006" role="doc-biblioref">2006</a>)</span> provides empirically estimated values of <span class="math inline">\(\phi\)</span> for use in the drainage area ratio when applied in Texas.</p>
 </div>
 </div>
 <div id="method" class="section level2">
 <h2>Method</h2>
 <div id="data-collection" class="section level3">
 <h3>Data collection</h3>
-<p>Water level data loggers (HOBO U20 Series Water Level Data Loggers) were deployed at TCEQ SWQM stations 16396, 16397, and 16882 (Table <a href="#tab:hoboimport"><strong>??</strong></a>, Figure <a href="#fig:hoboplot">1</a>). An additional data logger was deployed at … to provide ambient atmospheric pressure corrections for the data loggers deployed underwater. Water level data loggers were deployed near continuously from 2020-03-02 through 2021-..-… and setup to record water level at 15-minute intervals.</p>
+<p>Water level data loggers (HOBO U20 Series Water Level Data Loggers) were deployed at TCEQ SWQM stations 16396, 16397, and 16882 (Table <a href="#tab:hoboimport">1</a>, Figure <a href="#fig:hoboplot">1</a>). An additional data logger was deployed at … to provide ambient atmospheric pressure corrections for the data loggers deployed underwater. Water level data loggers were deployed near continuously from 2020-03-02 through 2021-..-… and setup to record water level at 15-minute intervals.</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="co">## make a list of files to import</span></span>
 <span id="cb2-2"><a href="#cb2-2"></a>file_paths &lt;-<span class="st"> </span><span class="kw">paste0</span>(<span class="kw">here</span>(<span class="st">&quot;Data/Hobo&quot;</span>),</span>
 <span id="cb2-3"><a href="#cb2-3"></a>                     <span class="st">&quot;/&quot;</span>,</span>
@@ -1088,382 +1088,27 @@ Q_{yt} = Q_{xt}\bigg(\frac{A_y}{A_x}\bigg)^\phi
 <span id="cb2-74"><a href="#cb2-74"></a>              <span class="dt">statistic =</span> <span class="kw">list</span>(<span class="kw">all_continuous</span>() <span class="op">~</span><span class="st"> &quot;{mean} ({sd})&quot;</span>)) <span class="op">%&gt;%</span></span>
 <span id="cb2-75"><a href="#cb2-75"></a><span class="st">  </span><span class="kw">modify_header</span>(<span class="dt">label =</span> <span class="st">&quot;**Variable**&quot;</span>) <span class="op">%&gt;%</span></span>
 <span id="cb2-76"><a href="#cb2-76"></a><span class="st">  </span><span class="kw">modify_spanning_header</span>(<span class="kw">all_stat_cols</span>() <span class="op">~</span><span class="st"> &quot;**Sites**&quot;</span>) <span class="op">%&gt;%</span></span>
-<span id="cb2-77"><a href="#cb2-77"></a><span class="st">  </span><span class="kw">modify_caption</span>(<span class="st">&quot;Summary statistics of 15 minute stream levels measured at each site.&quot;</span>)</span></code></pre></div>
-<style>html {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
-}
-
-#iynvxciqop .gt_table {
-  display: table;
-  border-collapse: collapse;
-  margin-left: auto;
-  margin-right: auto;
-  color: #333333;
-  font-size: 16px;
-  font-weight: normal;
-  font-style: normal;
-  background-color: #FFFFFF;
-  width: auto;
-  border-top-style: solid;
-  border-top-width: 2px;
-  border-top-color: #A8A8A8;
-  border-right-style: none;
-  border-right-width: 2px;
-  border-right-color: #D3D3D3;
-  border-bottom-style: solid;
-  border-bottom-width: 2px;
-  border-bottom-color: #A8A8A8;
-  border-left-style: none;
-  border-left-width: 2px;
-  border-left-color: #D3D3D3;
-}
-
-#iynvxciqop .gt_heading {
-  background-color: #FFFFFF;
-  text-align: center;
-  border-bottom-color: #FFFFFF;
-  border-left-style: none;
-  border-left-width: 1px;
-  border-left-color: #D3D3D3;
-  border-right-style: none;
-  border-right-width: 1px;
-  border-right-color: #D3D3D3;
-}
-
-#iynvxciqop .gt_title {
-  color: #333333;
-  font-size: 125%;
-  font-weight: initial;
-  padding-top: 4px;
-  padding-bottom: 4px;
-  border-bottom-color: #FFFFFF;
-  border-bottom-width: 0;
-}
-
-#iynvxciqop .gt_subtitle {
-  color: #333333;
-  font-size: 85%;
-  font-weight: initial;
-  padding-top: 0;
-  padding-bottom: 4px;
-  border-top-color: #FFFFFF;
-  border-top-width: 0;
-}
-
-#iynvxciqop .gt_bottom_border {
-  border-bottom-style: solid;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-}
-
-#iynvxciqop .gt_col_headings {
-  border-top-style: solid;
-  border-top-width: 2px;
-  border-top-color: #D3D3D3;
-  border-bottom-style: solid;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-  border-left-style: none;
-  border-left-width: 1px;
-  border-left-color: #D3D3D3;
-  border-right-style: none;
-  border-right-width: 1px;
-  border-right-color: #D3D3D3;
-}
-
-#iynvxciqop .gt_col_heading {
-  color: #333333;
-  background-color: #FFFFFF;
-  font-size: 100%;
-  font-weight: normal;
-  text-transform: inherit;
-  border-left-style: none;
-  border-left-width: 1px;
-  border-left-color: #D3D3D3;
-  border-right-style: none;
-  border-right-width: 1px;
-  border-right-color: #D3D3D3;
-  vertical-align: bottom;
-  padding-top: 5px;
-  padding-bottom: 6px;
-  padding-left: 5px;
-  padding-right: 5px;
-  overflow-x: hidden;
-}
-
-#iynvxciqop .gt_column_spanner_outer {
-  color: #333333;
-  background-color: #FFFFFF;
-  font-size: 100%;
-  font-weight: normal;
-  text-transform: inherit;
-  padding-top: 0;
-  padding-bottom: 0;
-  padding-left: 4px;
-  padding-right: 4px;
-}
-
-#iynvxciqop .gt_column_spanner_outer:first-child {
-  padding-left: 0;
-}
-
-#iynvxciqop .gt_column_spanner_outer:last-child {
-  padding-right: 0;
-}
-
-#iynvxciqop .gt_column_spanner {
-  border-bottom-style: solid;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-  vertical-align: bottom;
-  padding-top: 5px;
-  padding-bottom: 6px;
-  overflow-x: hidden;
-  display: inline-block;
-  width: 100%;
-}
-
-#iynvxciqop .gt_group_heading {
-  padding: 8px;
-  color: #333333;
-  background-color: #FFFFFF;
-  font-size: 100%;
-  font-weight: initial;
-  text-transform: inherit;
-  border-top-style: solid;
-  border-top-width: 2px;
-  border-top-color: #D3D3D3;
-  border-bottom-style: solid;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-  border-left-style: none;
-  border-left-width: 1px;
-  border-left-color: #D3D3D3;
-  border-right-style: none;
-  border-right-width: 1px;
-  border-right-color: #D3D3D3;
-  vertical-align: middle;
-}
-
-#iynvxciqop .gt_empty_group_heading {
-  padding: 0.5px;
-  color: #333333;
-  background-color: #FFFFFF;
-  font-size: 100%;
-  font-weight: initial;
-  border-top-style: solid;
-  border-top-width: 2px;
-  border-top-color: #D3D3D3;
-  border-bottom-style: solid;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-  vertical-align: middle;
-}
-
-#iynvxciqop .gt_from_md > :first-child {
-  margin-top: 0;
-}
-
-#iynvxciqop .gt_from_md > :last-child {
-  margin-bottom: 0;
-}
-
-#iynvxciqop .gt_row {
-  padding-top: 8px;
-  padding-bottom: 8px;
-  padding-left: 5px;
-  padding-right: 5px;
-  margin: 10px;
-  border-top-style: solid;
-  border-top-width: 1px;
-  border-top-color: #D3D3D3;
-  border-left-style: none;
-  border-left-width: 1px;
-  border-left-color: #D3D3D3;
-  border-right-style: none;
-  border-right-width: 1px;
-  border-right-color: #D3D3D3;
-  vertical-align: middle;
-  overflow-x: hidden;
-}
-
-#iynvxciqop .gt_stub {
-  color: #333333;
-  background-color: #FFFFFF;
-  font-size: 100%;
-  font-weight: initial;
-  text-transform: inherit;
-  border-right-style: solid;
-  border-right-width: 2px;
-  border-right-color: #D3D3D3;
-  padding-left: 12px;
-}
-
-#iynvxciqop .gt_summary_row {
-  color: #333333;
-  background-color: #FFFFFF;
-  text-transform: inherit;
-  padding-top: 8px;
-  padding-bottom: 8px;
-  padding-left: 5px;
-  padding-right: 5px;
-}
-
-#iynvxciqop .gt_first_summary_row {
-  padding-top: 8px;
-  padding-bottom: 8px;
-  padding-left: 5px;
-  padding-right: 5px;
-  border-top-style: solid;
-  border-top-width: 2px;
-  border-top-color: #D3D3D3;
-}
-
-#iynvxciqop .gt_grand_summary_row {
-  color: #333333;
-  background-color: #FFFFFF;
-  text-transform: inherit;
-  padding-top: 8px;
-  padding-bottom: 8px;
-  padding-left: 5px;
-  padding-right: 5px;
-}
-
-#iynvxciqop .gt_first_grand_summary_row {
-  padding-top: 8px;
-  padding-bottom: 8px;
-  padding-left: 5px;
-  padding-right: 5px;
-  border-top-style: double;
-  border-top-width: 6px;
-  border-top-color: #D3D3D3;
-}
-
-#iynvxciqop .gt_striped {
-  background-color: rgba(128, 128, 128, 0.05);
-}
-
-#iynvxciqop .gt_table_body {
-  border-top-style: solid;
-  border-top-width: 2px;
-  border-top-color: #D3D3D3;
-  border-bottom-style: solid;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-}
-
-#iynvxciqop .gt_footnotes {
-  color: #333333;
-  background-color: #FFFFFF;
-  border-bottom-style: none;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-  border-left-style: none;
-  border-left-width: 2px;
-  border-left-color: #D3D3D3;
-  border-right-style: none;
-  border-right-width: 2px;
-  border-right-color: #D3D3D3;
-}
-
-#iynvxciqop .gt_footnote {
-  margin: 0px;
-  font-size: 90%;
-  padding: 4px;
-}
-
-#iynvxciqop .gt_sourcenotes {
-  color: #333333;
-  background-color: #FFFFFF;
-  border-bottom-style: none;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-  border-left-style: none;
-  border-left-width: 2px;
-  border-left-color: #D3D3D3;
-  border-right-style: none;
-  border-right-width: 2px;
-  border-right-color: #D3D3D3;
-}
-
-#iynvxciqop .gt_sourcenote {
-  font-size: 90%;
-  padding: 4px;
-}
-
-#iynvxciqop .gt_left {
-  text-align: left;
-}
-
-#iynvxciqop .gt_center {
-  text-align: center;
-}
-
-#iynvxciqop .gt_right {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-#iynvxciqop .gt_font_normal {
-  font-weight: normal;
-}
-
-#iynvxciqop .gt_font_bold {
-  font-weight: bold;
-}
-
-#iynvxciqop .gt_font_italic {
-  font-style: italic;
-}
-
-#iynvxciqop .gt_super {
-  font-size: 65%;
-}
-
-#iynvxciqop .gt_footnote_marks {
-  font-style: italic;
-  font-size: 65%;
-}
-</style>
-<div id="iynvxciqop" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
-  
-  <thead class="gt_col_headings">
-    <tr>
-      <th class="gt_col_heading gt_center gt_columns_bottom_border" rowspan="2" colspan="1"><strong>Variable</strong></th>
-      <th class="gt_center gt_columns_top_border gt_column_spanner_outer" rowspan="1" colspan="3">
-        <span class="gt_column_spanner"><strong>Sites</strong></span>
-      </th>
-    </tr>
-    <tr>
-      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>16396</strong>, N = 29,749<sup class="gt_footnote_marks">1</sup></th>
-      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>16397</strong>, N = 29,748<sup class="gt_footnote_marks">1</sup></th>
-      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>16882</strong>, N = 30,428<sup class="gt_footnote_marks">1</sup></th>
-    </tr>
-  </thead>
-  <tbody class="gt_table_body">
-    <tr>
-      <td class="gt_row gt_left">Stream Height</td>
-      <td class="gt_row gt_center">1.90 (0.74)</td>
-      <td class="gt_row gt_center">1.53 (0.85)</td>
-      <td class="gt_row gt_center">2.46 (0.41)</td>
-    </tr>
-  </tbody>
-  
-  <tfoot>
-    <tr class="gt_footnotes">
-      <td colspan="4">
-        <p class="gt_footnote">
-          <sup class="gt_footnote_marks">
-            <em>1</em>
-          </sup>
-           
-          Mean (SD)
-          <br />
-        </p>
-      </td>
-    </tr>
-  </tfoot>
-</table></div>
+<span id="cb2-77"><a href="#cb2-77"></a><span class="st">  </span><span class="kw">modify_caption</span>(<span class="st">&quot;Summary statistics of 15 minute stream levels measured at each site.&quot;</span>) <span class="op">%&gt;%</span></span>
+<span id="cb2-78"><a href="#cb2-78"></a><span class="st">  </span><span class="kw">as_kable</span>()</span></code></pre></div>
+<table>
+<caption><span id="tab:hoboimport">Table 1: </span>Summary statistics of 15 minute stream levels measured at each site.</caption>
+<thead>
+<tr class="header">
+<th align="left"><strong>Variable</strong></th>
+<th align="left"><strong>16396</strong>, N = 29,749</th>
+<th align="left"><strong>16397</strong>, N = 29,748</th>
+<th align="left"><strong>16882</strong>, N = 30,428</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Stream Height</td>
+<td align="left">1.90 (0.74)</td>
+<td align="left">1.53 (0.85)</td>
+<td align="left">2.46 (0.41)</td>
+</tr>
+</tbody>
+</table>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="kw">ggplot</span>(hobo_df) <span class="op">+</span></span>
 <span id="cb3-2"><a href="#cb3-2"></a><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(Date_Time, Water_Level)) <span class="op">+</span></span>
 <span id="cb3-3"><a href="#cb3-3"></a><span class="st">  </span><span class="kw">facet_wrap</span>(<span class="op">~</span>Site, <span class="dt">ncol =</span> <span class="dv">1</span>, <span class="dt">scales =</span> <span class="st">&quot;free_y&quot;</span>) <span class="op">+</span></span>
@@ -1608,23 +1253,23 @@ Figure 2: Period of recorded data at each station.
 <p>In-stream and stream bank conditions change through the year due to plant growth, plant dieback, sedimentation, erosion, and other processes. These changing conditions can necessitate the development of multiple rating curves. Exploratory data analysis was used to identify periods of change and the potential for hysteresis affected rating curves. Once rating curve periods and appropriate formulas were determined, rating curve parameters in formulas <a href="#eq:powerfunction">(1)</a> and <a href="#eq:Jonesformula">(2)</a> were estimated by non-linear least squares regression using the <code>nls.multstart</code> package in <code>R</code> <span class="citation">(Padfield and Matheson <a href="#ref-padfield_2020" role="doc-biblioref">2020</a>)</span>. This method utilizes the Levenberg-Marquardt algorithm and multiple starting values to find the global minimum SSE value.</p>
 <p>Individual rating curves were used to estimate streamflows using the measured stream heights. Nash-Sutcliffe Efficiency (NSE) and normalized Root Mean Square Error was used to evaluate goodness-of-fit between measured and estimated streamflow. NSE is a normalized statistic that evaluates the relative residual variance against the measured data variance and is calculated as:</p>
 <p><span class="math display" id="eq:nseformula">\[\begin{equation}
-NSE = 1 - \frac{\sum\limits_{t=1}^T(Q^t_{sim}-Q^t_{obs})^2}{\sum\limits_{t=1}^T(Q^t_{obs}-\bar{Q}_{obs})^2}
+NSE = 1 - \frac{\sum_{t=1}^T(\hat{Q}_t-Q_t)^2}{\sum_{t=1}^T(Q_t-\bar{Q})^2}
   \tag{6}
 \end{equation}\]</span></p>
-<p>Where <span class="math inline">\(\bar{Q}_{obs}\)</span> is the mean of observed discharges, <span class="math inline">\(Q^t_{sim}\)</span> is the estimated discharge at time <span class="math inline">\(t\)</span>, and <span class="math inline">\(Q^t_{obs}\)</span> is observed discharge at time <span class="math inline">\(t\)</span>. Values of NSE range from <span class="math inline">\(-\infty\)</span> to 1, where 1 indicates perfect predicitive performance. NSE of zero indicates the model has the same predictive performance as the mean of the dataset.</p>
+<p>Where <span class="math inline">\(\bar{Q}\)</span> is the mean of observed discharges, <span class="math inline">\(\hat{Q}_t\)</span> is the estimated discharge at time <span class="math inline">\(t\)</span>, and <span class="math inline">\(Q_t\)</span> is observed discharge at time <span class="math inline">\(t\)</span>. Values of NSE range from <span class="math inline">\(-\infty\)</span> to 1, where 1 indicates perfect predictive performance. NSE of zero indicates the model has the same predictive performance as the mean of the dataset.</p>
 <p>The nRMSE is a percentage based metric that describes the difference between predicted and measured discharge values:</p>
 <p><span class="math display" id="eq:nRMSE">\[\begin{equation}
 nRMSE = \frac{RMSE}{Q_{max}-Q_{min}}, \quad \textrm{where} \quad RMSE = \sqrt{\frac{\sum_{t=1}^{n}{(Q_t-\hat{Q}_t)^2}}{n}}
   \tag{7}
 \end{equation}\]</span></p>
-<p>Where <span class="math inline">\(Q_i\)</span> is the observed discharge at time <span class="math inline">\(t\)</span>, <span class="math inline">\(\hat{Q}_t\)</span> is the estimated discharge at time <span class="math inline">\(t\)</span>, <span class="math inline">\(n\)</span> is the number of samples, <span class="math inline">\(Q_{max}\)</span> and <span class="math inline">\(Q_{min}\)</span> are the maximum and minimum observed discharges. The resulting nRMSE calculation is a percentage value.</p>
+<p>Where <span class="math inline">\(Q_t\)</span> is the observed discharge at time <span class="math inline">\(t\)</span>, <span class="math inline">\(\hat{Q}_t\)</span> is the estimated discharge at time <span class="math inline">\(t\)</span>, <span class="math inline">\(n\)</span> is the number of samples, <span class="math inline">\(Q_{max}\)</span> and <span class="math inline">\(Q_{min}\)</span> are the maximum and minimum observed discharges. The resulting nRMSE calculation is a percentage value.</p>
 </div>
 </div>
 <div id="results" class="section level2">
 <h2>Results</h2>
 <div id="site-16396" class="section level3">
 <h3>Site 16396</h3>
-<p>Based on exploratory analysis, two rating curves were developed for site 16396. The rating curve periods were 2020-03-03 through 2020-11-30 and 2020-12-01 through 2021-01-31. Due to apparent unsteady flow in the observed hydrogaphs, we applied the Jones formula (Formula<a href="#eq:Jonesformula">(2)</a>). Both time periods resulted in a rating curve with NSE greater than 0.97 and nRMSE less than 3% indicating excellent fit (Table <a href="#tab:results16369">1</a>; Figure <a href="#fig:metricplot16396">3</a>). Figure <a href="#fig:metricplot16396">3</a> does indicate some biased flow estimates at extremely low flow measurements. This is attributed to variability in flows recorded by the doppler flow meter at low flows.</p>
+<p>Based on exploratory analysis, two rating curves were developed for site 16396. The rating curve periods were 2020-03-03 through 2020-11-30 and 2020-12-01 through 2021-01-31. Due to apparent unsteady flow in the observed hydrogaphs, we applied the Jones formula (Formula<a href="#eq:Jonesformula">(2)</a>). Both time periods resulted in a rating curve with NSE greater than 0.97 and nRMSE less than 3% indicating excellent fit (Table <a href="#tab:results16369">2</a>; Figure <a href="#fig:metricplot16396">3</a>). Figure <a href="#fig:metricplot16396">3</a> does indicate some biased flow estimates at extremely low flow measurements. This is attributed to variability in flows recorded by the doppler flow meter at low flows.</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="co">## Make dataframe for site 16396 before december </span></span>
 <span id="cb6-2"><a href="#cb6-2"></a></span>
 <span id="cb6-3"><a href="#cb6-3"></a>iqplus_df <span class="op">%&gt;%</span></span>
@@ -1731,7 +1376,7 @@ nRMSE = \frac{RMSE}{Q_{max}-Q_{min}}, \quad \textrm{where} \quad RMSE = \sqrt{\f
 <span id="cb9-21"><a href="#cb9-21"></a><span class="kw">kable</span>(df_results_<span class="dv">16369</span>, </span>
 <span id="cb9-22"><a href="#cb9-22"></a>      <span class="dt">caption =</span> <span class="st">&quot;Rating curve parameter estimates and goodness-of-fit metrics for station 16369.&quot;</span>) </span></code></pre></div>
 <table>
-<caption><span id="tab:results16369">Table 1: </span>Rating curve parameter estimates and goodness-of-fit metrics for station 16369.</caption>
+<caption><span id="tab:results16369">Table 2: </span>Rating curve parameter estimates and goodness-of-fit metrics for station 16369.</caption>
 <colgroup>
 <col width="6%" />
 <col width="27%" />
@@ -1828,7 +1473,7 @@ Figure 3: Scatter plot of rating curve estimated flows against measured flows (A
 </div>
 <div id="site-16397" class="section level3">
 <h3>Site 16397</h3>
-<p>Exploratory analysis indicated pooled conditions when during doppler flow meter deployment from August 2020 through November 2020. A single rating curve was developed at this site using the power function (Formula <a href="#eq:powerfunction">(1)</a>) since unsteady flow conditions were not observed in the hydrographs. Rating curve predictions resulted in NSE greater than 0.95 indicating excellent fit (Table <a href="#tab:results16369">1</a>). The nRMSE was less than 5%, which is likely a good result for the smaller sample sized obtained at this station and probably influenced by the observed low flow variance (Table <a href="#tab:results16369">1</a>; Figure <a href="#fig:metricplot16396">3</a>).</p>
+<p>Exploratory analysis indicated pooled conditions when during doppler flow meter deployment from August 2020 through November 2020. A single rating curve was developed at this site using the power function (Formula <a href="#eq:powerfunction">(1)</a>) since unsteady flow conditions were not observed in the hydrographs. Rating curve predictions resulted in NSE greater than 0.95 indicating excellent fit (Table <a href="#tab:results16369">2</a>). The nRMSE was less than 5%, which is likely a good result for the smaller sample sized obtained at this station and probably influenced by the observed low flow variance (Table <a href="#tab:results16369">2</a>; Figure <a href="#fig:metricplot16396">3</a>).</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a><span class="co">## setup dataframe to fit rating curve to 16397</span></span>
 <span id="cb11-2"><a href="#cb11-2"></a></span>
 <span id="cb11-3"><a href="#cb11-3"></a>iqplus_df <span class="op">%&gt;%</span></span>
@@ -1878,7 +1523,7 @@ Figure 3: Scatter plot of rating curve estimated flows against measured flows (A
 <span id="cb13-10"><a href="#cb13-10"></a><span class="kw">kable</span>(df_results_<span class="dv">16397</span>,</span>
 <span id="cb13-11"><a href="#cb13-11"></a>      <span class="dt">caption =</span> <span class="st">&quot;Rating curve parameter estimates and goodness-of-fit metrics for station 16397.&quot;</span>)</span></code></pre></div>
 <table>
-<caption><span id="tab:results16397">Table 2: </span>Rating curve parameter estimates and goodness-of-fit metrics for station 16397.</caption>
+<caption><span id="tab:results16397">Table 3: </span>Rating curve parameter estimates and goodness-of-fit metrics for station 16397.</caption>
 <thead>
 <tr class="header">
 <th align="left">Site</th>
@@ -1894,10 +1539,10 @@ Figure 3: Scatter plot of rating curve estimated flows against measured flows (A
 <tr class="odd">
 <td align="left">16397</td>
 <td align="left">2020-03-01 : 2020-01-30</td>
-<td align="right">0.0005048</td>
-<td align="right">-2.54658</td>
-<td align="right">5.86874</td>
-<td align="right">0.9519453</td>
+<td align="right">0.0008322</td>
+<td align="right">-2.402912</td>
+<td align="right">5.658475</td>
+<td align="right">0.9519032</td>
 <td align="right">4.9</td>
 </tr>
 </tbody>
@@ -1929,7 +1574,7 @@ Figure 4: Scatter plot of rating curve estimated flows against measured flows (A
 </div>
 <div id="site-16882" class="section level3">
 <h3>Site 16882</h3>
-<p>Based on exploratory analysis, three rating curves were developed for site 16396. The rating curve periods were 2020-03-03 through 2020-05-30; 2020-06-01 through 2020-10-31; and 2020-11-01 through 2021-01-31. Due to apparent unsteady flow in the observed hydrogaphs, we applied the Jones formula (Formula<a href="#eq:Jonesformula">(2)</a>). Results for March through September indicate the rating curve had a very good fit (NSE &gt; 0.96, nRMSE &lt;6%; Table <a href="#tab:results16882">3</a>). The high variance between observed and predicted values at low flows is attributable to an event with an extremely fast stream height change (&gt; 1.5 feet per hour) that parameter estimation had difficulty accommodating (Figure <a href="#fig:metricplot16882">5</a>). Goodness of fit metrics for the remaining rating curves decreased but at still indicate good performance (Table <a href="#tab:results16882">3</a>). High variance in the measured low and mid streamflow values impact rating curve performance (Figure <a href="#fig:metricplot16882">5</a>).</p>
+<p>Based on exploratory analysis, three rating curves were developed for site 16396. The rating curve periods were 2020-03-03 through 2020-05-30; 2020-06-01 through 2020-10-31; and 2020-11-01 through 2021-01-31. Due to apparent unsteady flow in the observed hydrogaphs, we applied the Jones formula (Formula<a href="#eq:Jonesformula">(2)</a>). Results for March through September indicate the rating curve had a very good fit (NSE &gt; 0.96, nRMSE &lt;6%; Table <a href="#tab:results16882">4</a>). The high variance between observed and predicted values at low flows is attributable to an event with an extremely fast stream height change (&gt; 1.5 feet per hour) that parameter estimation had difficulty accommodating (Figure <a href="#fig:metricplot16882">5</a>). Goodness of fit metrics for the remaining rating curves decreased but at still indicate good performance (Table <a href="#tab:results16882">4</a>). High variance in the measured low and mid streamflow values impact rating curve performance (Figure <a href="#fig:metricplot16882">5</a>).</p>
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1"></a><span class="co">## make 3 different dataframes to fit jones formula to.</span></span>
 <span id="cb15-2"><a href="#cb15-2"></a></span>
 <span id="cb15-3"><a href="#cb15-3"></a>iqplus_df <span class="op">%&gt;%</span></span>
@@ -2080,7 +1725,7 @@ Figure 4: Scatter plot of rating curve estimated flows against measured flows (A
 <span id="cb17-47"><a href="#cb17-47"></a><span class="kw">kable</span>(df_results_<span class="dv">16882</span>,</span>
 <span id="cb17-48"><a href="#cb17-48"></a>      <span class="dt">caption =</span> <span class="st">&quot;Rating curve parameter estimates and goodness-of-fit metrics for station 16882.&quot;</span>)</span></code></pre></div>
 <table>
-<caption><span id="tab:results16882">Table 3: </span>Rating curve parameter estimates and goodness-of-fit metrics for station 16882.</caption>
+<caption><span id="tab:results16882">Table 4: </span>Rating curve parameter estimates and goodness-of-fit metrics for station 16882.</caption>
 <colgroup>
 <col width="6%" />
 <col width="27%" />
@@ -2117,21 +1762,21 @@ Figure 4: Scatter plot of rating curve estimated flows against measured flows (A
 <tr class="even">
 <td align="left">16882</td>
 <td align="left">2020-10-01 : 2020-11-30</td>
-<td align="right">4.429873</td>
-<td align="right">0.8771891</td>
-<td align="right">0.2634828</td>
-<td align="right">-3.6730616</td>
-<td align="right">0.9256386</td>
-<td align="right">8.0</td>
+<td align="right">3.371444</td>
+<td align="right">0.8957127</td>
+<td align="right">0.1359091</td>
+<td align="right">-6.1282243</td>
+<td align="right">0.8850142</td>
+<td align="right">10.0</td>
 </tr>
 <tr class="odd">
 <td align="left">16882</td>
 <td align="left">2020-12-01 : 2021-01-31</td>
 <td align="right">3.855323</td>
-<td align="right">0.5431169</td>
+<td align="right">0.5431170</td>
 <td align="right">0.7936082</td>
 <td align="right">0.3829932</td>
-<td align="right">0.8833268</td>
+<td align="right">0.8833267</td>
 <td align="right">1.9</td>
 </tr>
 </tbody>
@@ -2280,382 +1925,27 @@ Figure 6: Fifteen minute streamflow estimates with overlaid measured streamflow 
 <span id="cb20-16"><a href="#cb20-16"></a>              <span class="dt">statistic =</span> <span class="kw">list</span>(<span class="kw">all_continuous</span>() <span class="op">~</span><span class="st"> &quot;{mean} ({sd})&quot;</span>)) <span class="op">%&gt;%</span></span>
 <span id="cb20-17"><a href="#cb20-17"></a><span class="st">  </span><span class="kw">modify_header</span>(<span class="dt">label =</span> <span class="st">&quot;**Variable**&quot;</span>) <span class="op">%&gt;%</span></span>
 <span id="cb20-18"><a href="#cb20-18"></a><span class="st">  </span><span class="kw">modify_spanning_header</span>(<span class="kw">all_stat_cols</span>() <span class="op">~</span><span class="st"> &quot;**Sites**&quot;</span>) <span class="op">%&gt;%</span></span>
-<span id="cb20-19"><a href="#cb20-19"></a><span class="st">  </span><span class="kw">modify_caption</span>(<span class="st">&quot;Summary statistics of mean daily flow estimates at each site.&quot;</span>)</span></code></pre></div>
-<style>html {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
-}
-
-#inzteyeqtn .gt_table {
-  display: table;
-  border-collapse: collapse;
-  margin-left: auto;
-  margin-right: auto;
-  color: #333333;
-  font-size: 16px;
-  font-weight: normal;
-  font-style: normal;
-  background-color: #FFFFFF;
-  width: auto;
-  border-top-style: solid;
-  border-top-width: 2px;
-  border-top-color: #A8A8A8;
-  border-right-style: none;
-  border-right-width: 2px;
-  border-right-color: #D3D3D3;
-  border-bottom-style: solid;
-  border-bottom-width: 2px;
-  border-bottom-color: #A8A8A8;
-  border-left-style: none;
-  border-left-width: 2px;
-  border-left-color: #D3D3D3;
-}
-
-#inzteyeqtn .gt_heading {
-  background-color: #FFFFFF;
-  text-align: center;
-  border-bottom-color: #FFFFFF;
-  border-left-style: none;
-  border-left-width: 1px;
-  border-left-color: #D3D3D3;
-  border-right-style: none;
-  border-right-width: 1px;
-  border-right-color: #D3D3D3;
-}
-
-#inzteyeqtn .gt_title {
-  color: #333333;
-  font-size: 125%;
-  font-weight: initial;
-  padding-top: 4px;
-  padding-bottom: 4px;
-  border-bottom-color: #FFFFFF;
-  border-bottom-width: 0;
-}
-
-#inzteyeqtn .gt_subtitle {
-  color: #333333;
-  font-size: 85%;
-  font-weight: initial;
-  padding-top: 0;
-  padding-bottom: 4px;
-  border-top-color: #FFFFFF;
-  border-top-width: 0;
-}
-
-#inzteyeqtn .gt_bottom_border {
-  border-bottom-style: solid;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-}
-
-#inzteyeqtn .gt_col_headings {
-  border-top-style: solid;
-  border-top-width: 2px;
-  border-top-color: #D3D3D3;
-  border-bottom-style: solid;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-  border-left-style: none;
-  border-left-width: 1px;
-  border-left-color: #D3D3D3;
-  border-right-style: none;
-  border-right-width: 1px;
-  border-right-color: #D3D3D3;
-}
-
-#inzteyeqtn .gt_col_heading {
-  color: #333333;
-  background-color: #FFFFFF;
-  font-size: 100%;
-  font-weight: normal;
-  text-transform: inherit;
-  border-left-style: none;
-  border-left-width: 1px;
-  border-left-color: #D3D3D3;
-  border-right-style: none;
-  border-right-width: 1px;
-  border-right-color: #D3D3D3;
-  vertical-align: bottom;
-  padding-top: 5px;
-  padding-bottom: 6px;
-  padding-left: 5px;
-  padding-right: 5px;
-  overflow-x: hidden;
-}
-
-#inzteyeqtn .gt_column_spanner_outer {
-  color: #333333;
-  background-color: #FFFFFF;
-  font-size: 100%;
-  font-weight: normal;
-  text-transform: inherit;
-  padding-top: 0;
-  padding-bottom: 0;
-  padding-left: 4px;
-  padding-right: 4px;
-}
-
-#inzteyeqtn .gt_column_spanner_outer:first-child {
-  padding-left: 0;
-}
-
-#inzteyeqtn .gt_column_spanner_outer:last-child {
-  padding-right: 0;
-}
-
-#inzteyeqtn .gt_column_spanner {
-  border-bottom-style: solid;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-  vertical-align: bottom;
-  padding-top: 5px;
-  padding-bottom: 6px;
-  overflow-x: hidden;
-  display: inline-block;
-  width: 100%;
-}
-
-#inzteyeqtn .gt_group_heading {
-  padding: 8px;
-  color: #333333;
-  background-color: #FFFFFF;
-  font-size: 100%;
-  font-weight: initial;
-  text-transform: inherit;
-  border-top-style: solid;
-  border-top-width: 2px;
-  border-top-color: #D3D3D3;
-  border-bottom-style: solid;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-  border-left-style: none;
-  border-left-width: 1px;
-  border-left-color: #D3D3D3;
-  border-right-style: none;
-  border-right-width: 1px;
-  border-right-color: #D3D3D3;
-  vertical-align: middle;
-}
-
-#inzteyeqtn .gt_empty_group_heading {
-  padding: 0.5px;
-  color: #333333;
-  background-color: #FFFFFF;
-  font-size: 100%;
-  font-weight: initial;
-  border-top-style: solid;
-  border-top-width: 2px;
-  border-top-color: #D3D3D3;
-  border-bottom-style: solid;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-  vertical-align: middle;
-}
-
-#inzteyeqtn .gt_from_md > :first-child {
-  margin-top: 0;
-}
-
-#inzteyeqtn .gt_from_md > :last-child {
-  margin-bottom: 0;
-}
-
-#inzteyeqtn .gt_row {
-  padding-top: 8px;
-  padding-bottom: 8px;
-  padding-left: 5px;
-  padding-right: 5px;
-  margin: 10px;
-  border-top-style: solid;
-  border-top-width: 1px;
-  border-top-color: #D3D3D3;
-  border-left-style: none;
-  border-left-width: 1px;
-  border-left-color: #D3D3D3;
-  border-right-style: none;
-  border-right-width: 1px;
-  border-right-color: #D3D3D3;
-  vertical-align: middle;
-  overflow-x: hidden;
-}
-
-#inzteyeqtn .gt_stub {
-  color: #333333;
-  background-color: #FFFFFF;
-  font-size: 100%;
-  font-weight: initial;
-  text-transform: inherit;
-  border-right-style: solid;
-  border-right-width: 2px;
-  border-right-color: #D3D3D3;
-  padding-left: 12px;
-}
-
-#inzteyeqtn .gt_summary_row {
-  color: #333333;
-  background-color: #FFFFFF;
-  text-transform: inherit;
-  padding-top: 8px;
-  padding-bottom: 8px;
-  padding-left: 5px;
-  padding-right: 5px;
-}
-
-#inzteyeqtn .gt_first_summary_row {
-  padding-top: 8px;
-  padding-bottom: 8px;
-  padding-left: 5px;
-  padding-right: 5px;
-  border-top-style: solid;
-  border-top-width: 2px;
-  border-top-color: #D3D3D3;
-}
-
-#inzteyeqtn .gt_grand_summary_row {
-  color: #333333;
-  background-color: #FFFFFF;
-  text-transform: inherit;
-  padding-top: 8px;
-  padding-bottom: 8px;
-  padding-left: 5px;
-  padding-right: 5px;
-}
-
-#inzteyeqtn .gt_first_grand_summary_row {
-  padding-top: 8px;
-  padding-bottom: 8px;
-  padding-left: 5px;
-  padding-right: 5px;
-  border-top-style: double;
-  border-top-width: 6px;
-  border-top-color: #D3D3D3;
-}
-
-#inzteyeqtn .gt_striped {
-  background-color: rgba(128, 128, 128, 0.05);
-}
-
-#inzteyeqtn .gt_table_body {
-  border-top-style: solid;
-  border-top-width: 2px;
-  border-top-color: #D3D3D3;
-  border-bottom-style: solid;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-}
-
-#inzteyeqtn .gt_footnotes {
-  color: #333333;
-  background-color: #FFFFFF;
-  border-bottom-style: none;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-  border-left-style: none;
-  border-left-width: 2px;
-  border-left-color: #D3D3D3;
-  border-right-style: none;
-  border-right-width: 2px;
-  border-right-color: #D3D3D3;
-}
-
-#inzteyeqtn .gt_footnote {
-  margin: 0px;
-  font-size: 90%;
-  padding: 4px;
-}
-
-#inzteyeqtn .gt_sourcenotes {
-  color: #333333;
-  background-color: #FFFFFF;
-  border-bottom-style: none;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-  border-left-style: none;
-  border-left-width: 2px;
-  border-left-color: #D3D3D3;
-  border-right-style: none;
-  border-right-width: 2px;
-  border-right-color: #D3D3D3;
-}
-
-#inzteyeqtn .gt_sourcenote {
-  font-size: 90%;
-  padding: 4px;
-}
-
-#inzteyeqtn .gt_left {
-  text-align: left;
-}
-
-#inzteyeqtn .gt_center {
-  text-align: center;
-}
-
-#inzteyeqtn .gt_right {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-#inzteyeqtn .gt_font_normal {
-  font-weight: normal;
-}
-
-#inzteyeqtn .gt_font_bold {
-  font-weight: bold;
-}
-
-#inzteyeqtn .gt_font_italic {
-  font-style: italic;
-}
-
-#inzteyeqtn .gt_super {
-  font-size: 65%;
-}
-
-#inzteyeqtn .gt_footnote_marks {
-  font-style: italic;
-  font-size: 65%;
-}
-</style>
-<div id="inzteyeqtn" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
-  
-  <thead class="gt_col_headings">
-    <tr>
-      <th class="gt_col_heading gt_center gt_columns_bottom_border" rowspan="2" colspan="1"><strong>Variable</strong></th>
-      <th class="gt_center gt_columns_top_border gt_column_spanner_outer" rowspan="1" colspan="3">
-        <span class="gt_column_spanner"><strong>Sites</strong></span>
-      </th>
-    </tr>
-    <tr>
-      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>16396</strong>, N = 312<sup class="gt_footnote_marks">1</sup></th>
-      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>16397</strong>, N = 312<sup class="gt_footnote_marks">1</sup></th>
-      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>16882</strong>, N = 318<sup class="gt_footnote_marks">1</sup></th>
-    </tr>
-  </thead>
-  <tbody class="gt_table_body">
-    <tr>
-      <td class="gt_row gt_left">Mean Daily Flow (cfs)</td>
-      <td class="gt_row gt_center">19.65 (44.20)</td>
-      <td class="gt_row gt_center">1.70 (2.06)</td>
-      <td class="gt_row gt_center">3.27 (8.84)</td>
-    </tr>
-  </tbody>
-  
-  <tfoot>
-    <tr class="gt_footnotes">
-      <td colspan="4">
-        <p class="gt_footnote">
-          <sup class="gt_footnote_marks">
-            <em>1</em>
-          </sup>
-           
-          Mean (SD)
-          <br />
-        </p>
-      </td>
-    </tr>
-  </tfoot>
-</table></div>
+<span id="cb20-19"><a href="#cb20-19"></a><span class="st">  </span><span class="kw">modify_caption</span>(<span class="st">&quot;Summary statistics of mean daily flow estimates at each site.&quot;</span>) <span class="op">%&gt;%</span></span>
+<span id="cb20-20"><a href="#cb20-20"></a><span class="st">  </span><span class="kw">as_kable</span>()</span></code></pre></div>
+<table>
+<caption><span id="tab:unnamed-chunk-9">Table 5: </span>Summary statistics of mean daily flow estimates at each site.</caption>
+<thead>
+<tr class="header">
+<th align="left"><strong>Variable</strong></th>
+<th align="left"><strong>16396</strong>, N = 312</th>
+<th align="left"><strong>16397</strong>, N = 312</th>
+<th align="left"><strong>16882</strong>, N = 318</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Mean Daily Flow (cfs)</td>
+<td align="left">19.65 (44.20)</td>
+<td align="left">1.69 (2.06)</td>
+<td align="left">3.10 (8.88)</td>
+</tr>
+</tbody>
+</table>
 <div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1"></a><span class="kw">ggplot</span>(mean_daily_flow) <span class="op">+</span><span class="st"> </span></span>
 <span id="cb21-2"><a href="#cb21-2"></a><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(date, mean_daily)) <span class="op">+</span></span>
 <span id="cb21-3"><a href="#cb21-3"></a><span class="st">  </span><span class="kw">facet_wrap</span>(<span class="op">~</span>Site, <span class="dt">ncol =</span> <span class="dv">1</span>, <span class="dt">scales =</span> <span class="st">&quot;free_y&quot;</span>) <span class="op">+</span></span>
@@ -2677,6 +1967,9 @@ Figure 7: Mean daily streamflow estimates.
 <h2>References</h2>
 
 <div id="refs" class="references">
+<div id="ref-asquith_statewide_2006">
+<p>Asquith, William H., Meghan C. Roussel, and Joseph Vrabel. 2006. “Statewide Analysis of the Drainage-Area Ratio Method for 34 Streamflow Percentile Ranges in Texas.” 2006-5286. U.S. Geological Survey. <a href="https://pubs.usgs.gov/sir/2006/5286/pdf/sir2006-5286.pdf">https://pubs.usgs.gov/sir/2006/5286/pdf/sir2006-5286.pdf</a>.</p>
+</div>
 <div id="ref-padfield_2020">
 <p>Padfield, Daniel, and Granville Matheson. 2020. <em>Nls.multstart: Robust Non-Linear Regression Using Aic Scores</em>. <a href="https://CRAN.R-project.org/package=nls.multstart">https://CRAN.R-project.org/package=nls.multstart</a>.</p>
 </div>
