@@ -118,13 +118,13 @@ $X$ is the measured value and $Y$ is the predicted value. Nonlinear optimization
 ### Ungaged streamflow estimation
 
 Rating curves allowed development of daily streamflow records for the period of time that stream depth data recorders were deployed. However, estimation of daily streamflows when sites are ungaged requires additional information. Most commonly, daily streamflow data from a nearby gaged watershed is used to estiamte flows in the ungaged watershed using a drainage area ratio or regression methods. With the drainage area ratio, daily streamflows are transferred from one basin to the other by multiplying the area ratio to daily streamflows:
-
+$$
 \begin{equation}
-Q_{yt} = Q_{xt}\bigg(\frac{A_y}{A_x}\bigg)^\phi
+Q_y^t = Q_x^t\bigg(\frac{A_y}{A_x}\bigg)^\phi
   (\#eq:dar)
 \end{equation}
-
-Where $Q_{yt}$ is streamflow at ungaged basin $y$ and time $t$, $Q_{xt}$ is streamflow at gaged basin $x$ and time $t$, and $\frac{A_y}{A_x}$ is the area ratio of the basins. Parameter $\phi$ is typically equal to one  [\@asquith_statewide_2006]. However, \@asquith_statewide_2006 provides empirically estimated values of $\phi$ for use in the drainage area ratio when applied in Texas. 
+$$
+Where $Q_y^t$ is streamflow at ungaged basin $y$ and time $t$, $Q_x^t$ is streamflow at gaged basin $x$ and time $t$, and $\frac{A_y}{A_x}$ is the area ratio of the basins. Parameter $\phi$ is typically equal to one  [\@asquith_statewide_2006]. However, \@asquith_statewide_2006 provides empirically estimated values of $\phi$ for use in the drainage area ratio when applied in Texas. 
 
 ## Method
 
@@ -365,11 +365,11 @@ In-stream and stream bank conditions change through the year due to plant growth
 Individual rating curves were used to estimate streamflows using the measured stream heights. Nash-Sutcliffe Efficiency (NSE) and normalized Root Mean Square Error was used to evaluate goodness-of-fit between measured and estimated streamflow. NSE is a normalized statistic that evaluates the relative residual variance against the measured data variance and is calculated as:
 
 \begin{equation}
-NSE = 1 - \frac{\sum\limits_{t=1}^T(Q^t_{sim}-Q^t_{obs})^2}{\sum\limits_{t=1}^T(Q^t_{obs}-\bar{Q}_{obs})^2}
+NSE = 1 - \frac{\sum_{t=1}^T(\hat{Q}_t-Q_t)^2}{\sum_{t=1}^T(Q_t-\bar{Q})^2}
   (\#eq:nseformula)
 \end{equation} 
 
-Where $\bar{Q}_{obs}$ is the mean of observed discharges, $Q^t_{sim}$ is the estimated discharge at time $t$, and $Q^t_{obs}$ is observed discharge at time $t$. Values of NSE range from $-\infty$ to 1, where 1 indicates perfect predicitive performance. NSE of zero indicates the model has the same predictive performance as the mean of the dataset.
+Where $\bar{Q}$ is the mean of observed discharges, $\hat{Q}_t$ is the estimated discharge at time $t$, and $Q_t$ is observed discharge at time $t$. Values of NSE range from $-\infty$ to 1, where 1 indicates perfect predictive performance. NSE of zero indicates the model has the same predictive performance as the mean of the dataset.
 
 The nRMSE is a percentage based metric that describes the difference between predicted and measured discharge values:
 
@@ -378,7 +378,7 @@ nRMSE = \frac{RMSE}{Q_{max}-Q_{min}}, \quad \textrm{where} \quad RMSE = \sqrt{\f
   (\#eq:nRMSE)
 \end{equation}
 
-Where $Q_i$ is the observed discharge at time $t$, $\hat{Q}_t$ is the estimated discharge at time $t$, $n$ is the number of samples, $Q_{max}$ and $Q_{min}$ are the maximum and minimum observed discharges. The resulting nRMSE calculation is a percentage value.
+Where $Q_t$ is the observed discharge at time $t$, $\hat{Q}_t$ is the estimated discharge at time $t$, $n$ is the number of samples, $Q_{max}$ and $Q_{min}$ are the maximum and minimum observed discharges. The resulting nRMSE calculation is a percentage value.
 
 
 ## Results
