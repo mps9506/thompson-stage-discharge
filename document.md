@@ -1,6 +1,6 @@
 ---
 title: "Exploring Thompsons Creek Stage Discharge Data"
-date: "2021-03-05"
+date: "2021-03-08"
 github-repo: https://github.com/mps9506/thompson-stage-discharge
 bibliography: bibliography.bib
 biblio-style: "apalike"
@@ -73,6 +73,9 @@ This document walks through some exploratory data analysis to develop rating cur
 
 ## Introduction
 
+
+### Rating curves
+
 Due to the high costs associated with continuous in-stream measurements of stream discharge, it is preferable to estimate discharge using stream height measurements. Continuous measurements of stream height can be accomplished inexpensively using pressure transducers. When supplemented with periodic discharge measurements, a power function can relate stream height and discharge [@venetis1970note]:
 
 \begin{equation}
@@ -107,6 +110,17 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
 
 where:
 $X$ is the measured value and $Y$ is the predicted value. Nonlinear optimization methods search though parameter combinations to minimize the objective function (residual SSE in this case). @petersen2006modelling applied the Nelder-Mead algorithm to solve the Jones formula. @zakwan_spreadsheet-based_2018 present spreadsheet based nonlinear optimization methods using generalized reduced gradient and genetic algorithm. Most methods require careful planning for parameter starting values that are somewhat near the global minimum value or risk identifying a alternative local minimum values. To reduce the likelihood of convergence on local minimum, the `nls.multstart` package in `R` provides functionality to iterate non-linear least squares optimization over many different starting values [@padfield_2020]. 
+
+### Ungaged streamflow estimation
+
+Rating curves allowed development of daily streamflow records for the period of time that stream depth data recorders were deployed. However, estimation of daily streamflows when sites are ungaged requires additional information. Most commonly, daily streamflow data from a nearby gaged watershed is used to estiamte flows in the ungaged watershed using a drainage area ratio or regression methods. With the drainage area ratio, daily streamflows are transferred from one basin to the other by multiplying the area ratio to daily streamflows:
+
+\begin{equation}
+Q_{yt} = Q_{xt}\bigg(\frac{A_y}{A_x}\bigg)^\phi
+  (\#eq:dar)
+\end{equation}
+
+Where $Q_{yt}$ is streamflow at ungaged basin $y$ and time $t$, $Q_{xt}$ is streamflow at gaged basin $x$ and time $t$, and $\frac{A_y}{A_x}$ is the area ratio of the basins. Parameter $\phi$ is typically equal to one  [\@asquith_statewide_2006]. However, \@asquith_statewide_2006 provides empirically estimated values of $\phi$ for use in the drainage area ratio when applied in Texas. 
 
 ## Method
 
@@ -200,7 +214,7 @@ hobo_df %>%
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
 }
 
-#conskutojc .gt_table {
+#iynvxciqop .gt_table {
   display: table;
   border-collapse: collapse;
   margin-left: auto;
@@ -225,7 +239,7 @@ hobo_df %>%
   border-left-color: #D3D3D3;
 }
 
-#conskutojc .gt_heading {
+#iynvxciqop .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -237,7 +251,7 @@ hobo_df %>%
   border-right-color: #D3D3D3;
 }
 
-#conskutojc .gt_title {
+#iynvxciqop .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -247,7 +261,7 @@ hobo_df %>%
   border-bottom-width: 0;
 }
 
-#conskutojc .gt_subtitle {
+#iynvxciqop .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -257,13 +271,13 @@ hobo_df %>%
   border-top-width: 0;
 }
 
-#conskutojc .gt_bottom_border {
+#iynvxciqop .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#conskutojc .gt_col_headings {
+#iynvxciqop .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -278,7 +292,7 @@ hobo_df %>%
   border-right-color: #D3D3D3;
 }
 
-#conskutojc .gt_col_heading {
+#iynvxciqop .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -298,7 +312,7 @@ hobo_df %>%
   overflow-x: hidden;
 }
 
-#conskutojc .gt_column_spanner_outer {
+#iynvxciqop .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -310,15 +324,15 @@ hobo_df %>%
   padding-right: 4px;
 }
 
-#conskutojc .gt_column_spanner_outer:first-child {
+#iynvxciqop .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#conskutojc .gt_column_spanner_outer:last-child {
+#iynvxciqop .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#conskutojc .gt_column_spanner {
+#iynvxciqop .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -330,7 +344,7 @@ hobo_df %>%
   width: 100%;
 }
 
-#conskutojc .gt_group_heading {
+#iynvxciqop .gt_group_heading {
   padding: 8px;
   color: #333333;
   background-color: #FFFFFF;
@@ -352,7 +366,7 @@ hobo_df %>%
   vertical-align: middle;
 }
 
-#conskutojc .gt_empty_group_heading {
+#iynvxciqop .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -367,15 +381,15 @@ hobo_df %>%
   vertical-align: middle;
 }
 
-#conskutojc .gt_from_md > :first-child {
+#iynvxciqop .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#conskutojc .gt_from_md > :last-child {
+#iynvxciqop .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#conskutojc .gt_row {
+#iynvxciqop .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -394,7 +408,7 @@ hobo_df %>%
   overflow-x: hidden;
 }
 
-#conskutojc .gt_stub {
+#iynvxciqop .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -406,7 +420,7 @@ hobo_df %>%
   padding-left: 12px;
 }
 
-#conskutojc .gt_summary_row {
+#iynvxciqop .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -416,7 +430,7 @@ hobo_df %>%
   padding-right: 5px;
 }
 
-#conskutojc .gt_first_summary_row {
+#iynvxciqop .gt_first_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -426,7 +440,7 @@ hobo_df %>%
   border-top-color: #D3D3D3;
 }
 
-#conskutojc .gt_grand_summary_row {
+#iynvxciqop .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -436,7 +450,7 @@ hobo_df %>%
   padding-right: 5px;
 }
 
-#conskutojc .gt_first_grand_summary_row {
+#iynvxciqop .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -446,11 +460,11 @@ hobo_df %>%
   border-top-color: #D3D3D3;
 }
 
-#conskutojc .gt_striped {
+#iynvxciqop .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#conskutojc .gt_table_body {
+#iynvxciqop .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -459,7 +473,7 @@ hobo_df %>%
   border-bottom-color: #D3D3D3;
 }
 
-#conskutojc .gt_footnotes {
+#iynvxciqop .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -473,13 +487,13 @@ hobo_df %>%
   border-right-color: #D3D3D3;
 }
 
-#conskutojc .gt_footnote {
+#iynvxciqop .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding: 4px;
 }
 
-#conskutojc .gt_sourcenotes {
+#iynvxciqop .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -493,46 +507,46 @@ hobo_df %>%
   border-right-color: #D3D3D3;
 }
 
-#conskutojc .gt_sourcenote {
+#iynvxciqop .gt_sourcenote {
   font-size: 90%;
   padding: 4px;
 }
 
-#conskutojc .gt_left {
+#iynvxciqop .gt_left {
   text-align: left;
 }
 
-#conskutojc .gt_center {
+#iynvxciqop .gt_center {
   text-align: center;
 }
 
-#conskutojc .gt_right {
+#iynvxciqop .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#conskutojc .gt_font_normal {
+#iynvxciqop .gt_font_normal {
   font-weight: normal;
 }
 
-#conskutojc .gt_font_bold {
+#iynvxciqop .gt_font_bold {
   font-weight: bold;
 }
 
-#conskutojc .gt_font_italic {
+#iynvxciqop .gt_font_italic {
   font-style: italic;
 }
 
-#conskutojc .gt_super {
+#iynvxciqop .gt_super {
   font-size: 65%;
 }
 
-#conskutojc .gt_footnote_marks {
+#iynvxciqop .gt_footnote_marks {
   font-style: italic;
   font-size: 65%;
 }
 </style>
-<div id="conskutojc" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
+<div id="iynvxciqop" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
   
   <thead class="gt_col_headings">
     <tr>
@@ -748,6 +762,7 @@ nRMSE = \frac{RMSE}{Q_{max}-Q_{min}}, \quad \textrm{where} \quad RMSE = \sqrt{\f
 \end{equation}
 
 Where $Q_i$ is the observed discharge at time $t$, $\hat{Q}_t$ is the estimated discharge at time $t$, $n$ is the number of samples, $Q_{max}$ and $Q_{min}$ are the maximum and minimum observed discharges. The resulting nRMSE calculation is a percentage value.
+
 
 ## Results
 
@@ -1013,9 +1028,9 @@ kable(df_results_16397,
 
 Table: (\#tab:results16397)Rating curve parameter estimates and goodness-of-fit metrics for station 16397.
 
-|Site  |Period                  |         K|       H_0|        Z|       NSE| nRMSE|
-|:-----|:-----------------------|---------:|---------:|--------:|---------:|-----:|
-|16397 |2020-03-01 : 2020-01-30 | 0.0001475| -2.891489| 6.374075| 0.9522081|   4.9|
+|Site  |Period                  |         K|      H_0|       Z|       NSE| nRMSE|
+|:-----|:-----------------------|---------:|--------:|-------:|---------:|-----:|
+|16397 |2020-03-01 : 2020-01-30 | 0.0005048| -2.54658| 5.86874| 0.9519453|   4.9|
 
 
 
@@ -1386,7 +1401,7 @@ mean_daily_flow %>%
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
 }
 
-#wniglrtbym .gt_table {
+#inzteyeqtn .gt_table {
   display: table;
   border-collapse: collapse;
   margin-left: auto;
@@ -1411,7 +1426,7 @@ mean_daily_flow %>%
   border-left-color: #D3D3D3;
 }
 
-#wniglrtbym .gt_heading {
+#inzteyeqtn .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -1423,7 +1438,7 @@ mean_daily_flow %>%
   border-right-color: #D3D3D3;
 }
 
-#wniglrtbym .gt_title {
+#inzteyeqtn .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -1433,7 +1448,7 @@ mean_daily_flow %>%
   border-bottom-width: 0;
 }
 
-#wniglrtbym .gt_subtitle {
+#inzteyeqtn .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -1443,13 +1458,13 @@ mean_daily_flow %>%
   border-top-width: 0;
 }
 
-#wniglrtbym .gt_bottom_border {
+#inzteyeqtn .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#wniglrtbym .gt_col_headings {
+#inzteyeqtn .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1464,7 +1479,7 @@ mean_daily_flow %>%
   border-right-color: #D3D3D3;
 }
 
-#wniglrtbym .gt_col_heading {
+#inzteyeqtn .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1484,7 +1499,7 @@ mean_daily_flow %>%
   overflow-x: hidden;
 }
 
-#wniglrtbym .gt_column_spanner_outer {
+#inzteyeqtn .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1496,15 +1511,15 @@ mean_daily_flow %>%
   padding-right: 4px;
 }
 
-#wniglrtbym .gt_column_spanner_outer:first-child {
+#inzteyeqtn .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#wniglrtbym .gt_column_spanner_outer:last-child {
+#inzteyeqtn .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#wniglrtbym .gt_column_spanner {
+#inzteyeqtn .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -1516,7 +1531,7 @@ mean_daily_flow %>%
   width: 100%;
 }
 
-#wniglrtbym .gt_group_heading {
+#inzteyeqtn .gt_group_heading {
   padding: 8px;
   color: #333333;
   background-color: #FFFFFF;
@@ -1538,7 +1553,7 @@ mean_daily_flow %>%
   vertical-align: middle;
 }
 
-#wniglrtbym .gt_empty_group_heading {
+#inzteyeqtn .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -1553,15 +1568,15 @@ mean_daily_flow %>%
   vertical-align: middle;
 }
 
-#wniglrtbym .gt_from_md > :first-child {
+#inzteyeqtn .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#wniglrtbym .gt_from_md > :last-child {
+#inzteyeqtn .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#wniglrtbym .gt_row {
+#inzteyeqtn .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1580,7 +1595,7 @@ mean_daily_flow %>%
   overflow-x: hidden;
 }
 
-#wniglrtbym .gt_stub {
+#inzteyeqtn .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1592,7 +1607,7 @@ mean_daily_flow %>%
   padding-left: 12px;
 }
 
-#wniglrtbym .gt_summary_row {
+#inzteyeqtn .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1602,7 +1617,7 @@ mean_daily_flow %>%
   padding-right: 5px;
 }
 
-#wniglrtbym .gt_first_summary_row {
+#inzteyeqtn .gt_first_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1612,7 +1627,7 @@ mean_daily_flow %>%
   border-top-color: #D3D3D3;
 }
 
-#wniglrtbym .gt_grand_summary_row {
+#inzteyeqtn .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1622,7 +1637,7 @@ mean_daily_flow %>%
   padding-right: 5px;
 }
 
-#wniglrtbym .gt_first_grand_summary_row {
+#inzteyeqtn .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1632,11 +1647,11 @@ mean_daily_flow %>%
   border-top-color: #D3D3D3;
 }
 
-#wniglrtbym .gt_striped {
+#inzteyeqtn .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#wniglrtbym .gt_table_body {
+#inzteyeqtn .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1645,7 +1660,7 @@ mean_daily_flow %>%
   border-bottom-color: #D3D3D3;
 }
 
-#wniglrtbym .gt_footnotes {
+#inzteyeqtn .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1659,13 +1674,13 @@ mean_daily_flow %>%
   border-right-color: #D3D3D3;
 }
 
-#wniglrtbym .gt_footnote {
+#inzteyeqtn .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding: 4px;
 }
 
-#wniglrtbym .gt_sourcenotes {
+#inzteyeqtn .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1679,46 +1694,46 @@ mean_daily_flow %>%
   border-right-color: #D3D3D3;
 }
 
-#wniglrtbym .gt_sourcenote {
+#inzteyeqtn .gt_sourcenote {
   font-size: 90%;
   padding: 4px;
 }
 
-#wniglrtbym .gt_left {
+#inzteyeqtn .gt_left {
   text-align: left;
 }
 
-#wniglrtbym .gt_center {
+#inzteyeqtn .gt_center {
   text-align: center;
 }
 
-#wniglrtbym .gt_right {
+#inzteyeqtn .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#wniglrtbym .gt_font_normal {
+#inzteyeqtn .gt_font_normal {
   font-weight: normal;
 }
 
-#wniglrtbym .gt_font_bold {
+#inzteyeqtn .gt_font_bold {
   font-weight: bold;
 }
 
-#wniglrtbym .gt_font_italic {
+#inzteyeqtn .gt_font_italic {
   font-style: italic;
 }
 
-#wniglrtbym .gt_super {
+#inzteyeqtn .gt_super {
   font-size: 65%;
 }
 
-#wniglrtbym .gt_footnote_marks {
+#inzteyeqtn .gt_footnote_marks {
   font-style: italic;
   font-size: 65%;
 }
 </style>
-<div id="wniglrtbym" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
+<div id="inzteyeqtn" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
   
   <thead class="gt_col_headings">
     <tr>

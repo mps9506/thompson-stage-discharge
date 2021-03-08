@@ -2,6 +2,7 @@ eq:powerfunction
 eq:Jonesformula
 eq:finitediff
 eq:sseformula
+eq:dar
 fig:hoboplot
 fig:iqimport
 eq:nseformula

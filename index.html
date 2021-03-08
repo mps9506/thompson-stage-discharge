@@ -23,7 +23,7 @@
 
 
 
-<meta name="date" content="2021-03-05" />
+<meta name="date" content="2021-03-08" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -870,7 +870,10 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 <li class="divider"></li>
 <li class="chapter" data-level="" data-path=""><a href="#about"><i class="fa fa-check"></i>About</a></li>
-<li class="chapter" data-level="" data-path=""><a href="#introduction"><i class="fa fa-check"></i>Introduction</a></li>
+<li class="chapter" data-level="" data-path=""><a href="#introduction"><i class="fa fa-check"></i>Introduction</a><ul>
+<li class="chapter" data-level="" data-path=""><a href="#rating-curves"><i class="fa fa-check"></i>Rating curves</a></li>
+<li class="chapter" data-level="" data-path=""><a href="#ungaged-streamflow-estimation"><i class="fa fa-check"></i>Ungaged streamflow estimation</a></li>
+</ul></li>
 <li class="chapter" data-level="" data-path=""><a href="#method"><i class="fa fa-check"></i>Method</a><ul>
 <li class="chapter" data-level="" data-path=""><a href="#data-collection"><i class="fa fa-check"></i>Data collection</a></li>
 <li class="chapter" data-level="" data-path=""><a href="#rating-curve-development"><i class="fa fa-check"></i>Rating curve development</a></li>
@@ -904,7 +907,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
             <section class="normal" id="section-">
 <div id="header">
 <h1 class="title">Exploring Thompsons Creek Stage Discharge Data</h1>
-<p class="date"><em>2021-03-05</em></p>
+<p class="date"><em>2021-03-08</em></p>
 </div>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="co">## readr imports data</span></span>
 <span id="cb1-2"><a href="#cb1-2"></a><span class="kw">library</span>(readr)</span>
@@ -966,6 +969,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </div>
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
+<div id="rating-curves" class="section level3">
+<h3>Rating curves</h3>
 <p>Due to the high costs associated with continuous in-stream measurements of stream discharge, it is preferable to estimate discharge using stream height measurements. Continuous measurements of stream height can be accomplished inexpensively using pressure transducers. When supplemented with periodic discharge measurements, a power function can relate stream height and discharge <span class="citation">(Venetis <a href="#ref-venetis1970note" role="doc-biblioref">1970</a>)</span>:</p>
 <p><span class="math display" id="eq:powerfunction">\[\begin{equation}
   Q = K(H-H_0)^z
@@ -991,6 +996,16 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
 \end{equation}\]</span></p>
 <p>where:
 <span class="math inline">\(X\)</span> is the measured value and <span class="math inline">\(Y\)</span> is the predicted value. Nonlinear optimization methods search though parameter combinations to minimize the objective function (residual SSE in this case). <span class="citation">Petersen-Øverleir (<a href="#ref-petersen2006modelling" role="doc-biblioref">2006</a>)</span> applied the Nelder-Mead algorithm to solve the Jones formula. <span class="citation">Zakwan (<a href="#ref-zakwan_spreadsheet-based_2018" role="doc-biblioref">2018</a>)</span> present spreadsheet based nonlinear optimization methods using generalized reduced gradient and genetic algorithm. Most methods require careful planning for parameter starting values that are somewhat near the global minimum value or risk identifying a alternative local minimum values. To reduce the likelihood of convergence on local minimum, the <code>nls.multstart</code> package in <code>R</code> provides functionality to iterate non-linear least squares optimization over many different starting values <span class="citation">(Padfield and Matheson <a href="#ref-padfield_2020" role="doc-biblioref">2020</a>)</span>.</p>
+</div>
+<div id="ungaged-streamflow-estimation" class="section level3">
+<h3>Ungaged streamflow estimation</h3>
+<p>Rating curves allowed development of daily streamflow records for the period of time that stream depth data recorders were deployed. However, estimation of daily streamflows when sites are ungaged requires additional information. Most commonly, daily streamflow data from a nearby gaged watershed is used to estiamte flows in the ungaged watershed using a drainage area ratio or regression methods. With the drainage area ratio, daily streamflows are transferred from one basin to the other by multiplying the area ratio to daily streamflows:</p>
+<p><span class="math display" id="eq:dar">\[\begin{equation}
+Q_{yt} = Q_{xt}\bigg(\frac{A_y}{A_x}\bigg)^\phi
+  \tag{5}
+\end{equation}\]</span></p>
+<p>Where <span class="math inline">\(Q_{yt}\)</span> is streamflow at ungaged basin <span class="math inline">\(y\)</span> and time <span class="math inline">\(t\)</span>, <span class="math inline">\(Q_{xt}\)</span> is streamflow at gaged basin <span class="math inline">\(x\)</span> and time <span class="math inline">\(t\)</span>, and <span class="math inline">\(\frac{A_y}{A_x}\)</span> is the area ratio of the basins. Parameter <span class="math inline">\(\phi\)</span> is typically equal to one [@asquith_statewide_2006]. However, @asquith_statewide_2006 provides empirically estimated values of <span class="math inline">\(\phi\)</span> for use in the drainage area ratio when applied in Texas.</p>
+</div>
 </div>
 <div id="method" class="section level2">
 <h2>Method</h2>
@@ -1078,7 +1093,7 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
 }
 
-#conskutojc .gt_table {
+#iynvxciqop .gt_table {
   display: table;
   border-collapse: collapse;
   margin-left: auto;
@@ -1103,7 +1118,7 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   border-left-color: #D3D3D3;
 }
 
-#conskutojc .gt_heading {
+#iynvxciqop .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -1115,7 +1130,7 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   border-right-color: #D3D3D3;
 }
 
-#conskutojc .gt_title {
+#iynvxciqop .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -1125,7 +1140,7 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   border-bottom-width: 0;
 }
 
-#conskutojc .gt_subtitle {
+#iynvxciqop .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -1135,13 +1150,13 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   border-top-width: 0;
 }
 
-#conskutojc .gt_bottom_border {
+#iynvxciqop .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#conskutojc .gt_col_headings {
+#iynvxciqop .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1156,7 +1171,7 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   border-right-color: #D3D3D3;
 }
 
-#conskutojc .gt_col_heading {
+#iynvxciqop .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1176,7 +1191,7 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   overflow-x: hidden;
 }
 
-#conskutojc .gt_column_spanner_outer {
+#iynvxciqop .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1188,15 +1203,15 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   padding-right: 4px;
 }
 
-#conskutojc .gt_column_spanner_outer:first-child {
+#iynvxciqop .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#conskutojc .gt_column_spanner_outer:last-child {
+#iynvxciqop .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#conskutojc .gt_column_spanner {
+#iynvxciqop .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -1208,7 +1223,7 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   width: 100%;
 }
 
-#conskutojc .gt_group_heading {
+#iynvxciqop .gt_group_heading {
   padding: 8px;
   color: #333333;
   background-color: #FFFFFF;
@@ -1230,7 +1245,7 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   vertical-align: middle;
 }
 
-#conskutojc .gt_empty_group_heading {
+#iynvxciqop .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -1245,15 +1260,15 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   vertical-align: middle;
 }
 
-#conskutojc .gt_from_md > :first-child {
+#iynvxciqop .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#conskutojc .gt_from_md > :last-child {
+#iynvxciqop .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#conskutojc .gt_row {
+#iynvxciqop .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1272,7 +1287,7 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   overflow-x: hidden;
 }
 
-#conskutojc .gt_stub {
+#iynvxciqop .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1284,7 +1299,7 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   padding-left: 12px;
 }
 
-#conskutojc .gt_summary_row {
+#iynvxciqop .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1294,7 +1309,7 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   padding-right: 5px;
 }
 
-#conskutojc .gt_first_summary_row {
+#iynvxciqop .gt_first_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1304,7 +1319,7 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   border-top-color: #D3D3D3;
 }
 
-#conskutojc .gt_grand_summary_row {
+#iynvxciqop .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1314,7 +1329,7 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   padding-right: 5px;
 }
 
-#conskutojc .gt_first_grand_summary_row {
+#iynvxciqop .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1324,11 +1339,11 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   border-top-color: #D3D3D3;
 }
 
-#conskutojc .gt_striped {
+#iynvxciqop .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#conskutojc .gt_table_body {
+#iynvxciqop .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1337,7 +1352,7 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   border-bottom-color: #D3D3D3;
 }
 
-#conskutojc .gt_footnotes {
+#iynvxciqop .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1351,13 +1366,13 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   border-right-color: #D3D3D3;
 }
 
-#conskutojc .gt_footnote {
+#iynvxciqop .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding: 4px;
 }
 
-#conskutojc .gt_sourcenotes {
+#iynvxciqop .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1371,46 +1386,46 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
   border-right-color: #D3D3D3;
 }
 
-#conskutojc .gt_sourcenote {
+#iynvxciqop .gt_sourcenote {
   font-size: 90%;
   padding: 4px;
 }
 
-#conskutojc .gt_left {
+#iynvxciqop .gt_left {
   text-align: left;
 }
 
-#conskutojc .gt_center {
+#iynvxciqop .gt_center {
   text-align: center;
 }
 
-#conskutojc .gt_right {
+#iynvxciqop .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#conskutojc .gt_font_normal {
+#iynvxciqop .gt_font_normal {
   font-weight: normal;
 }
 
-#conskutojc .gt_font_bold {
+#iynvxciqop .gt_font_bold {
   font-weight: bold;
 }
 
-#conskutojc .gt_font_italic {
+#iynvxciqop .gt_font_italic {
   font-style: italic;
 }
 
-#conskutojc .gt_super {
+#iynvxciqop .gt_super {
   font-size: 65%;
 }
 
-#conskutojc .gt_footnote_marks {
+#iynvxciqop .gt_footnote_marks {
   font-style: italic;
   font-size: 65%;
 }
 </style>
-<div id="conskutojc" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
+<div id="iynvxciqop" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
   
   <thead class="gt_col_headings">
     <tr>
@@ -1594,13 +1609,13 @@ Figure 2: Period of recorded data at each station.
 <p>Individual rating curves were used to estimate streamflows using the measured stream heights. Nash-Sutcliffe Efficiency (NSE) and normalized Root Mean Square Error was used to evaluate goodness-of-fit between measured and estimated streamflow. NSE is a normalized statistic that evaluates the relative residual variance against the measured data variance and is calculated as:</p>
 <p><span class="math display" id="eq:nseformula">\[\begin{equation}
 NSE = 1 - \frac{\sum\limits_{t=1}^T(Q^t_{sim}-Q^t_{obs})^2}{\sum\limits_{t=1}^T(Q^t_{obs}-\bar{Q}_{obs})^2}
-  \tag{5}
+  \tag{6}
 \end{equation}\]</span></p>
 <p>Where <span class="math inline">\(\bar{Q}_{obs}\)</span> is the mean of observed discharges, <span class="math inline">\(Q^t_{sim}\)</span> is the estimated discharge at time <span class="math inline">\(t\)</span>, and <span class="math inline">\(Q^t_{obs}\)</span> is observed discharge at time <span class="math inline">\(t\)</span>. Values of NSE range from <span class="math inline">\(-\infty\)</span> to 1, where 1 indicates perfect predicitive performance. NSE of zero indicates the model has the same predictive performance as the mean of the dataset.</p>
 <p>The nRMSE is a percentage based metric that describes the difference between predicted and measured discharge values:</p>
 <p><span class="math display" id="eq:nRMSE">\[\begin{equation}
 nRMSE = \frac{RMSE}{Q_{max}-Q_{min}}, \quad \textrm{where} \quad RMSE = \sqrt{\frac{\sum_{t=1}^{n}{(Q_t-\hat{Q}_t)^2}}{n}}
-  \tag{6}
+  \tag{7}
 \end{equation}\]</span></p>
 <p>Where <span class="math inline">\(Q_i\)</span> is the observed discharge at time <span class="math inline">\(t\)</span>, <span class="math inline">\(\hat{Q}_t\)</span> is the estimated discharge at time <span class="math inline">\(t\)</span>, <span class="math inline">\(n\)</span> is the number of samples, <span class="math inline">\(Q_{max}\)</span> and <span class="math inline">\(Q_{min}\)</span> are the maximum and minimum observed discharges. The resulting nRMSE calculation is a percentage value.</p>
 </div>
@@ -1879,10 +1894,10 @@ Figure 3: Scatter plot of rating curve estimated flows against measured flows (A
 <tr class="odd">
 <td align="left">16397</td>
 <td align="left">2020-03-01 : 2020-01-30</td>
-<td align="right">0.0001475</td>
-<td align="right">-2.891489</td>
-<td align="right">6.374075</td>
-<td align="right">0.9522081</td>
+<td align="right">0.0005048</td>
+<td align="right">-2.54658</td>
+<td align="right">5.86874</td>
+<td align="right">0.9519453</td>
 <td align="right">4.9</td>
 </tr>
 </tbody>
@@ -2270,7 +2285,7 @@ Figure 6: Fifteen minute streamflow estimates with overlaid measured streamflow 
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
 }
 
-#wniglrtbym .gt_table {
+#inzteyeqtn .gt_table {
   display: table;
   border-collapse: collapse;
   margin-left: auto;
@@ -2295,7 +2310,7 @@ Figure 6: Fifteen minute streamflow estimates with overlaid measured streamflow 
   border-left-color: #D3D3D3;
 }
 
-#wniglrtbym .gt_heading {
+#inzteyeqtn .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -2307,7 +2322,7 @@ Figure 6: Fifteen minute streamflow estimates with overlaid measured streamflow 
   border-right-color: #D3D3D3;
 }
 
-#wniglrtbym .gt_title {
+#inzteyeqtn .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -2317,7 +2332,7 @@ Figure 6: Fifteen minute streamflow estimates with overlaid measured streamflow 
   border-bottom-width: 0;
 }
 
-#wniglrtbym .gt_subtitle {
+#inzteyeqtn .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -2327,13 +2342,13 @@ Figure 6: Fifteen minute streamflow estimates with overlaid measured streamflow 
   border-top-width: 0;
 }
 
-#wniglrtbym .gt_bottom_border {
+#inzteyeqtn .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#wniglrtbym .gt_col_headings {
+#inzteyeqtn .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -2348,7 +2363,7 @@ Figure 6: Fifteen minute streamflow estimates with overlaid measured streamflow 
   border-right-color: #D3D3D3;
 }
 
-#wniglrtbym .gt_col_heading {
+#inzteyeqtn .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2368,7 +2383,7 @@ Figure 6: Fifteen minute streamflow estimates with overlaid measured streamflow 
   overflow-x: hidden;
 }
 
-#wniglrtbym .gt_column_spanner_outer {
+#inzteyeqtn .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2380,15 +2395,15 @@ Figure 6: Fifteen minute streamflow estimates with overlaid measured streamflow 
   padding-right: 4px;
 }
 
-#wniglrtbym .gt_column_spanner_outer:first-child {
+#inzteyeqtn .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#wniglrtbym .gt_column_spanner_outer:last-child {
+#inzteyeqtn .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#wniglrtbym .gt_column_spanner {
+#inzteyeqtn .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -2400,7 +2415,7 @@ Figure 6: Fifteen minute streamflow estimates with overlaid measured streamflow 
   width: 100%;
 }
 
-#wniglrtbym .gt_group_heading {
+#inzteyeqtn .gt_group_heading {
   padding: 8px;
   color: #333333;
   background-color: #FFFFFF;
@@ -2422,7 +2437,7 @@ Figure 6: Fifteen minute streamflow estimates with overlaid measured streamflow 
   vertical-align: middle;
 }
 
-#wniglrtbym .gt_empty_group_heading {
+#inzteyeqtn .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -2437,15 +2452,15 @@ Figure 6: Fifteen minute streamflow estimates with overlaid measured streamflow 
   vertical-align: middle;
 }
 
-#wniglrtbym .gt_from_md > :first-child {
+#inzteyeqtn .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#wniglrtbym .gt_from_md > :last-child {
+#inzteyeqtn .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#wniglrtbym .gt_row {
+#inzteyeqtn .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2464,7 +2479,7 @@ Figure 6: Fifteen minute streamflow estimates with overlaid measured streamflow 
   overflow-x: hidden;
 }
 
-#wniglrtbym .gt_stub {
+#inzteyeqtn .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2476,7 +2491,7 @@ Figure 6: Fifteen minute streamflow estimates with overlaid measured streamflow 
   padding-left: 12px;
 }
 
-#wniglrtbym .gt_summary_row {
+#inzteyeqtn .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -2486,7 +2501,7 @@ Figure 6: Fifteen minute streamflow estimates with overlaid measured streamflow 
   padding-right: 5px;
 }
 
-#wniglrtbym .gt_first_summary_row {
+#inzteyeqtn .gt_first_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2496,7 +2511,7 @@ Figure 6: Fifteen minute streamflow estimates with overlaid measured streamflow 
   border-top-color: #D3D3D3;
 }
 
-#wniglrtbym .gt_grand_summary_row {
+#inzteyeqtn .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -2506,7 +2521,7 @@ Figure 6: Fifteen minute streamflow estimates with overlaid measured streamflow 
   padding-right: 5px;
 }
 
-#wniglrtbym .gt_first_grand_summary_row {
+#inzteyeqtn .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2516,11 +2531,11 @@ Figure 6: Fifteen minute streamflow estimates with overlaid measured streamflow 
   border-top-color: #D3D3D3;
 }
 
-#wniglrtbym .gt_striped {
+#inzteyeqtn .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#wniglrtbym .gt_table_body {
+#inzteyeqtn .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -2529,7 +2544,7 @@ Figure 6: Fifteen minute streamflow estimates with overlaid measured streamflow 
   border-bottom-color: #D3D3D3;
 }
 
-#wniglrtbym .gt_footnotes {
+#inzteyeqtn .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -2543,13 +2558,13 @@ Figure 6: Fifteen minute streamflow estimates with overlaid measured streamflow 
   border-right-color: #D3D3D3;
 }
 
-#wniglrtbym .gt_footnote {
+#inzteyeqtn .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding: 4px;
 }
 
-#wniglrtbym .gt_sourcenotes {
+#inzteyeqtn .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -2563,46 +2578,46 @@ Figure 6: Fifteen minute streamflow estimates with overlaid measured streamflow 
   border-right-color: #D3D3D3;
 }
 
-#wniglrtbym .gt_sourcenote {
+#inzteyeqtn .gt_sourcenote {
   font-size: 90%;
   padding: 4px;
 }
 
-#wniglrtbym .gt_left {
+#inzteyeqtn .gt_left {
   text-align: left;
 }
 
-#wniglrtbym .gt_center {
+#inzteyeqtn .gt_center {
   text-align: center;
 }
 
-#wniglrtbym .gt_right {
+#inzteyeqtn .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#wniglrtbym .gt_font_normal {
+#inzteyeqtn .gt_font_normal {
   font-weight: normal;
 }
 
-#wniglrtbym .gt_font_bold {
+#inzteyeqtn .gt_font_bold {
   font-weight: bold;
 }
 
-#wniglrtbym .gt_font_italic {
+#inzteyeqtn .gt_font_italic {
   font-style: italic;
 }
 
-#wniglrtbym .gt_super {
+#inzteyeqtn .gt_super {
   font-size: 65%;
 }
 
-#wniglrtbym .gt_footnote_marks {
+#inzteyeqtn .gt_footnote_marks {
   font-style: italic;
   font-size: 65%;
 }
 </style>
-<div id="wniglrtbym" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
+<div id="inzteyeqtn" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
   
   <thead class="gt_col_headings">
     <tr>
