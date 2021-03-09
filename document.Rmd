@@ -33,8 +33,9 @@ library(units)
 library(ggforce)
 ## hrbrtheme is optional, I use it to pretty my plots
 library(hrbrthemes)
-## patchwork support arranging multiple ggplots into one plot
+## patchwork and cowplot support arranging multiple ggplots into one plot
 library(patchwork)
+library(cowplot)
 ## lubridate provides functions for handling time and date
 library(lubridate)
 ## purrr lets us use map_ functions as an alternative to loops
@@ -117,14 +118,23 @@ $X$ is the measured value and $Y$ is the predicted value. Nonlinear optimization
 
 ### Ungaged streamflow estimation
 
-Rating curves allowed development of daily streamflow records for the period of time that stream depth data recorders were deployed. However, estimation of daily streamflows when sites are ungaged requires additional information. Most commonly, daily streamflow data from a nearby gaged watershed is used to estimate flows in the ungaged watershed using a drainage area ratio or regression methods. With the drainage area ratio, daily streamflows are transferred from one basin to the other by multiplying the area ratio to daily streamflows:
+Rating curves allowed development of daily streamflow records for the period of time that stream depth data recorders were deployed. However, estimation of daily streamflows when sites are ungaged requires additional information. Statistical information transfer and empirical regression are two relatively simple methods for estimating streamflows in poorly gaged watersheds. Statistical transfer procedures simply transfer flow duration curves or daily streamflow values from a gaged watershed to the ungaged watershed using assumed relationships between area and runoff. The most common statistical transfer method is the drainage area ratio. With the drainage area ratio, daily streamflows are transferred from one basin to the other by multiplying the area ratio to daily streamflows:
 
 \begin{equation}
 Q_y^t = Q_x^t\bigg(\frac{A_y}{A_x}\bigg)^\phi
   (\#eq:dar)
 \end{equation}
 
-Where $Q_y^t$ is streamflow at ungaged basin $y$ and time $t$, $Q_x^t$ is streamflow at gaged basin $x$ and time $t$, and $\frac{A_y}{A_x}$ is the area ratio of the basins. Parameter $\phi$ is typically equal to one  [@asquith_statewide_2006]. However, @asquith_statewide_2006 provides empirically estimated values of $\phi$ for use in the drainage area ratio when applied in Texas. 
+Where $Q_y^t$ is streamflow at ungaged basin $y$ and time $t$, $Q_x^t$ is streamflow at gaged basin $x$ and time $t$, and $\frac{A_y}{A_x}$ is the area ratio of the basins. Parameter $\phi$ is typically equal to one  [@asquith_statewide_2006]. However, @asquith_statewide_2006 provides empirically estimated values of $\phi$ for use in the drainage area ratio when applied in Texas. With an available short term streamflow record available, various stream gages can be assessed for performance using the drainage area ratio method. Furthermore, localized values of $\phi$ can be developed using non-linear least squares. If the primary output is a flow duration curve, the main concern is that the candidate gages have similar runoff response and be within a reasonable distance of the ungaged watershed. .... discuss general rules and methods for choosing appropriate candidate gages. However, if the primary output includes daily streamflow estimates, it is more important to have a candidate gage with same timing of flow exceedance probabilities. 
+
+Empirical regression based approaches require a period of measured streamflow and some predictor variables to estimate the runoff response from. Typically, daily rainfall data are employed to fit a regression model to measured streamflow data:
+
+\begin{equation}
+Q_i = \sum_{j=0}^M\beta_jx_{ji}+\epsilon_i
+  (\#eq:linear)
+\end{equation}
+where $Q_i$ is predicted discharge on day $i$, $\beta$ is the coefficient of the $j$th variable, $x$ is the predictor variable(s) value on the $i$th day. The error term, $\epsilon_i$ is assumed normally distributed around mean zero. Using simple linear or multiple linear regression $Q$ is typically log transformed prior to estimating the regression coefficients. If the relationship between predictor variables and the response are expected to be nonlinear polynomial terms can be included. However, an extension of linear regression called generalized additive models allows relatively easy fitting of these nonlinear terms to the data. With generalized additive models, the response variable depends on the sum of smoothing functions applied to each predictor variable. Furthermore, generalized additive models can accommodate response variables with error distributions other than the normal distribution. However, compared to linear or multiple linear regression, generalized additive models are more difficult to interpret due to the lack of single model coefficients. Therefore, the effect of each individual smoothing function on the response variable mean is typically communicated graphically.
+
 
 ## Method
 
@@ -357,6 +367,91 @@ iqplus_df %>%
   
   
 ```
+
+Two National Oceanic and Atmospheric Administration (NOAA) Global Historical Climatology Network (GHCN) locations provide daily precipitation data for the project area. GHCN daily summaries were downloaded for GHCND:USW00003904 (Easterfield Airport) and GHCND:US1TXBZS088 (Bryan 3.5 NNW, TX US) using the NOAA API services and the `rnoaa` package in R [@chamberlain_2019].
+
+```{r precipsum, fig.cap="Daily precipitation and marginal histograms of daily precipitation.", message=FALSE, warning=FALSE, out.width="100%"}
+easterfield_precip <- read_csv("Data/noaa_precip/easterfield.csv",
+                               col_types = cols(
+                                 date = col_datetime(format = ""),
+                                 datatype = col_character(),
+                                 station = col_character(),
+                                 value = col_double(),
+                                 fl_m = col_character(),
+                                 fl_q = col_character(),
+                                 fl_so = col_character(),
+                                 fl_t = col_character(),
+                                 units = col_character())) %>%
+  mutate(value =  set_units(value/10, "mm")) %>%
+  select(date, datatype, station, value)
+  
+
+bryan_precip <- read_csv("Data/noaa_precip/bryan3_5nnw.csv",
+                         col_types = cols(
+                           date = col_datetime(format = ""),
+                           datatype = col_character(),
+                           station = col_character(),
+                           value = col_double(),
+                           fl_m = col_character(),
+                           fl_q = col_character(),
+                           fl_so = col_character(),
+                           fl_t = col_character(),
+                           units = col_character())) %>%
+  mutate(value =  set_units(value/10, "mm")) %>%
+  select(date, datatype, station, value)
+
+easterfield_precip %>%
+  bind_rows(bryan_precip) %>%
+  mutate(date = as.Date(date),
+         value = as.numeric(value)) %>%
+  ggplot() +
+  geom_line(aes(date, value)) +
+  geom_point(aes(date, value), alpha = 0) +
+  labs(y = "Daily precipitation (mm)",
+       x = "Date") +
+  facet_wrap(~station, ncol = 1) +
+  theme_ms(plot.margin = margin(10,0,10,10),
+           panel.spacing = unit(0, "lines"),
+           panel.spacing.x = unit(0, "lines"),
+           panel.spacing.y = unit(2, "lines"),) -> p1
+
+  
+
+easterfield_precip %>%
+  bind_rows(bryan_precip) %>%
+  mutate(date = as.Date(date),
+         value = as.numeric(value)) %>%
+  ggplot() +
+  geom_histogram(aes(value), binwidth = 10) +
+  facet_wrap(~station, ncol = 1) +
+  coord_flip() +
+  theme_ms() +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        panel.background = element_blank(),
+        panel.border = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        plot.background = element_blank(),
+        plot.margin = margin(10,10,10,0),
+        panel.spacing = unit(0, "lines"),
+        panel.spacing.x = unit(0, "lines"),
+        panel.spacing.y = unit(2, "lines"),
+        strip.text = element_text(color="transparent")) -> p2
+
+
+plot_grid(p1,p2,align = "h", axis = "bt", rel_widths = c(2, 1))
+
+
+
+
+```
+
+
 
 
 ### Rating curve development
@@ -979,6 +1074,86 @@ ggplot(mean_daily_flow) +
   guides(x = guide_axis(angle = 90)) +
   theme(axis.text.x = element_text(size = 8)) 
 ```
+
+```{r message=FALSE}
+read_csv("Data/USGS_Streamflow/08110100.csv") %>%
+  filter(datetime >= as.Date("2020-03-03") & datetime <= as.Date("2021-01-14")) %>%
+  rename(Flow = `135389_00060_00003`) -> mean_daily_08110100
+
+
+read_csv("Data/USGS_Streamflow/08109800.csv") %>%
+  filter(datetime >= as.Date("2020-03-03") & datetime <= as.Date("2021-01-14")) %>%
+  rename(Flow = `135356_00060_00003`) -> mean_daily_08109800
+
+
+read_csv("Data/USGS_Streamflow/08065800.csv") %>%
+  filter(datetime >= as.Date("2020-03-03") & datetime <= as.Date("2021-01-14")) %>%
+  rename(Flow = `133946_00060_00003`) -> mean_daily_08065800
+
+
+mean_daily_flow %>%
+  as_tibble() %>%
+  filter(Site == "16396") %>%
+  left_join(mean_daily_08110100 %>% select(datetime, Flow_08110100 = Flow), by = c("date" = "datetime")) %>%
+  left_join(mean_daily_08109800 %>% select(datetime, Flow_08109800 = Flow), by = c("date" = "datetime")) %>%
+  left_join(mean_daily_08065800 %>% select(datetime, Flow_08065800 = Flow), by = c("date" = "datetime")) -> model_df
+```
+
+
+```{r}
+####
+# next steps: calculate fdc for 2020 at each site
+# regress at selected quantiles using watershed characteristics
+# predict and linear interpolate to fill in. 
+# use transfer procedure from candidate gaage. 
+####
+# evaluate DAR procedure as below, looks like we don't have a great candidate
+# gage as the magnitude of the peaks are not in the correct order.
+####
+#evaluate a rainfall runoff mode? q~f(x,y) runoff is a function of precip and observed runoff?
+# precip data vailable through rnoaa at easterfield which is very close by.
+# 	GHCND:USW00003904
+####
+
+
+
+# ####
+# area_16396 <- 24 ## need to adjust this, not quite right
+# area_08110100 <- 195
+# area_08109800 <- 244
+# area_08065800 <- 321
+# dar16396 <- formula(mean_daily ~ (Flow_08110100 * (24/195)^phi + 
+#                       Flow_08109800 * (24/244)^upsilon +
+#                       Flow_08065800 * (24/321)^tau)/3)
+# 
+# ## some starting paremeters. nls_multstart will use multiple
+# ## starting parameters and model selection to find 
+# ## global minimum
+# start_lower <- list(phi = 0.1, upsilon = 0.1, tau = 0.1)
+# start_upper <- list(phi = 10, upsilon = 10, tau = 10)
+# ## fit nls
+# multidar <- nls_multstart(dar16396,
+#               data = model_df,
+#               iter = 1000,
+#               start_lower = start_lower,
+#               start_upper = start_upper,
+#               #convergence_count = FALSE,
+#               supp_errors = "Y")
+# 
+# model_df %>%
+#   mutate(fit = predict(multidar, newdata = .)) %>%
+#   ggplot() +
+#   geom_line(aes(date, mean_daily)) +
+#   geom_point(aes(date, fit))
+```
+
+
+```{r}
+### Use linear regression to estiamte streamflow response
+### Models: 
+### log(y) ~ easterwood + easterwood lag1 + bryan + bryan lag1;
+```
+
 
 
 ## References
