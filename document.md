@@ -1,6 +1,6 @@
 ---
 title: "Exploring Thompsons Creek Stage Discharge Data"
-date: "2021-03-08"
+date: "2021-03-16"
 github-repo: https://github.com/mps9506/thompson-stage-discharge
 bibliography: bibliography.bib
 biblio-style: "apalike"
@@ -29,8 +29,9 @@ library(units)
 library(ggforce)
 ## hrbrtheme is optional, I use it to pretty my plots
 library(hrbrthemes)
-## patchwork support arranging multiple ggplots into one plot
+## patchwork and cowplot support arranging multiple ggplots into one plot
 library(patchwork)
+library(cowplot)
 ## lubridate provides functions for handling time and date
 library(lubridate)
 ## purrr lets us use map_ functions as an alternative to loops
@@ -44,6 +45,8 @@ library(imputeTS)
 library(gtsummary)
 ## nls.multstart fits non-linear least squares using the Levenberg-Marquardt algorithm with multiple starting values.
 library(nls.multstart)
+##
+library(mgcv)
 
 ## set some options
 update_geom_font_defaults(font_rc)
@@ -113,14 +116,23 @@ $X$ is the measured value and $Y$ is the predicted value. Nonlinear optimization
 
 ### Ungaged streamflow estimation
 
-Rating curves allowed development of daily streamflow records for the period of time that stream depth data recorders were deployed. However, estimation of daily streamflows when sites are ungaged requires additional information. Most commonly, daily streamflow data from a nearby gaged watershed is used to estimate flows in the ungaged watershed using a drainage area ratio or regression methods. With the drainage area ratio, daily streamflows are transferred from one basin to the other by multiplying the area ratio to daily streamflows:
+Rating curves allowed development of daily streamflow records for the period of time that stream depth data recorders were deployed. However, estimation of daily streamflows when sites are ungaged requires additional information. Statistical information transfer and empirical regression are two relatively simple methods for estimating streamflows in poorly gaged watersheds. Statistical transfer procedures simply transfer flow duration curves or daily streamflow values from a gaged watershed to the ungaged watershed using assumed relationships between area and runoff. The most common statistical transfer method is the drainage area ratio. With the drainage area ratio, daily streamflows are transferred from one basin to the other by multiplying the area ratio to daily streamflows:
 
 \begin{equation}
 Q_y^t = Q_x^t\bigg(\frac{A_y}{A_x}\bigg)^\phi
   (\#eq:dar)
 \end{equation}
 
-Where $Q_y^t$ is streamflow at ungaged basin $y$ and time $t$, $Q_x^t$ is streamflow at gaged basin $x$ and time $t$, and $\frac{A_y}{A_x}$ is the area ratio of the basins. Parameter $\phi$ is typically equal to one  [@asquith_statewide_2006]. However, @asquith_statewide_2006 provides empirically estimated values of $\phi$ for use in the drainage area ratio when applied in Texas. 
+Where $Q_y^t$ is streamflow at ungaged basin $y$ and time $t$, $Q_x^t$ is streamflow at gaged basin $x$ and time $t$, and $\frac{A_y}{A_x}$ is the area ratio of the basins. Parameter $\phi$ is typically equal to one  [@asquith_statewide_2006]. However, @asquith_statewide_2006 provides empirically estimated values of $\phi$ for use in the drainage area ratio when applied in Texas. With an available short term streamflow record available, various stream gages can be assessed for performance using the drainage area ratio method. Furthermore, localized values of $\phi$ can be developed using non-linear least squares. If the primary output is a flow duration curve, the main concern is that the candidate gages have similar runoff response and be within a reasonable distance of the ungaged watershed. .... discuss general rules and methods for choosing appropriate candidate gages. However, if the primary output includes daily streamflow estimates, it is more important to have a candidate gage with same timing of flow exceedance probabilities. 
+
+Empirical regression based approaches require a period of measured streamflow and some predictor variables to estimate the runoff response from. Typically, daily rainfall data are employed to fit a regression model to measured streamflow data:
+
+\begin{equation}
+Q_i = \sum_{j=0}^M\beta_jx_{ji}+\epsilon_i
+  (\#eq:linear)
+\end{equation}
+where $Q_i$ is predicted discharge on day $i$, $\beta$ is the coefficient of the $j$th variable, $x$ is the predictor variable(s) value on the $i$th day. The error term, $\epsilon_i$ is assumed normally distributed around mean zero. Using simple linear or multiple linear regression $Q$ is typically log transformed prior to estimating the regression coefficients. If the relationship between predictor variables and the response are expected to be nonlinear polynomial terms can be included. However, an extension of linear regression called generalized additive models allows relatively easy fitting of these nonlinear terms to the data. With generalized additive models, the response variable depends on the sum of smoothing functions applied to each predictor variable. Furthermore, generalized additive models can accommodate response variables with error distributions other than the normal distribution. However, compared to linear or multiple linear regression, generalized additive models are more difficult to interpret due to the lack of single model coefficients. Therefore, the effect of each individual smoothing function on the response variable mean is typically communicated graphically.
+
 
 ## Method
 
@@ -332,7 +344,7 @@ ggplot(iqplus_df) +
 ```
 
 <div class="figure">
-<img src="document_files/figure-html/iqimport-1.png" alt="Period of recorded data at each station." width="672" />
+<img src="document_files/figure-html/iqimport-1.png" alt="Period of recorded data at each station." width="1050" />
 <p class="caption">(\#fig:iqimport)Period of recorded data at each station.</p>
 </div>
 
@@ -372,6 +384,8 @@ iqplus_df %>%
 ```
 
 
+
+
 ### Rating curve development
 
 In-stream and stream bank conditions change through the year due to plant growth, plant dieback, sedimentation, erosion, and other processes. These changing conditions can necessitate the development of multiple rating curves. Exploratory data analysis was used to identify periods of change and the potential for hysteresis affected rating curves. Once rating curve periods and appropriate formulas were determined, rating curve parameters in formulas \@ref(eq:powerfunction) and \@ref(eq:Jonesformula)  were estimated by non-linear least squares regression using the `nls.multstart` package in `R` [@padfield_2020]. This method utilizes the Levenberg-Marquardt algorithm and multiple starting values to find the global minimum SSE value. 
@@ -407,7 +421,7 @@ Based on exploratory analysis, two rating curves were developed for site 16396. 
 
 iqplus_df %>%
   filter(Site == "16396",
-         Date_Time < as.POSIXct("2020-12-01", tz = "Etc/GMT-6")) %>%
+         Date_Time < as.POSIXct("2020-12-14", tz = "Etc/GMT-6")) %>%
   arrange(Date_Time) %>%
   mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
          diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours"))) %>%
@@ -425,10 +439,10 @@ iqplus_df %>%
   filter(!is.na(diff_depth)) %>%
   mutate(J = as.numeric(diff_depth)/as.numeric(diff_time)) -> df_16396_2020_03
 
-## Make dataframe for site 16396 Dec 2020 through January 2021
+## Make dataframe for site 16396 Dec 14 2020 through January 2021
 iqplus_df %>%
   filter(Site == "16396",
-         Date_Time >= as.POSIXct("2020-12-01", tz = "Etc/GMT-6") &
+         Date_Time >= as.POSIXct("2020-12-14", tz = "Etc/GMT-6") &
             Date_Time < as.POSIXct("2021-02-01", tz = "Etc/GMT-6")) %>%
   arrange(Date_Time) %>%
   mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
@@ -487,8 +501,8 @@ rc_16396_2020_12 <- nls_multstart(jones_form,
 ```r
 ## setup dataframe with parameter results. Will use this later to report parameters and GOF metrics
 df_results_16369 <- tibble(Site = c("16396","16396"),
-                           Period = c("2020-03-01 : 2020-11-30",
-                                      "2020-12-01 : 2021-01-31"),
+                           Period = c("2020-03-03 : 2020-12-13",
+                                      "2020-12-14 : 2021-01-31"),
                            K = c(coefficients(rc_16396_2020_03)[["K"]],
                                  coefficients(rc_16396_2020_12)[["K"]]),
                            a = c(coefficients(rc_16396_2020_03)[["a"]],
@@ -531,8 +545,8 @@ Table: (\#tab:results16369)Rating curve parameter estimates and goodness-of-fit 
 
 |Site  |Period                  |        K|         a|         n|          x|       NSE| nRMSE|
 |:-----|:-----------------------|--------:|---------:|---------:|----------:|---------:|-----:|
-|16396 |2020-03-01 : 2020-11-30 | 4.700924| 0.3324034| 0.5018387| -0.1250084| 0.9793704|   1.7|
-|16396 |2020-12-01 : 2021-01-31 | 4.393037| 0.1779943| 0.6566228|  0.0979444| 0.9779388|   2.0|
+|16396 |2020-03-03 : 2020-12-13 | 4.700924| 0.3324034| 0.5018387| -0.1250084| 0.9793704|   1.7|
+|16396 |2020-12-14 : 2021-01-31 | 4.393037| 0.1779943| 0.6566228|  0.0979444| 0.9779388|   2.0|
 
 
 ```r
@@ -543,9 +557,10 @@ p1 <- ggplot(df_16396_2020_03) +
   geom_abline(aes(slope = 1, intercept = 0, linetype = "1:1 line")) +
   scale_x_continuous(name = "Rating curve flow estimate [cfs]", trans = "log10") +
   scale_y_continuous(name = "Measured flow [cfs]", trans = "log10") +
-  theme_ms() + labs(subtitle = "March-November") +
+  theme_ms() + labs(subtitle = "2020-03-03 through 2020-12-13") +
   theme(legend.title = element_blank(),
-        legend.position = "none")
+        legend.position = "none",
+        plot.subtitle = element_text(size = 8))
 
 p2 <- ggplot(df_16396_2020_03) +
   geom_point(aes(as.numeric(Flow), Depth, color = "Measured")) +
@@ -556,15 +571,18 @@ p2 <- ggplot(df_16396_2020_03) +
             alpha = 0.5) +
   scale_color_discrete("") + scale_linetype_discrete("") +
   scale_x_continuous("Flow [cfs]", trans = "log10") +
-  labs(subtitle = "March-November") + theme_ms() + theme(legend.position = "none")
+  labs(subtitle = "2020-03-03 through 2020-12-13") + theme_ms() + 
+  theme(legend.position = "none",
+        plot.subtitle = element_text(size = 8))
 
 p3 <- ggplot(df_16396_2020_12) +
     geom_point(aes(as.numeric(predicted), as.numeric(Flow), color = "Rating curve prediction against measured flow"), alpha = 0.25) +
   geom_abline(aes(slope = 1, intercept = 0, linetype = "1:1 line")) +
   scale_x_continuous(name = "Rating curve flow estimate [cfs]", trans = "log10") +
   scale_y_continuous(name = "Measured flow [cfs]", trans = "log10") +
-  theme_ms() + labs(subtitle = "December-January") +
-  theme(legend.title = element_blank())
+  theme_ms() + labs(subtitle = "2020-12-14 through 2021-01-14") +
+  theme(legend.title = element_blank(),
+        plot.subtitle = element_text(size = 8))
 
 p4 <- ggplot(df_16396_2020_12) +
   geom_point(aes(as.numeric(Flow), Depth, color = "Measured")) +
@@ -575,7 +593,8 @@ p4 <- ggplot(df_16396_2020_12) +
             alpha = 0.5) +
   scale_color_discrete("") + scale_linetype_discrete("") +
   scale_x_continuous("Flow [cfs]", trans = "log10") +
-  labs(subtitle = "December-January") + theme_ms()
+  labs(subtitle = "2020-12-14 through 2021-01-14") + theme_ms() +
+  theme(plot.subtitle = element_text(size = 8))
 
 (p1 + p2) / (p3 + p4) + plot_annotation(tag_levels = "A")
 ```
@@ -633,7 +652,7 @@ rc_16397 <- nls_multstart(power_form,
 ```r
 ## setup dataframe with parameter results. Will use this later to report parameters and GOF metrics
 df_results_16397 <- tibble(Site = c("16397"),
-                           Period = c("2020-03-01 : 2020-01-30"),
+                           Period = c("2020-03-03 : 2020-01-14"),
                            K = coefficients(rc_16397)[["K"]],
                            H_0 = coefficients(rc_16397)[["H_0"]],
                            Z = coefficients(rc_16397)[["Z"]])
@@ -661,7 +680,7 @@ Table: (\#tab:results16397)Rating curve parameter estimates and goodness-of-fit 
 
 |Site  |Period                  |         K|       H_0|        Z|       NSE| nRMSE|
 |:-----|:-----------------------|---------:|---------:|--------:|---------:|-----:|
-|16397 |2020-03-01 : 2020-01-30 | 0.0008322| -2.402912| 5.658475| 0.9519032|   4.9|
+|16397 |2020-03-03 : 2020-01-14 | 0.0006341| -2.481346| 5.772743| 0.9517218|   4.9|
 
 
 
@@ -813,9 +832,9 @@ rc_16882_2020_12 <- nls_multstart(jones_form,
 ```r
 ## setup dataframe with parameter results. Will use this later to report parameters and GOF metrics
 df_results_16882 <- tibble(Site = c("16882", "16882", "16882"),
-                           Period = c("2020-03-01 : 2020-09-30",
-                                      "2020-10-01 : 2020-11-30",
-                                      "2020-12-01 : 2021-01-31"),
+                           Period = c("2020-03-03 : 2020-10-22",
+                                      "2020-10-23 : 2020-12-09",
+                                      "2020-12-10 : 2021-01-14"),
                            K = c(coefficients(rc_16882_2020_03)[["K"]],
                                  coefficients(rc_16882_2020_10)[["K"]],
                                  coefficients(rc_16882_2020_12)[["K"]]),
@@ -867,9 +886,9 @@ Table: (\#tab:results16882)Rating curve parameter estimates and goodness-of-fit 
 
 |Site  |Period                  |        K|         a|         n|          x|       NSE| nRMSE|
 |:-----|:-----------------------|--------:|---------:|---------:|----------:|---------:|-----:|
-|16882 |2020-03-01 : 2020-09-30 | 4.520613| 0.9598066| 0.1515910| -0.5764236| 0.9674766|   5.5|
-|16882 |2020-10-01 : 2020-11-30 | 3.371444| 0.8957127| 0.1359091| -6.1282243| 0.8850142|  10.0|
-|16882 |2020-12-01 : 2021-01-31 | 3.855323| 0.5431170| 0.7936082|  0.3829932| 0.8833267|   1.9|
+|16882 |2020-03-03 : 2020-10-22 | 4.520613| 0.9598066| 0.1515910| -0.5764236| 0.9674766|   5.5|
+|16882 |2020-10-23 : 2020-12-09 | 4.429873| 0.8771891| 0.2634828| -3.6730615| 0.9256386|   8.0|
+|16882 |2020-12-10 : 2021-01-14 | 3.855323| 0.5431170| 0.7936081|  0.3829932| 0.8833267|   1.9|
 
 
 ```r
@@ -880,9 +899,10 @@ p1 <- ggplot(df_16882_2020_03) +
   geom_abline(aes(slope = 1, intercept = 0, linetype = "1:1 line")) +
   scale_x_continuous(name = "Rating curve flow estimate [cfs]", trans = "log10") +
   scale_y_continuous(name = "Measured flow [cfs]", trans = "log10") +
-  theme_ms() + labs(subtitle = "March-September") +
+  theme_ms() + labs(subtitle = "2020-03-03 : 2020-10-22") +
   theme(legend.title = element_blank(),
-        legend.position = "none")
+        legend.position = "none",
+        plot.subtitle = element_text(size = 8))
 
 p2 <- ggplot(df_16882_2020_03) +
   geom_point(aes(as.numeric(Flow), Depth, color = "Measured")) +
@@ -893,16 +913,18 @@ p2 <- ggplot(df_16882_2020_03) +
             alpha = 0.5) +
   scale_color_discrete("") + scale_linetype_discrete("") +
   scale_x_continuous("Flow [cfs]", trans = "log10") +
-  labs(subtitle = "March-September") + theme_ms() + theme(legend.position = "none")
+  labs(subtitle = "2020-03-03 : 2020-10-22") + theme_ms() + theme(legend.position = "none",
+                                                                  plot.subtitle = element_text(size = 8))
 
 p3 <- ggplot(df_16882_2020_10) +
     geom_point(aes(as.numeric(predicted), as.numeric(Flow), color = "Rating curve prediction against measured flow"), alpha = 0.25) +
   geom_abline(aes(slope = 1, intercept = 0, linetype = "1:1 line")) +
   scale_x_continuous(name = "Rating curve flow estimate [cfs]", trans = "log10") +
   scale_y_continuous(name = "Measured flow [cfs]", trans = "log10") +
-  theme_ms() + labs(subtitle = "October-November") +
+  theme_ms() + labs(subtitle = "2020-10-23 : 2020-12-09") +
   theme(legend.title = element_blank(),
-        legend.position = "none")
+        legend.position = "none",
+        plot.subtitle = element_text(size = 8))
 
 p4 <- ggplot(df_16882_2020_10) +
   geom_point(aes(as.numeric(Flow), Depth, color = "Measured")) +
@@ -913,15 +935,17 @@ p4 <- ggplot(df_16882_2020_10) +
             alpha = 0.5) +
   scale_color_discrete("") + scale_linetype_discrete("") +
   scale_x_continuous("Flow [cfs]", trans = "log10") +
-  labs(subtitle = "October-November") + theme_ms() + theme(legend.position = "none")
+  labs(subtitle = "2020-10-23 : 2020-12-09") + theme_ms() + theme(legend.position = "none",
+                                                                  plot.subtitle = element_text(size = 8))
 
 p5 <- ggplot(df_16882_2020_12) +
     geom_point(aes(as.numeric(predicted), as.numeric(Flow), color = "Rating curve prediction against measured flow"), alpha = 0.25) +
   geom_abline(aes(slope = 1, intercept = 0, linetype = "1:1 line")) +
   scale_x_continuous(name = "Rating curve flow estimate [cfs]", trans = "log10") +
   scale_y_continuous(name = "Measured flow [cfs]", trans = "log10") +
-  theme_ms() + labs(subtitle = "December-January") +
-  theme(legend.title = element_blank())
+  theme_ms() + labs(subtitle = "2020-12-10 : 2021-01-14") +
+  theme(legend.title = element_blank(),
+        plot.subtitle = element_text(size = 8))
 
 p6 <- ggplot(df_16882_2020_12) +
   geom_point(aes(as.numeric(Flow), Depth, color = "Measured")) +
@@ -932,7 +956,8 @@ p6 <- ggplot(df_16882_2020_12) +
             alpha = 0.5) +
   scale_color_discrete("") + scale_linetype_discrete("") +
   scale_x_continuous("Flow [cfs]", trans = "log10") +
-  labs(subtitle = "December-January") + theme_ms()
+  labs(subtitle = "2020-12-10 : 2021-01-14") + theme_ms() +
+  theme(plot.subtitle = element_text(size = 8))
 
 (p1 + p2) / (p3 + p4) / (p5 + p6) + plot_annotation(tag_levels = "A")
 ```
@@ -953,7 +978,7 @@ p6 <- ggplot(df_16882_2020_12) +
 # aggregate to mean daily flows, report summary stats.
 
 hobo_df %>%
-  select(Site, Depth = Water_Level, Date_Time) %>%
+  dplyr::select(Site, Depth = Water_Level, Date_Time) %>%
   group_split(Site) %>%
   map(~mutate(.x,
               time_lag = lag(Date_Time, default = Date_Time[1]),
@@ -970,20 +995,22 @@ tibble(rating_curve = list(rc_16396_2020_03, rc_16396_2020_12,
                                           rc_16397,
                                           rc_16882_2020_03, rc_16882_2020_10, rc_16882_2020_12),
        data = list(
-         estimated_data %>% filter(Site == "16396" & Date_Time < as.POSIXct("2020-12-01", tz = "Etc/GMT-6")),
-         estimated_data %>% filter(Site == "16396" & Date_Time >= as.POSIXct("2020-12-01", tz = "Etc/GMT-6") & Date_Time < as.POSIXct("2021-02-01", tz = "Etc/GMT-6")),
+         estimated_data %>% filter(Site == "16396" & Date_Time < as.POSIXct("2020-12-14", tz = "Etc/GMT-6")),
+         estimated_data %>% filter(Site == "16396" & Date_Time >= as.POSIXct("2020-12-14", tz = "Etc/GMT-6") & Date_Time < as.POSIXct("2021-02-01", tz = "Etc/GMT-6")),
          estimated_data %>% filter(Site == "16397"),
-         estimated_data %>% filter(Site == "16882" & Date_Time < as.POSIXct("2020-10-01", tz = "Etc/GMT-6")),
-         estimated_data %>% filter(Site == "16882" & Date_Time >= as.POSIXct("2020-10-01", tz = "Etc/GMT-6") & Date_Time < as.POSIXct("2020-12-01", tz = "Etc/GMT-6")),
-         estimated_data %>% filter(Site == "16882" & Date_Time >= as.POSIXct("2020-12-01", tz = "Etc/GMT-6"))
+         estimated_data %>% filter(Site == "16882" & Date_Time < as.POSIXct("2020-10-23", tz = "Etc/GMT-6")),
+         estimated_data %>% filter(Site == "16882" & Date_Time >= as.POSIXct("2020-10-23", tz = "Etc/GMT-6") & Date_Time < as.POSIXct("2020-12-10", tz = "Etc/GMT-6")),
+         estimated_data %>% filter(Site == "16882" & Date_Time >= as.POSIXct("2020-12-10", tz = "Etc/GMT-6"))
        )
 ) %>%
   mutate(predicted = map2(rating_curve, data,
     ~exp(predict(.x, newdata = .y))
   )) %>%
-  tidyr::unnest(c(data, predicted)) -> estimated_data
+  tidyr::unnest(c(data, predicted)) %>%
+  as_tsibble(key = Site, index = Date_Time) -> estimated_data
 
 ## plot the data
+
 ggplot() +
   geom_line(data = estimated_data, aes(Date_Time, predicted, color = "Rating curve estimate")) +
   geom_point(data = iqplus_df, aes(Date_Time, as.numeric(Flow), color = "Measured streamflow"), alpha = 0.1) +
@@ -1008,8 +1035,7 @@ ggplot() +
 ```r
 ## calculate mean daily flows and report stats
 estimated_data %>%
-  select(Site, Date_Time, predicted) %>%
-  as_tsibble(key = Site, index = Date_Time) %>%
+  dplyr::select(Site, Date_Time, predicted) %>%
   group_by_key() %>%
   index_by(date = ~as_date(.)) %>%
   summarise(mean_daily = mean(predicted, na.rm=TRUE)) -> mean_daily_flow
@@ -1017,7 +1043,7 @@ estimated_data %>%
 ## report summary stats
 mean_daily_flow %>% 
   as_tibble() %>%
-  select(Site, mean_daily) %>%
+  dplyr::select(Site, mean_daily) %>%
   tbl_summary(by = Site, 
               label = list(mean_daily = "Mean Daily Flow (cfs)"),
               digits = list(mean_daily = 2),
@@ -1034,11 +1060,11 @@ Table: (\#tab:unnamed-chunk-9)Summary statistics of mean daily flow estimates at
 
 |**Variable**          |**16396**, N = 312 |**16397**, N = 312 |**16882**, N = 318 |
 |:---------------------|:------------------|:------------------|:------------------|
-|Mean Daily Flow (cfs) |19.65 (44.20)      |1.69 (2.06)        |3.10 (8.88)        |
+|Mean Daily Flow (cfs) |19.60 (44.21)      |1.69 (2.05)        |3.10 (8.87)        |
 
 
 ```r
-ggplot(mean_daily_flow) + 
+ggplot(mean_daily_flow %>% fill_gaps()) + 
   geom_line(aes(date, mean_daily)) +
   facet_wrap(~Site, ncol = 1, scales = "free_y") +
   scale_x_date("Date", date_breaks = "1 month",
@@ -1053,6 +1079,17 @@ ggplot(mean_daily_flow) +
 <img src="document_files/figure-html/meandailyresults-1.png" alt="Mean daily streamflow estimates." width="100%" />
 <p class="caption">(\#fig:meandailyresults)Mean daily streamflow estimates.</p>
 </div>
+
+
+
+```r
+## export data
+mean_daily_flow %>%
+  fill_gaps() %>%
+  write_csv("Data/Out/model_df.csv")
+```
+
+
 
 
 ## References

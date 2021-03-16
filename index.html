@@ -23,7 +23,7 @@
 
 
 
-<meta name="date" content="2021-03-08" />
+<meta name="date" content="2021-03-16" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -907,7 +907,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
             <section class="normal" id="section-">
 <div id="header">
 <h1 class="title">Exploring Thompsons Creek Stage Discharge Data</h1>
-<p class="date"><em>2021-03-08</em></p>
+<p class="date"><em>2021-03-16</em></p>
 </div>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="co">## readr imports data</span></span>
 <span id="cb1-2"><a href="#cb1-2"></a><span class="kw">library</span>(readr)</span>
@@ -927,42 +927,45 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb1-16"><a href="#cb1-16"></a><span class="kw">library</span>(ggforce)</span>
 <span id="cb1-17"><a href="#cb1-17"></a><span class="co">## hrbrtheme is optional, I use it to pretty my plots</span></span>
 <span id="cb1-18"><a href="#cb1-18"></a><span class="kw">library</span>(hrbrthemes)</span>
-<span id="cb1-19"><a href="#cb1-19"></a><span class="co">## patchwork support arranging multiple ggplots into one plot</span></span>
+<span id="cb1-19"><a href="#cb1-19"></a><span class="co">## patchwork and cowplot support arranging multiple ggplots into one plot</span></span>
 <span id="cb1-20"><a href="#cb1-20"></a><span class="kw">library</span>(patchwork)</span>
-<span id="cb1-21"><a href="#cb1-21"></a><span class="co">## lubridate provides functions for handling time and date</span></span>
-<span id="cb1-22"><a href="#cb1-22"></a><span class="kw">library</span>(lubridate)</span>
-<span id="cb1-23"><a href="#cb1-23"></a><span class="co">## purrr lets us use map_ functions as an alternative to loops</span></span>
-<span id="cb1-24"><a href="#cb1-24"></a><span class="kw">library</span>(purrr)</span>
-<span id="cb1-25"><a href="#cb1-25"></a><span class="co">## hydroGOF provide goodness of fit metrics (NSE, RMSE, etc.)</span></span>
-<span id="cb1-26"><a href="#cb1-26"></a><span class="kw">library</span>(hydroGOF)</span>
-<span id="cb1-27"><a href="#cb1-27"></a><span class="co">## tsibble and imputeTS will allow some simple time series interpolation</span></span>
-<span id="cb1-28"><a href="#cb1-28"></a><span class="kw">library</span>(tsibble)</span>
-<span id="cb1-29"><a href="#cb1-29"></a><span class="kw">library</span>(imputeTS)</span>
-<span id="cb1-30"><a href="#cb1-30"></a><span class="co">## gt</span></span>
-<span id="cb1-31"><a href="#cb1-31"></a><span class="kw">library</span>(gtsummary)</span>
-<span id="cb1-32"><a href="#cb1-32"></a><span class="co">## nls.multstart fits non-linear least squares using the Levenberg-Marquardt algorithm with multiple starting values.</span></span>
-<span id="cb1-33"><a href="#cb1-33"></a><span class="kw">library</span>(nls.multstart)</span>
-<span id="cb1-34"><a href="#cb1-34"></a></span>
-<span id="cb1-35"><a href="#cb1-35"></a><span class="co">## set some options</span></span>
-<span id="cb1-36"><a href="#cb1-36"></a><span class="kw">update_geom_font_defaults</span>(font_rc)</span>
-<span id="cb1-37"><a href="#cb1-37"></a><span class="kw">units_options</span>(<span class="dt">parse =</span> <span class="ot">FALSE</span>)</span>
-<span id="cb1-38"><a href="#cb1-38"></a></span>
-<span id="cb1-39"><a href="#cb1-39"></a></span>
-<span id="cb1-40"><a href="#cb1-40"></a><span class="co">## some custom functions</span></span>
-<span id="cb1-41"><a href="#cb1-41"></a>theme_ms &lt;-<span class="st"> </span><span class="cf">function</span>(...) {</span>
-<span id="cb1-42"><a href="#cb1-42"></a>  <span class="kw">theme_ipsum_rc</span>(<span class="dt">plot_margin =</span> <span class="kw">margin</span>(<span class="dv">10</span>,<span class="dv">10</span>,<span class="dv">10</span>,<span class="dv">10</span>),</span>
-<span id="cb1-43"><a href="#cb1-43"></a>              <span class="dt">axis_title_just =</span> <span class="st">&quot;c&quot;</span>) <span class="op">+</span></span>
-<span id="cb1-44"><a href="#cb1-44"></a><span class="st">    </span><span class="kw">theme</span>(<span class="dt">legend.position =</span> <span class="st">&quot;bottom&quot;</span>,</span>
-<span id="cb1-45"><a href="#cb1-45"></a>          <span class="dt">panel.background =</span> <span class="kw">element_rect</span>(<span class="dt">fill =</span> <span class="st">&quot;white&quot;</span>, </span>
-<span id="cb1-46"><a href="#cb1-46"></a>            <span class="dt">colour =</span> <span class="ot">NA</span>), </span>
-<span id="cb1-47"><a href="#cb1-47"></a>          <span class="dt">panel.border =</span> <span class="kw">element_rect</span>(<span class="dt">fill =</span> <span class="ot">NA</span>, </span>
-<span id="cb1-48"><a href="#cb1-48"></a>            <span class="dt">colour =</span> <span class="st">&quot;grey20&quot;</span>),</span>
-<span id="cb1-49"><a href="#cb1-49"></a>          ...)</span>
-<span id="cb1-50"><a href="#cb1-50"></a>}</span>
-<span id="cb1-51"><a href="#cb1-51"></a></span>
-<span id="cb1-52"><a href="#cb1-52"></a>exponent &lt;-<span class="st"> </span><span class="cf">function</span>(x, pow) {</span>
-<span id="cb1-53"><a href="#cb1-53"></a>  (<span class="kw">abs</span>(x)<span class="op">^</span>pow)<span class="op">*</span><span class="kw">sign</span>(x)</span>
-<span id="cb1-54"><a href="#cb1-54"></a>}</span></code></pre></div>
+<span id="cb1-21"><a href="#cb1-21"></a><span class="kw">library</span>(cowplot)</span>
+<span id="cb1-22"><a href="#cb1-22"></a><span class="co">## lubridate provides functions for handling time and date</span></span>
+<span id="cb1-23"><a href="#cb1-23"></a><span class="kw">library</span>(lubridate)</span>
+<span id="cb1-24"><a href="#cb1-24"></a><span class="co">## purrr lets us use map_ functions as an alternative to loops</span></span>
+<span id="cb1-25"><a href="#cb1-25"></a><span class="kw">library</span>(purrr)</span>
+<span id="cb1-26"><a href="#cb1-26"></a><span class="co">## hydroGOF provide goodness of fit metrics (NSE, RMSE, etc.)</span></span>
+<span id="cb1-27"><a href="#cb1-27"></a><span class="kw">library</span>(hydroGOF)</span>
+<span id="cb1-28"><a href="#cb1-28"></a><span class="co">## tsibble and imputeTS will allow some simple time series interpolation</span></span>
+<span id="cb1-29"><a href="#cb1-29"></a><span class="kw">library</span>(tsibble)</span>
+<span id="cb1-30"><a href="#cb1-30"></a><span class="kw">library</span>(imputeTS)</span>
+<span id="cb1-31"><a href="#cb1-31"></a><span class="co">## gt</span></span>
+<span id="cb1-32"><a href="#cb1-32"></a><span class="kw">library</span>(gtsummary)</span>
+<span id="cb1-33"><a href="#cb1-33"></a><span class="co">## nls.multstart fits non-linear least squares using the Levenberg-Marquardt algorithm with multiple starting values.</span></span>
+<span id="cb1-34"><a href="#cb1-34"></a><span class="kw">library</span>(nls.multstart)</span>
+<span id="cb1-35"><a href="#cb1-35"></a><span class="co">##</span></span>
+<span id="cb1-36"><a href="#cb1-36"></a><span class="kw">library</span>(mgcv)</span>
+<span id="cb1-37"><a href="#cb1-37"></a></span>
+<span id="cb1-38"><a href="#cb1-38"></a><span class="co">## set some options</span></span>
+<span id="cb1-39"><a href="#cb1-39"></a><span class="kw">update_geom_font_defaults</span>(font_rc)</span>
+<span id="cb1-40"><a href="#cb1-40"></a><span class="kw">units_options</span>(<span class="dt">parse =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb1-41"><a href="#cb1-41"></a></span>
+<span id="cb1-42"><a href="#cb1-42"></a></span>
+<span id="cb1-43"><a href="#cb1-43"></a><span class="co">## some custom functions</span></span>
+<span id="cb1-44"><a href="#cb1-44"></a>theme_ms &lt;-<span class="st"> </span><span class="cf">function</span>(...) {</span>
+<span id="cb1-45"><a href="#cb1-45"></a>  <span class="kw">theme_ipsum_rc</span>(<span class="dt">plot_margin =</span> <span class="kw">margin</span>(<span class="dv">10</span>,<span class="dv">10</span>,<span class="dv">10</span>,<span class="dv">10</span>),</span>
+<span id="cb1-46"><a href="#cb1-46"></a>              <span class="dt">axis_title_just =</span> <span class="st">&quot;c&quot;</span>) <span class="op">+</span></span>
+<span id="cb1-47"><a href="#cb1-47"></a><span class="st">    </span><span class="kw">theme</span>(<span class="dt">legend.position =</span> <span class="st">&quot;bottom&quot;</span>,</span>
+<span id="cb1-48"><a href="#cb1-48"></a>          <span class="dt">panel.background =</span> <span class="kw">element_rect</span>(<span class="dt">fill =</span> <span class="st">&quot;white&quot;</span>, </span>
+<span id="cb1-49"><a href="#cb1-49"></a>            <span class="dt">colour =</span> <span class="ot">NA</span>), </span>
+<span id="cb1-50"><a href="#cb1-50"></a>          <span class="dt">panel.border =</span> <span class="kw">element_rect</span>(<span class="dt">fill =</span> <span class="ot">NA</span>, </span>
+<span id="cb1-51"><a href="#cb1-51"></a>            <span class="dt">colour =</span> <span class="st">&quot;grey20&quot;</span>),</span>
+<span id="cb1-52"><a href="#cb1-52"></a>          ...)</span>
+<span id="cb1-53"><a href="#cb1-53"></a>}</span>
+<span id="cb1-54"><a href="#cb1-54"></a></span>
+<span id="cb1-55"><a href="#cb1-55"></a>exponent &lt;-<span class="st"> </span><span class="cf">function</span>(x, pow) {</span>
+<span id="cb1-56"><a href="#cb1-56"></a>  (<span class="kw">abs</span>(x)<span class="op">^</span>pow)<span class="op">*</span><span class="kw">sign</span>(x)</span>
+<span id="cb1-57"><a href="#cb1-57"></a>}</span></code></pre></div>
 <div id="about" class="section level2">
 <h2>About</h2>
 <p>This document walks through some exploratory data analysis to develop rating curves and streamflow predictions on Thompsons Creek. The purpose is to utilize (1) instantaneous streamflows measured during periodic deployments of bottom mounted doppler units and (2) instantaneous depth measurements from water level data loggers deployed long-term in-stream to create and update rating curves. The rating curves will be utilized to calculate streamflow over the HOBO pressure transducer deployment period (approximately 1-yr). The resulting data will be used to create and validate regression and DAR streamflow estimates in Thompsons creek over a 10-15 year period.</p>
@@ -999,12 +1002,18 @@ SSE = \sum\limits_{i=1}^N[X-Y]^2
 </div>
 <div id="ungaged-streamflow-estimation" class="section level3">
 <h3>Ungaged streamflow estimation</h3>
-<p>Rating curves allowed development of daily streamflow records for the period of time that stream depth data recorders were deployed. However, estimation of daily streamflows when sites are ungaged requires additional information. Most commonly, daily streamflow data from a nearby gaged watershed is used to estimate flows in the ungaged watershed using a drainage area ratio or regression methods. With the drainage area ratio, daily streamflows are transferred from one basin to the other by multiplying the area ratio to daily streamflows:</p>
+<p>Rating curves allowed development of daily streamflow records for the period of time that stream depth data recorders were deployed. However, estimation of daily streamflows when sites are ungaged requires additional information. Statistical information transfer and empirical regression are two relatively simple methods for estimating streamflows in poorly gaged watersheds. Statistical transfer procedures simply transfer flow duration curves or daily streamflow values from a gaged watershed to the ungaged watershed using assumed relationships between area and runoff. The most common statistical transfer method is the drainage area ratio. With the drainage area ratio, daily streamflows are transferred from one basin to the other by multiplying the area ratio to daily streamflows:</p>
 <p><span class="math display" id="eq:dar">\[\begin{equation}
 Q_y^t = Q_x^t\bigg(\frac{A_y}{A_x}\bigg)^\phi
   \tag{5}
 \end{equation}\]</span></p>
-<p>Where <span class="math inline">\(Q_y^t\)</span> is streamflow at ungaged basin <span class="math inline">\(y\)</span> and time <span class="math inline">\(t\)</span>, <span class="math inline">\(Q_x^t\)</span> is streamflow at gaged basin <span class="math inline">\(x\)</span> and time <span class="math inline">\(t\)</span>, and <span class="math inline">\(\frac{A_y}{A_x}\)</span> is the area ratio of the basins. Parameter <span class="math inline">\(\phi\)</span> is typically equal to one <span class="citation">(Asquith, Roussel, and Vrabel <a href="#ref-asquith_statewide_2006" role="doc-biblioref">2006</a>)</span>. However, <span class="citation">Asquith, Roussel, and Vrabel (<a href="#ref-asquith_statewide_2006" role="doc-biblioref">2006</a>)</span> provides empirically estimated values of <span class="math inline">\(\phi\)</span> for use in the drainage area ratio when applied in Texas.</p>
+<p>Where <span class="math inline">\(Q_y^t\)</span> is streamflow at ungaged basin <span class="math inline">\(y\)</span> and time <span class="math inline">\(t\)</span>, <span class="math inline">\(Q_x^t\)</span> is streamflow at gaged basin <span class="math inline">\(x\)</span> and time <span class="math inline">\(t\)</span>, and <span class="math inline">\(\frac{A_y}{A_x}\)</span> is the area ratio of the basins. Parameter <span class="math inline">\(\phi\)</span> is typically equal to one <span class="citation">(Asquith, Roussel, and Vrabel <a href="#ref-asquith_statewide_2006" role="doc-biblioref">2006</a>)</span>. However, <span class="citation">Asquith, Roussel, and Vrabel (<a href="#ref-asquith_statewide_2006" role="doc-biblioref">2006</a>)</span> provides empirically estimated values of <span class="math inline">\(\phi\)</span> for use in the drainage area ratio when applied in Texas. With an available short term streamflow record available, various stream gages can be assessed for performance using the drainage area ratio method. Furthermore, localized values of <span class="math inline">\(\phi\)</span> can be developed using non-linear least squares. If the primary output is a flow duration curve, the main concern is that the candidate gages have similar runoff response and be within a reasonable distance of the ungaged watershed. …. discuss general rules and methods for choosing appropriate candidate gages. However, if the primary output includes daily streamflow estimates, it is more important to have a candidate gage with same timing of flow exceedance probabilities.</p>
+<p>Empirical regression based approaches require a period of measured streamflow and some predictor variables to estimate the runoff response from. Typically, daily rainfall data are employed to fit a regression model to measured streamflow data:</p>
+<p><span class="math display" id="eq:linear">\[\begin{equation}
+Q_i = \sum_{j=0}^M\beta_jx_{ji}+\epsilon_i
+  \tag{6}
+\end{equation}\]</span>
+where <span class="math inline">\(Q_i\)</span> is predicted discharge on day <span class="math inline">\(i\)</span>, <span class="math inline">\(\beta\)</span> is the coefficient of the <span class="math inline">\(j\)</span>th variable, <span class="math inline">\(x\)</span> is the predictor variable(s) value on the <span class="math inline">\(i\)</span>th day. The error term, <span class="math inline">\(\epsilon_i\)</span> is assumed normally distributed around mean zero. Using simple linear or multiple linear regression <span class="math inline">\(Q\)</span> is typically log transformed prior to estimating the regression coefficients. If the relationship between predictor variables and the response are expected to be nonlinear polynomial terms can be included. However, an extension of linear regression called generalized additive models allows relatively easy fitting of these nonlinear terms to the data. With generalized additive models, the response variable depends on the sum of smoothing functions applied to each predictor variable. Furthermore, generalized additive models can accommodate response variables with error distributions other than the normal distribution. However, compared to linear or multiple linear regression, generalized additive models are more difficult to interpret due to the lack of single model coefficients. Therefore, the effect of each individual smoothing function on the response variable mean is typically communicated graphically.</p>
 </div>
 </div>
 <div id="method" class="section level2">
@@ -1212,7 +1221,7 @@ Figure 1: Fifteen minute interval stream depth records at each site.
 <span id="cb4-84"><a href="#cb4-84"></a><span class="st">  </span><span class="kw">labs</span>(<span class="dt">x =</span> <span class="st">&quot;Date&quot;</span>) <span class="op">+</span></span>
 <span id="cb4-85"><a href="#cb4-85"></a><span class="st">  </span><span class="kw">theme_ms</span>()</span></code></pre></div>
 <div class="figure"><span id="fig:iqimport"></span>
-<img src="document_files/figure-html/iqimport-1.png" alt="Period of recorded data at each station." width="672" />
+<img src="document_files/figure-html/iqimport-1.png" alt="Period of recorded data at each station." width="1050" />
 <p class="caption">
 Figure 2: Period of recorded data at each station.
 </p>
@@ -1254,13 +1263,13 @@ Figure 2: Period of recorded data at each station.
 <p>Individual rating curves were used to estimate streamflows using the measured stream heights. Nash-Sutcliffe Efficiency (NSE) and normalized Root Mean Square Error was used to evaluate goodness-of-fit between measured and estimated streamflow. NSE is a normalized statistic that evaluates the relative residual variance against the measured data variance and is calculated as:</p>
 <p><span class="math display" id="eq:nseformula">\[\begin{equation}
 NSE = 1 - \frac{\sum_{t=1}^T(\hat{Q}_t-Q_t)^2}{\sum_{t=1}^T(Q_t-\bar{Q})^2}
-  \tag{6}
+  \tag{7}
 \end{equation}\]</span></p>
 <p>Where <span class="math inline">\(\bar{Q}\)</span> is the mean of observed discharges, <span class="math inline">\(\hat{Q}_t\)</span> is the estimated discharge at time <span class="math inline">\(t\)</span>, and <span class="math inline">\(Q_t\)</span> is observed discharge at time <span class="math inline">\(t\)</span>. Values of NSE range from <span class="math inline">\(-\infty\)</span> to 1, where 1 indicates perfect predictive performance. NSE of zero indicates the model has the same predictive performance as the mean of the dataset.</p>
 <p>The nRMSE is a percentage based metric that describes the difference between predicted and measured discharge values:</p>
 <p><span class="math display" id="eq:nRMSE">\[\begin{equation}
 nRMSE = \frac{RMSE}{Q_{max}-Q_{min}}, \quad \textrm{where} \quad RMSE = \sqrt{\frac{\sum_{t=1}^{n}{(Q_t-\hat{Q}_t)^2}}{n}}
-  \tag{7}
+  \tag{8}
 \end{equation}\]</span></p>
 <p>Where <span class="math inline">\(Q_t\)</span> is the observed discharge at time <span class="math inline">\(t\)</span>, <span class="math inline">\(\hat{Q}_t\)</span> is the estimated discharge at time <span class="math inline">\(t\)</span>, <span class="math inline">\(n\)</span> is the number of samples, <span class="math inline">\(Q_{max}\)</span> and <span class="math inline">\(Q_{min}\)</span> are the maximum and minimum observed discharges. The resulting nRMSE calculation is a percentage value.</p>
 </div>
@@ -1274,7 +1283,7 @@ nRMSE = \frac{RMSE}{Q_{max}-Q_{min}}, \quad \textrm{where} \quad RMSE = \sqrt{\f
 <span id="cb6-2"><a href="#cb6-2"></a></span>
 <span id="cb6-3"><a href="#cb6-3"></a>iqplus_df <span class="op">%&gt;%</span></span>
 <span id="cb6-4"><a href="#cb6-4"></a><span class="st">  </span><span class="kw">filter</span>(Site <span class="op">==</span><span class="st"> &quot;16396&quot;</span>,</span>
-<span id="cb6-5"><a href="#cb6-5"></a>         Date_Time <span class="op">&lt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-12-01&quot;</span>, <span class="dt">tz =</span> <span class="st">&quot;Etc/GMT-6&quot;</span>)) <span class="op">%&gt;%</span></span>
+<span id="cb6-5"><a href="#cb6-5"></a>         Date_Time <span class="op">&lt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-12-14&quot;</span>, <span class="dt">tz =</span> <span class="st">&quot;Etc/GMT-6&quot;</span>)) <span class="op">%&gt;%</span></span>
 <span id="cb6-6"><a href="#cb6-6"></a><span class="st">  </span><span class="kw">arrange</span>(Date_Time) <span class="op">%&gt;%</span></span>
 <span id="cb6-7"><a href="#cb6-7"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">time_lag =</span> <span class="kw">lag</span>(Date_Time, <span class="dt">default =</span> Date_Time[<span class="dv">1</span>]),</span>
 <span id="cb6-8"><a href="#cb6-8"></a>         <span class="dt">diff_time =</span> <span class="kw">as.numeric</span>(<span class="kw">difftime</span>(Date_Time, time_lag, <span class="dt">units =</span> <span class="st">&quot;hours&quot;</span>))) <span class="op">%&gt;%</span></span>
@@ -1292,10 +1301,10 @@ nRMSE = \frac{RMSE}{Q_{max}-Q_{min}}, \quad \textrm{where} \quad RMSE = \sqrt{\f
 <span id="cb6-20"><a href="#cb6-20"></a><span class="st">  </span><span class="kw">filter</span>(<span class="op">!</span><span class="kw">is.na</span>(diff_depth)) <span class="op">%&gt;%</span></span>
 <span id="cb6-21"><a href="#cb6-21"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">J =</span> <span class="kw">as.numeric</span>(diff_depth)<span class="op">/</span><span class="kw">as.numeric</span>(diff_time)) -&gt;<span class="st"> </span>df_<span class="dv">16396</span>_<span class="dv">2020</span>_<span class="dv">03</span></span>
 <span id="cb6-22"><a href="#cb6-22"></a></span>
-<span id="cb6-23"><a href="#cb6-23"></a><span class="co">## Make dataframe for site 16396 Dec 2020 through January 2021</span></span>
+<span id="cb6-23"><a href="#cb6-23"></a><span class="co">## Make dataframe for site 16396 Dec 14 2020 through January 2021</span></span>
 <span id="cb6-24"><a href="#cb6-24"></a>iqplus_df <span class="op">%&gt;%</span></span>
 <span id="cb6-25"><a href="#cb6-25"></a><span class="st">  </span><span class="kw">filter</span>(Site <span class="op">==</span><span class="st"> &quot;16396&quot;</span>,</span>
-<span id="cb6-26"><a href="#cb6-26"></a>         Date_Time <span class="op">&gt;=</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-12-01&quot;</span>, <span class="dt">tz =</span> <span class="st">&quot;Etc/GMT-6&quot;</span>) <span class="op">&amp;</span></span>
+<span id="cb6-26"><a href="#cb6-26"></a>         Date_Time <span class="op">&gt;=</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-12-14&quot;</span>, <span class="dt">tz =</span> <span class="st">&quot;Etc/GMT-6&quot;</span>) <span class="op">&amp;</span></span>
 <span id="cb6-27"><a href="#cb6-27"></a><span class="st">            </span>Date_Time <span class="op">&lt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2021-02-01&quot;</span>, <span class="dt">tz =</span> <span class="st">&quot;Etc/GMT-6&quot;</span>)) <span class="op">%&gt;%</span></span>
 <span id="cb6-28"><a href="#cb6-28"></a><span class="st">  </span><span class="kw">arrange</span>(Date_Time) <span class="op">%&gt;%</span></span>
 <span id="cb6-29"><a href="#cb6-29"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">time_lag =</span> <span class="kw">lag</span>(Date_Time, <span class="dt">default =</span> Date_Time[<span class="dv">1</span>]),</span>
@@ -1343,8 +1352,8 @@ nRMSE = \frac{RMSE}{Q_{max}-Q_{min}}, \quad \textrm{where} \quad RMSE = \sqrt{\f
 <span id="cb7-28"><a href="#cb7-28"></a>              <span class="dt">supp_errors =</span> <span class="st">&quot;Y&quot;</span>)</span></code></pre></div>
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a><span class="co">## setup dataframe with parameter results. Will use this later to report parameters and GOF metrics</span></span>
 <span id="cb8-2"><a href="#cb8-2"></a>df_results_<span class="dv">16369</span> &lt;-<span class="st"> </span><span class="kw">tibble</span>(<span class="dt">Site =</span> <span class="kw">c</span>(<span class="st">&quot;16396&quot;</span>,<span class="st">&quot;16396&quot;</span>),</span>
-<span id="cb8-3"><a href="#cb8-3"></a>                           <span class="dt">Period =</span> <span class="kw">c</span>(<span class="st">&quot;2020-03-01 : 2020-11-30&quot;</span>,</span>
-<span id="cb8-4"><a href="#cb8-4"></a>                                      <span class="st">&quot;2020-12-01 : 2021-01-31&quot;</span>),</span>
+<span id="cb8-3"><a href="#cb8-3"></a>                           <span class="dt">Period =</span> <span class="kw">c</span>(<span class="st">&quot;2020-03-03 : 2020-12-13&quot;</span>,</span>
+<span id="cb8-4"><a href="#cb8-4"></a>                                      <span class="st">&quot;2020-12-14 : 2021-01-31&quot;</span>),</span>
 <span id="cb8-5"><a href="#cb8-5"></a>                           <span class="dt">K =</span> <span class="kw">c</span>(<span class="kw">coefficients</span>(rc_<span class="dv">16396</span>_<span class="dv">2020</span>_<span class="dv">03</span>)[[<span class="st">&quot;K&quot;</span>]],</span>
 <span id="cb8-6"><a href="#cb8-6"></a>                                 <span class="kw">coefficients</span>(rc_<span class="dv">16396</span>_<span class="dv">2020</span>_<span class="dv">12</span>)[[<span class="st">&quot;K&quot;</span>]]),</span>
 <span id="cb8-7"><a href="#cb8-7"></a>                           <span class="dt">a =</span> <span class="kw">c</span>(<span class="kw">coefficients</span>(rc_<span class="dv">16396</span>_<span class="dv">2020</span>_<span class="dv">03</span>)[[<span class="st">&quot;a&quot;</span>]],</span>
@@ -1402,7 +1411,7 @@ nRMSE = \frac{RMSE}{Q_{max}-Q_{min}}, \quad \textrm{where} \quad RMSE = \sqrt{\f
 <tbody>
 <tr class="odd">
 <td align="left">16396</td>
-<td align="left">2020-03-01 : 2020-11-30</td>
+<td align="left">2020-03-03 : 2020-12-13</td>
 <td align="right">4.700924</td>
 <td align="right">0.3324034</td>
 <td align="right">0.5018387</td>
@@ -1412,7 +1421,7 @@ nRMSE = \frac{RMSE}{Q_{max}-Q_{min}}, \quad \textrm{where} \quad RMSE = \sqrt{\f
 </tr>
 <tr class="even">
 <td align="left">16396</td>
-<td align="left">2020-12-01 : 2021-01-31</td>
+<td align="left">2020-12-14 : 2021-01-31</td>
 <td align="right">4.393037</td>
 <td align="right">0.1779943</td>
 <td align="right">0.6566228</td>
@@ -1429,41 +1438,46 @@ nRMSE = \frac{RMSE}{Q_{max}-Q_{min}}, \quad \textrm{where} \quad RMSE = \sqrt{\f
 <span id="cb10-5"><a href="#cb10-5"></a><span class="st">  </span><span class="kw">geom_abline</span>(<span class="kw">aes</span>(<span class="dt">slope =</span> <span class="dv">1</span>, <span class="dt">intercept =</span> <span class="dv">0</span>, <span class="dt">linetype =</span> <span class="st">&quot;1:1 line&quot;</span>)) <span class="op">+</span></span>
 <span id="cb10-6"><a href="#cb10-6"></a><span class="st">  </span><span class="kw">scale_x_continuous</span>(<span class="dt">name =</span> <span class="st">&quot;Rating curve flow estimate [cfs]&quot;</span>, <span class="dt">trans =</span> <span class="st">&quot;log10&quot;</span>) <span class="op">+</span></span>
 <span id="cb10-7"><a href="#cb10-7"></a><span class="st">  </span><span class="kw">scale_y_continuous</span>(<span class="dt">name =</span> <span class="st">&quot;Measured flow [cfs]&quot;</span>, <span class="dt">trans =</span> <span class="st">&quot;log10&quot;</span>) <span class="op">+</span></span>
-<span id="cb10-8"><a href="#cb10-8"></a><span class="st">  </span><span class="kw">theme_ms</span>() <span class="op">+</span><span class="st"> </span><span class="kw">labs</span>(<span class="dt">subtitle =</span> <span class="st">&quot;March-November&quot;</span>) <span class="op">+</span></span>
+<span id="cb10-8"><a href="#cb10-8"></a><span class="st">  </span><span class="kw">theme_ms</span>() <span class="op">+</span><span class="st"> </span><span class="kw">labs</span>(<span class="dt">subtitle =</span> <span class="st">&quot;2020-03-03 through 2020-12-13&quot;</span>) <span class="op">+</span></span>
 <span id="cb10-9"><a href="#cb10-9"></a><span class="st">  </span><span class="kw">theme</span>(<span class="dt">legend.title =</span> <span class="kw">element_blank</span>(),</span>
-<span id="cb10-10"><a href="#cb10-10"></a>        <span class="dt">legend.position =</span> <span class="st">&quot;none&quot;</span>)</span>
-<span id="cb10-11"><a href="#cb10-11"></a></span>
-<span id="cb10-12"><a href="#cb10-12"></a>p2 &lt;-<span class="st"> </span><span class="kw">ggplot</span>(df_<span class="dv">16396</span>_<span class="dv">2020</span>_<span class="dv">03</span>) <span class="op">+</span></span>
-<span id="cb10-13"><a href="#cb10-13"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Flow), Depth, <span class="dt">color =</span> <span class="st">&quot;Measured&quot;</span>)) <span class="op">+</span></span>
-<span id="cb10-14"><a href="#cb10-14"></a><span class="st">  </span><span class="kw">geom_path</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Flow), Depth, <span class="dt">color =</span> <span class="st">&quot;Measured&quot;</span>, <span class="dt">linetype =</span> <span class="st">&quot;Measured&quot;</span>),</span>
-<span id="cb10-15"><a href="#cb10-15"></a>            <span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
-<span id="cb10-16"><a href="#cb10-16"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(predicted), Depth, <span class="dt">color =</span> <span class="st">&quot;Predicted&quot;</span>)) <span class="op">+</span></span>
-<span id="cb10-17"><a href="#cb10-17"></a><span class="st">  </span><span class="kw">geom_path</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(predicted), Depth, <span class="dt">color =</span> <span class="st">&quot;Predicted&quot;</span>, <span class="dt">linetype =</span> <span class="st">&quot;Predicted&quot;</span>),</span>
-<span id="cb10-18"><a href="#cb10-18"></a>            <span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
-<span id="cb10-19"><a href="#cb10-19"></a><span class="st">  </span><span class="kw">scale_color_discrete</span>(<span class="st">&quot;&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">scale_linetype_discrete</span>(<span class="st">&quot;&quot;</span>) <span class="op">+</span></span>
-<span id="cb10-20"><a href="#cb10-20"></a><span class="st">  </span><span class="kw">scale_x_continuous</span>(<span class="st">&quot;Flow [cfs]&quot;</span>, <span class="dt">trans =</span> <span class="st">&quot;log10&quot;</span>) <span class="op">+</span></span>
-<span id="cb10-21"><a href="#cb10-21"></a><span class="st">  </span><span class="kw">labs</span>(<span class="dt">subtitle =</span> <span class="st">&quot;March-November&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">theme_ms</span>() <span class="op">+</span><span class="st"> </span><span class="kw">theme</span>(<span class="dt">legend.position =</span> <span class="st">&quot;none&quot;</span>)</span>
-<span id="cb10-22"><a href="#cb10-22"></a></span>
-<span id="cb10-23"><a href="#cb10-23"></a>p3 &lt;-<span class="st"> </span><span class="kw">ggplot</span>(df_<span class="dv">16396</span>_<span class="dv">2020</span>_<span class="dv">12</span>) <span class="op">+</span></span>
-<span id="cb10-24"><a href="#cb10-24"></a><span class="st">    </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(predicted), <span class="kw">as.numeric</span>(Flow), <span class="dt">color =</span> <span class="st">&quot;Rating curve prediction against measured flow&quot;</span>), <span class="dt">alpha =</span> <span class="fl">0.25</span>) <span class="op">+</span></span>
-<span id="cb10-25"><a href="#cb10-25"></a><span class="st">  </span><span class="kw">geom_abline</span>(<span class="kw">aes</span>(<span class="dt">slope =</span> <span class="dv">1</span>, <span class="dt">intercept =</span> <span class="dv">0</span>, <span class="dt">linetype =</span> <span class="st">&quot;1:1 line&quot;</span>)) <span class="op">+</span></span>
-<span id="cb10-26"><a href="#cb10-26"></a><span class="st">  </span><span class="kw">scale_x_continuous</span>(<span class="dt">name =</span> <span class="st">&quot;Rating curve flow estimate [cfs]&quot;</span>, <span class="dt">trans =</span> <span class="st">&quot;log10&quot;</span>) <span class="op">+</span></span>
-<span id="cb10-27"><a href="#cb10-27"></a><span class="st">  </span><span class="kw">scale_y_continuous</span>(<span class="dt">name =</span> <span class="st">&quot;Measured flow [cfs]&quot;</span>, <span class="dt">trans =</span> <span class="st">&quot;log10&quot;</span>) <span class="op">+</span></span>
-<span id="cb10-28"><a href="#cb10-28"></a><span class="st">  </span><span class="kw">theme_ms</span>() <span class="op">+</span><span class="st"> </span><span class="kw">labs</span>(<span class="dt">subtitle =</span> <span class="st">&quot;December-January&quot;</span>) <span class="op">+</span></span>
-<span id="cb10-29"><a href="#cb10-29"></a><span class="st">  </span><span class="kw">theme</span>(<span class="dt">legend.title =</span> <span class="kw">element_blank</span>())</span>
-<span id="cb10-30"><a href="#cb10-30"></a></span>
-<span id="cb10-31"><a href="#cb10-31"></a>p4 &lt;-<span class="st"> </span><span class="kw">ggplot</span>(df_<span class="dv">16396</span>_<span class="dv">2020</span>_<span class="dv">12</span>) <span class="op">+</span></span>
-<span id="cb10-32"><a href="#cb10-32"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Flow), Depth, <span class="dt">color =</span> <span class="st">&quot;Measured&quot;</span>)) <span class="op">+</span></span>
-<span id="cb10-33"><a href="#cb10-33"></a><span class="st">  </span><span class="kw">geom_path</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Flow), Depth, <span class="dt">color =</span> <span class="st">&quot;Measured&quot;</span>, <span class="dt">linetype =</span> <span class="st">&quot;Measured&quot;</span>),</span>
-<span id="cb10-34"><a href="#cb10-34"></a>            <span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
-<span id="cb10-35"><a href="#cb10-35"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(predicted), Depth, <span class="dt">color =</span> <span class="st">&quot;Predicted&quot;</span>)) <span class="op">+</span></span>
-<span id="cb10-36"><a href="#cb10-36"></a><span class="st">  </span><span class="kw">geom_path</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(predicted), Depth, <span class="dt">color =</span> <span class="st">&quot;Predicted&quot;</span>, <span class="dt">linetype =</span> <span class="st">&quot;Predicted&quot;</span>),</span>
-<span id="cb10-37"><a href="#cb10-37"></a>            <span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
-<span id="cb10-38"><a href="#cb10-38"></a><span class="st">  </span><span class="kw">scale_color_discrete</span>(<span class="st">&quot;&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">scale_linetype_discrete</span>(<span class="st">&quot;&quot;</span>) <span class="op">+</span></span>
-<span id="cb10-39"><a href="#cb10-39"></a><span class="st">  </span><span class="kw">scale_x_continuous</span>(<span class="st">&quot;Flow [cfs]&quot;</span>, <span class="dt">trans =</span> <span class="st">&quot;log10&quot;</span>) <span class="op">+</span></span>
-<span id="cb10-40"><a href="#cb10-40"></a><span class="st">  </span><span class="kw">labs</span>(<span class="dt">subtitle =</span> <span class="st">&quot;December-January&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">theme_ms</span>()</span>
-<span id="cb10-41"><a href="#cb10-41"></a></span>
-<span id="cb10-42"><a href="#cb10-42"></a>(p1 <span class="op">+</span><span class="st"> </span>p2) <span class="op">/</span><span class="st"> </span>(p3 <span class="op">+</span><span class="st"> </span>p4) <span class="op">+</span><span class="st"> </span><span class="kw">plot_annotation</span>(<span class="dt">tag_levels =</span> <span class="st">&quot;A&quot;</span>)</span></code></pre></div>
+<span id="cb10-10"><a href="#cb10-10"></a>        <span class="dt">legend.position =</span> <span class="st">&quot;none&quot;</span>,</span>
+<span id="cb10-11"><a href="#cb10-11"></a>        <span class="dt">plot.subtitle =</span> <span class="kw">element_text</span>(<span class="dt">size =</span> <span class="dv">8</span>))</span>
+<span id="cb10-12"><a href="#cb10-12"></a></span>
+<span id="cb10-13"><a href="#cb10-13"></a>p2 &lt;-<span class="st"> </span><span class="kw">ggplot</span>(df_<span class="dv">16396</span>_<span class="dv">2020</span>_<span class="dv">03</span>) <span class="op">+</span></span>
+<span id="cb10-14"><a href="#cb10-14"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Flow), Depth, <span class="dt">color =</span> <span class="st">&quot;Measured&quot;</span>)) <span class="op">+</span></span>
+<span id="cb10-15"><a href="#cb10-15"></a><span class="st">  </span><span class="kw">geom_path</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Flow), Depth, <span class="dt">color =</span> <span class="st">&quot;Measured&quot;</span>, <span class="dt">linetype =</span> <span class="st">&quot;Measured&quot;</span>),</span>
+<span id="cb10-16"><a href="#cb10-16"></a>            <span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
+<span id="cb10-17"><a href="#cb10-17"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(predicted), Depth, <span class="dt">color =</span> <span class="st">&quot;Predicted&quot;</span>)) <span class="op">+</span></span>
+<span id="cb10-18"><a href="#cb10-18"></a><span class="st">  </span><span class="kw">geom_path</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(predicted), Depth, <span class="dt">color =</span> <span class="st">&quot;Predicted&quot;</span>, <span class="dt">linetype =</span> <span class="st">&quot;Predicted&quot;</span>),</span>
+<span id="cb10-19"><a href="#cb10-19"></a>            <span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
+<span id="cb10-20"><a href="#cb10-20"></a><span class="st">  </span><span class="kw">scale_color_discrete</span>(<span class="st">&quot;&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">scale_linetype_discrete</span>(<span class="st">&quot;&quot;</span>) <span class="op">+</span></span>
+<span id="cb10-21"><a href="#cb10-21"></a><span class="st">  </span><span class="kw">scale_x_continuous</span>(<span class="st">&quot;Flow [cfs]&quot;</span>, <span class="dt">trans =</span> <span class="st">&quot;log10&quot;</span>) <span class="op">+</span></span>
+<span id="cb10-22"><a href="#cb10-22"></a><span class="st">  </span><span class="kw">labs</span>(<span class="dt">subtitle =</span> <span class="st">&quot;2020-03-03 through 2020-12-13&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">theme_ms</span>() <span class="op">+</span><span class="st"> </span></span>
+<span id="cb10-23"><a href="#cb10-23"></a><span class="st">  </span><span class="kw">theme</span>(<span class="dt">legend.position =</span> <span class="st">&quot;none&quot;</span>,</span>
+<span id="cb10-24"><a href="#cb10-24"></a>        <span class="dt">plot.subtitle =</span> <span class="kw">element_text</span>(<span class="dt">size =</span> <span class="dv">8</span>))</span>
+<span id="cb10-25"><a href="#cb10-25"></a></span>
+<span id="cb10-26"><a href="#cb10-26"></a>p3 &lt;-<span class="st"> </span><span class="kw">ggplot</span>(df_<span class="dv">16396</span>_<span class="dv">2020</span>_<span class="dv">12</span>) <span class="op">+</span></span>
+<span id="cb10-27"><a href="#cb10-27"></a><span class="st">    </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(predicted), <span class="kw">as.numeric</span>(Flow), <span class="dt">color =</span> <span class="st">&quot;Rating curve prediction against measured flow&quot;</span>), <span class="dt">alpha =</span> <span class="fl">0.25</span>) <span class="op">+</span></span>
+<span id="cb10-28"><a href="#cb10-28"></a><span class="st">  </span><span class="kw">geom_abline</span>(<span class="kw">aes</span>(<span class="dt">slope =</span> <span class="dv">1</span>, <span class="dt">intercept =</span> <span class="dv">0</span>, <span class="dt">linetype =</span> <span class="st">&quot;1:1 line&quot;</span>)) <span class="op">+</span></span>
+<span id="cb10-29"><a href="#cb10-29"></a><span class="st">  </span><span class="kw">scale_x_continuous</span>(<span class="dt">name =</span> <span class="st">&quot;Rating curve flow estimate [cfs]&quot;</span>, <span class="dt">trans =</span> <span class="st">&quot;log10&quot;</span>) <span class="op">+</span></span>
+<span id="cb10-30"><a href="#cb10-30"></a><span class="st">  </span><span class="kw">scale_y_continuous</span>(<span class="dt">name =</span> <span class="st">&quot;Measured flow [cfs]&quot;</span>, <span class="dt">trans =</span> <span class="st">&quot;log10&quot;</span>) <span class="op">+</span></span>
+<span id="cb10-31"><a href="#cb10-31"></a><span class="st">  </span><span class="kw">theme_ms</span>() <span class="op">+</span><span class="st"> </span><span class="kw">labs</span>(<span class="dt">subtitle =</span> <span class="st">&quot;2020-12-14 through 2021-01-14&quot;</span>) <span class="op">+</span></span>
+<span id="cb10-32"><a href="#cb10-32"></a><span class="st">  </span><span class="kw">theme</span>(<span class="dt">legend.title =</span> <span class="kw">element_blank</span>(),</span>
+<span id="cb10-33"><a href="#cb10-33"></a>        <span class="dt">plot.subtitle =</span> <span class="kw">element_text</span>(<span class="dt">size =</span> <span class="dv">8</span>))</span>
+<span id="cb10-34"><a href="#cb10-34"></a></span>
+<span id="cb10-35"><a href="#cb10-35"></a>p4 &lt;-<span class="st"> </span><span class="kw">ggplot</span>(df_<span class="dv">16396</span>_<span class="dv">2020</span>_<span class="dv">12</span>) <span class="op">+</span></span>
+<span id="cb10-36"><a href="#cb10-36"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Flow), Depth, <span class="dt">color =</span> <span class="st">&quot;Measured&quot;</span>)) <span class="op">+</span></span>
+<span id="cb10-37"><a href="#cb10-37"></a><span class="st">  </span><span class="kw">geom_path</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Flow), Depth, <span class="dt">color =</span> <span class="st">&quot;Measured&quot;</span>, <span class="dt">linetype =</span> <span class="st">&quot;Measured&quot;</span>),</span>
+<span id="cb10-38"><a href="#cb10-38"></a>            <span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
+<span id="cb10-39"><a href="#cb10-39"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(predicted), Depth, <span class="dt">color =</span> <span class="st">&quot;Predicted&quot;</span>)) <span class="op">+</span></span>
+<span id="cb10-40"><a href="#cb10-40"></a><span class="st">  </span><span class="kw">geom_path</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(predicted), Depth, <span class="dt">color =</span> <span class="st">&quot;Predicted&quot;</span>, <span class="dt">linetype =</span> <span class="st">&quot;Predicted&quot;</span>),</span>
+<span id="cb10-41"><a href="#cb10-41"></a>            <span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
+<span id="cb10-42"><a href="#cb10-42"></a><span class="st">  </span><span class="kw">scale_color_discrete</span>(<span class="st">&quot;&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">scale_linetype_discrete</span>(<span class="st">&quot;&quot;</span>) <span class="op">+</span></span>
+<span id="cb10-43"><a href="#cb10-43"></a><span class="st">  </span><span class="kw">scale_x_continuous</span>(<span class="st">&quot;Flow [cfs]&quot;</span>, <span class="dt">trans =</span> <span class="st">&quot;log10&quot;</span>) <span class="op">+</span></span>
+<span id="cb10-44"><a href="#cb10-44"></a><span class="st">  </span><span class="kw">labs</span>(<span class="dt">subtitle =</span> <span class="st">&quot;2020-12-14 through 2021-01-14&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">theme_ms</span>() <span class="op">+</span></span>
+<span id="cb10-45"><a href="#cb10-45"></a><span class="st">  </span><span class="kw">theme</span>(<span class="dt">plot.subtitle =</span> <span class="kw">element_text</span>(<span class="dt">size =</span> <span class="dv">8</span>))</span>
+<span id="cb10-46"><a href="#cb10-46"></a></span>
+<span id="cb10-47"><a href="#cb10-47"></a>(p1 <span class="op">+</span><span class="st"> </span>p2) <span class="op">/</span><span class="st"> </span>(p3 <span class="op">+</span><span class="st"> </span>p4) <span class="op">+</span><span class="st"> </span><span class="kw">plot_annotation</span>(<span class="dt">tag_levels =</span> <span class="st">&quot;A&quot;</span>)</span></code></pre></div>
 <div class="figure"><span id="fig:metricplot16396"></span>
 <img src="document_files/figure-html/metricplot16396-1.png" alt="Scatter plot of rating curve estimated flows against measured flows (A, C) and stage discharge predictions (B, D) for each rating curve period at station 16396." width="100%" />
 <p class="caption">
@@ -1507,7 +1521,7 @@ Figure 3: Scatter plot of rating curve estimated flows against measured flows (A
 <span id="cb11-31"><a href="#cb11-31"></a>              <span class="dt">supp_errors =</span> <span class="st">&quot;Y&quot;</span>)</span></code></pre></div>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1"></a><span class="co">## setup dataframe with parameter results. Will use this later to report parameters and GOF metrics</span></span>
 <span id="cb12-2"><a href="#cb12-2"></a>df_results_<span class="dv">16397</span> &lt;-<span class="st"> </span><span class="kw">tibble</span>(<span class="dt">Site =</span> <span class="kw">c</span>(<span class="st">&quot;16397&quot;</span>),</span>
-<span id="cb12-3"><a href="#cb12-3"></a>                           <span class="dt">Period =</span> <span class="kw">c</span>(<span class="st">&quot;2020-03-01 : 2020-01-30&quot;</span>),</span>
+<span id="cb12-3"><a href="#cb12-3"></a>                           <span class="dt">Period =</span> <span class="kw">c</span>(<span class="st">&quot;2020-03-03 : 2020-01-14&quot;</span>),</span>
 <span id="cb12-4"><a href="#cb12-4"></a>                           <span class="dt">K =</span> <span class="kw">coefficients</span>(rc_<span class="dv">16397</span>)[[<span class="st">&quot;K&quot;</span>]],</span>
 <span id="cb12-5"><a href="#cb12-5"></a>                           <span class="dt">H_0 =</span> <span class="kw">coefficients</span>(rc_<span class="dv">16397</span>)[[<span class="st">&quot;H_0&quot;</span>]],</span>
 <span id="cb12-6"><a href="#cb12-6"></a>                           <span class="dt">Z =</span> <span class="kw">coefficients</span>(rc_<span class="dv">16397</span>)[[<span class="st">&quot;Z&quot;</span>]])</span></code></pre></div>
@@ -1538,11 +1552,11 @@ Figure 3: Scatter plot of rating curve estimated flows against measured flows (A
 <tbody>
 <tr class="odd">
 <td align="left">16397</td>
-<td align="left">2020-03-01 : 2020-01-30</td>
-<td align="right">0.0008322</td>
-<td align="right">-2.402912</td>
-<td align="right">5.658475</td>
-<td align="right">0.9519032</td>
+<td align="left">2020-03-03 : 2020-01-14</td>
+<td align="right">0.0006341</td>
+<td align="right">-2.481346</td>
+<td align="right">5.772743</td>
+<td align="right">0.9517218</td>
 <td align="right">4.9</td>
 </tr>
 </tbody>
@@ -1678,9 +1692,9 @@ Figure 4: Scatter plot of rating curve estimated flows against measured flows (A
 <span id="cb16-35"><a href="#cb16-35"></a>              <span class="dt">supp_errors =</span> <span class="st">&quot;Y&quot;</span>)</span></code></pre></div>
 <div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1"></a><span class="co">## setup dataframe with parameter results. Will use this later to report parameters and GOF metrics</span></span>
 <span id="cb17-2"><a href="#cb17-2"></a>df_results_<span class="dv">16882</span> &lt;-<span class="st"> </span><span class="kw">tibble</span>(<span class="dt">Site =</span> <span class="kw">c</span>(<span class="st">&quot;16882&quot;</span>, <span class="st">&quot;16882&quot;</span>, <span class="st">&quot;16882&quot;</span>),</span>
-<span id="cb17-3"><a href="#cb17-3"></a>                           <span class="dt">Period =</span> <span class="kw">c</span>(<span class="st">&quot;2020-03-01 : 2020-09-30&quot;</span>,</span>
-<span id="cb17-4"><a href="#cb17-4"></a>                                      <span class="st">&quot;2020-10-01 : 2020-11-30&quot;</span>,</span>
-<span id="cb17-5"><a href="#cb17-5"></a>                                      <span class="st">&quot;2020-12-01 : 2021-01-31&quot;</span>),</span>
+<span id="cb17-3"><a href="#cb17-3"></a>                           <span class="dt">Period =</span> <span class="kw">c</span>(<span class="st">&quot;2020-03-03 : 2020-10-22&quot;</span>,</span>
+<span id="cb17-4"><a href="#cb17-4"></a>                                      <span class="st">&quot;2020-10-23 : 2020-12-09&quot;</span>,</span>
+<span id="cb17-5"><a href="#cb17-5"></a>                                      <span class="st">&quot;2020-12-10 : 2021-01-14&quot;</span>),</span>
 <span id="cb17-6"><a href="#cb17-6"></a>                           <span class="dt">K =</span> <span class="kw">c</span>(<span class="kw">coefficients</span>(rc_<span class="dv">16882</span>_<span class="dv">2020</span>_<span class="dv">03</span>)[[<span class="st">&quot;K&quot;</span>]],</span>
 <span id="cb17-7"><a href="#cb17-7"></a>                                 <span class="kw">coefficients</span>(rc_<span class="dv">16882</span>_<span class="dv">2020</span>_<span class="dv">10</span>)[[<span class="st">&quot;K&quot;</span>]],</span>
 <span id="cb17-8"><a href="#cb17-8"></a>                                 <span class="kw">coefficients</span>(rc_<span class="dv">16882</span>_<span class="dv">2020</span>_<span class="dv">12</span>)[[<span class="st">&quot;K&quot;</span>]]),</span>
@@ -1751,7 +1765,7 @@ Figure 4: Scatter plot of rating curve estimated flows against measured flows (A
 <tbody>
 <tr class="odd">
 <td align="left">16882</td>
-<td align="left">2020-03-01 : 2020-09-30</td>
+<td align="left">2020-03-03 : 2020-10-22</td>
 <td align="right">4.520613</td>
 <td align="right">0.9598066</td>
 <td align="right">0.1515910</td>
@@ -1761,20 +1775,20 @@ Figure 4: Scatter plot of rating curve estimated flows against measured flows (A
 </tr>
 <tr class="even">
 <td align="left">16882</td>
-<td align="left">2020-10-01 : 2020-11-30</td>
-<td align="right">3.371444</td>
-<td align="right">0.8957127</td>
-<td align="right">0.1359091</td>
-<td align="right">-6.1282243</td>
-<td align="right">0.8850142</td>
-<td align="right">10.0</td>
+<td align="left">2020-10-23 : 2020-12-09</td>
+<td align="right">4.429873</td>
+<td align="right">0.8771891</td>
+<td align="right">0.2634828</td>
+<td align="right">-3.6730615</td>
+<td align="right">0.9256386</td>
+<td align="right">8.0</td>
 </tr>
 <tr class="odd">
 <td align="left">16882</td>
-<td align="left">2020-12-01 : 2021-01-31</td>
+<td align="left">2020-12-10 : 2021-01-14</td>
 <td align="right">3.855323</td>
 <td align="right">0.5431170</td>
-<td align="right">0.7936082</td>
+<td align="right">0.7936081</td>
 <td align="right">0.3829932</td>
 <td align="right">0.8833267</td>
 <td align="right">1.9</td>
@@ -1788,61 +1802,67 @@ Figure 4: Scatter plot of rating curve estimated flows against measured flows (A
 <span id="cb18-5"><a href="#cb18-5"></a><span class="st">  </span><span class="kw">geom_abline</span>(<span class="kw">aes</span>(<span class="dt">slope =</span> <span class="dv">1</span>, <span class="dt">intercept =</span> <span class="dv">0</span>, <span class="dt">linetype =</span> <span class="st">&quot;1:1 line&quot;</span>)) <span class="op">+</span></span>
 <span id="cb18-6"><a href="#cb18-6"></a><span class="st">  </span><span class="kw">scale_x_continuous</span>(<span class="dt">name =</span> <span class="st">&quot;Rating curve flow estimate [cfs]&quot;</span>, <span class="dt">trans =</span> <span class="st">&quot;log10&quot;</span>) <span class="op">+</span></span>
 <span id="cb18-7"><a href="#cb18-7"></a><span class="st">  </span><span class="kw">scale_y_continuous</span>(<span class="dt">name =</span> <span class="st">&quot;Measured flow [cfs]&quot;</span>, <span class="dt">trans =</span> <span class="st">&quot;log10&quot;</span>) <span class="op">+</span></span>
-<span id="cb18-8"><a href="#cb18-8"></a><span class="st">  </span><span class="kw">theme_ms</span>() <span class="op">+</span><span class="st"> </span><span class="kw">labs</span>(<span class="dt">subtitle =</span> <span class="st">&quot;March-September&quot;</span>) <span class="op">+</span></span>
+<span id="cb18-8"><a href="#cb18-8"></a><span class="st">  </span><span class="kw">theme_ms</span>() <span class="op">+</span><span class="st"> </span><span class="kw">labs</span>(<span class="dt">subtitle =</span> <span class="st">&quot;2020-03-03 : 2020-10-22&quot;</span>) <span class="op">+</span></span>
 <span id="cb18-9"><a href="#cb18-9"></a><span class="st">  </span><span class="kw">theme</span>(<span class="dt">legend.title =</span> <span class="kw">element_blank</span>(),</span>
-<span id="cb18-10"><a href="#cb18-10"></a>        <span class="dt">legend.position =</span> <span class="st">&quot;none&quot;</span>)</span>
-<span id="cb18-11"><a href="#cb18-11"></a></span>
-<span id="cb18-12"><a href="#cb18-12"></a>p2 &lt;-<span class="st"> </span><span class="kw">ggplot</span>(df_<span class="dv">16882</span>_<span class="dv">2020</span>_<span class="dv">03</span>) <span class="op">+</span></span>
-<span id="cb18-13"><a href="#cb18-13"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Flow), Depth, <span class="dt">color =</span> <span class="st">&quot;Measured&quot;</span>)) <span class="op">+</span></span>
-<span id="cb18-14"><a href="#cb18-14"></a><span class="st">  </span><span class="kw">geom_path</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Flow), Depth, <span class="dt">color =</span> <span class="st">&quot;Measured&quot;</span>, <span class="dt">linetype =</span> <span class="st">&quot;Measured&quot;</span>),</span>
-<span id="cb18-15"><a href="#cb18-15"></a>            <span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
-<span id="cb18-16"><a href="#cb18-16"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(predicted), Depth, <span class="dt">color =</span> <span class="st">&quot;Predicted&quot;</span>)) <span class="op">+</span></span>
-<span id="cb18-17"><a href="#cb18-17"></a><span class="st">  </span><span class="kw">geom_path</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(predicted), Depth, <span class="dt">color =</span> <span class="st">&quot;Predicted&quot;</span>, <span class="dt">linetype =</span> <span class="st">&quot;Predicted&quot;</span>),</span>
-<span id="cb18-18"><a href="#cb18-18"></a>            <span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
-<span id="cb18-19"><a href="#cb18-19"></a><span class="st">  </span><span class="kw">scale_color_discrete</span>(<span class="st">&quot;&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">scale_linetype_discrete</span>(<span class="st">&quot;&quot;</span>) <span class="op">+</span></span>
-<span id="cb18-20"><a href="#cb18-20"></a><span class="st">  </span><span class="kw">scale_x_continuous</span>(<span class="st">&quot;Flow [cfs]&quot;</span>, <span class="dt">trans =</span> <span class="st">&quot;log10&quot;</span>) <span class="op">+</span></span>
-<span id="cb18-21"><a href="#cb18-21"></a><span class="st">  </span><span class="kw">labs</span>(<span class="dt">subtitle =</span> <span class="st">&quot;March-September&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">theme_ms</span>() <span class="op">+</span><span class="st"> </span><span class="kw">theme</span>(<span class="dt">legend.position =</span> <span class="st">&quot;none&quot;</span>)</span>
-<span id="cb18-22"><a href="#cb18-22"></a></span>
-<span id="cb18-23"><a href="#cb18-23"></a>p3 &lt;-<span class="st"> </span><span class="kw">ggplot</span>(df_<span class="dv">16882</span>_<span class="dv">2020</span>_<span class="dv">10</span>) <span class="op">+</span></span>
-<span id="cb18-24"><a href="#cb18-24"></a><span class="st">    </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(predicted), <span class="kw">as.numeric</span>(Flow), <span class="dt">color =</span> <span class="st">&quot;Rating curve prediction against measured flow&quot;</span>), <span class="dt">alpha =</span> <span class="fl">0.25</span>) <span class="op">+</span></span>
-<span id="cb18-25"><a href="#cb18-25"></a><span class="st">  </span><span class="kw">geom_abline</span>(<span class="kw">aes</span>(<span class="dt">slope =</span> <span class="dv">1</span>, <span class="dt">intercept =</span> <span class="dv">0</span>, <span class="dt">linetype =</span> <span class="st">&quot;1:1 line&quot;</span>)) <span class="op">+</span></span>
-<span id="cb18-26"><a href="#cb18-26"></a><span class="st">  </span><span class="kw">scale_x_continuous</span>(<span class="dt">name =</span> <span class="st">&quot;Rating curve flow estimate [cfs]&quot;</span>, <span class="dt">trans =</span> <span class="st">&quot;log10&quot;</span>) <span class="op">+</span></span>
-<span id="cb18-27"><a href="#cb18-27"></a><span class="st">  </span><span class="kw">scale_y_continuous</span>(<span class="dt">name =</span> <span class="st">&quot;Measured flow [cfs]&quot;</span>, <span class="dt">trans =</span> <span class="st">&quot;log10&quot;</span>) <span class="op">+</span></span>
-<span id="cb18-28"><a href="#cb18-28"></a><span class="st">  </span><span class="kw">theme_ms</span>() <span class="op">+</span><span class="st"> </span><span class="kw">labs</span>(<span class="dt">subtitle =</span> <span class="st">&quot;October-November&quot;</span>) <span class="op">+</span></span>
-<span id="cb18-29"><a href="#cb18-29"></a><span class="st">  </span><span class="kw">theme</span>(<span class="dt">legend.title =</span> <span class="kw">element_blank</span>(),</span>
-<span id="cb18-30"><a href="#cb18-30"></a>        <span class="dt">legend.position =</span> <span class="st">&quot;none&quot;</span>)</span>
-<span id="cb18-31"><a href="#cb18-31"></a></span>
-<span id="cb18-32"><a href="#cb18-32"></a>p4 &lt;-<span class="st"> </span><span class="kw">ggplot</span>(df_<span class="dv">16882</span>_<span class="dv">2020</span>_<span class="dv">10</span>) <span class="op">+</span></span>
-<span id="cb18-33"><a href="#cb18-33"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Flow), Depth, <span class="dt">color =</span> <span class="st">&quot;Measured&quot;</span>)) <span class="op">+</span></span>
-<span id="cb18-34"><a href="#cb18-34"></a><span class="st">  </span><span class="kw">geom_path</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Flow), Depth, <span class="dt">color =</span> <span class="st">&quot;Measured&quot;</span>, <span class="dt">linetype =</span> <span class="st">&quot;Measured&quot;</span>),</span>
-<span id="cb18-35"><a href="#cb18-35"></a>            <span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
-<span id="cb18-36"><a href="#cb18-36"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(predicted), Depth, <span class="dt">color =</span> <span class="st">&quot;Predicted&quot;</span>)) <span class="op">+</span></span>
-<span id="cb18-37"><a href="#cb18-37"></a><span class="st">  </span><span class="kw">geom_path</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(predicted), Depth, <span class="dt">color =</span> <span class="st">&quot;Predicted&quot;</span>, <span class="dt">linetype =</span> <span class="st">&quot;Predicted&quot;</span>),</span>
+<span id="cb18-10"><a href="#cb18-10"></a>        <span class="dt">legend.position =</span> <span class="st">&quot;none&quot;</span>,</span>
+<span id="cb18-11"><a href="#cb18-11"></a>        <span class="dt">plot.subtitle =</span> <span class="kw">element_text</span>(<span class="dt">size =</span> <span class="dv">8</span>))</span>
+<span id="cb18-12"><a href="#cb18-12"></a></span>
+<span id="cb18-13"><a href="#cb18-13"></a>p2 &lt;-<span class="st"> </span><span class="kw">ggplot</span>(df_<span class="dv">16882</span>_<span class="dv">2020</span>_<span class="dv">03</span>) <span class="op">+</span></span>
+<span id="cb18-14"><a href="#cb18-14"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Flow), Depth, <span class="dt">color =</span> <span class="st">&quot;Measured&quot;</span>)) <span class="op">+</span></span>
+<span id="cb18-15"><a href="#cb18-15"></a><span class="st">  </span><span class="kw">geom_path</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Flow), Depth, <span class="dt">color =</span> <span class="st">&quot;Measured&quot;</span>, <span class="dt">linetype =</span> <span class="st">&quot;Measured&quot;</span>),</span>
+<span id="cb18-16"><a href="#cb18-16"></a>            <span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
+<span id="cb18-17"><a href="#cb18-17"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(predicted), Depth, <span class="dt">color =</span> <span class="st">&quot;Predicted&quot;</span>)) <span class="op">+</span></span>
+<span id="cb18-18"><a href="#cb18-18"></a><span class="st">  </span><span class="kw">geom_path</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(predicted), Depth, <span class="dt">color =</span> <span class="st">&quot;Predicted&quot;</span>, <span class="dt">linetype =</span> <span class="st">&quot;Predicted&quot;</span>),</span>
+<span id="cb18-19"><a href="#cb18-19"></a>            <span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
+<span id="cb18-20"><a href="#cb18-20"></a><span class="st">  </span><span class="kw">scale_color_discrete</span>(<span class="st">&quot;&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">scale_linetype_discrete</span>(<span class="st">&quot;&quot;</span>) <span class="op">+</span></span>
+<span id="cb18-21"><a href="#cb18-21"></a><span class="st">  </span><span class="kw">scale_x_continuous</span>(<span class="st">&quot;Flow [cfs]&quot;</span>, <span class="dt">trans =</span> <span class="st">&quot;log10&quot;</span>) <span class="op">+</span></span>
+<span id="cb18-22"><a href="#cb18-22"></a><span class="st">  </span><span class="kw">labs</span>(<span class="dt">subtitle =</span> <span class="st">&quot;2020-03-03 : 2020-10-22&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">theme_ms</span>() <span class="op">+</span><span class="st"> </span><span class="kw">theme</span>(<span class="dt">legend.position =</span> <span class="st">&quot;none&quot;</span>,</span>
+<span id="cb18-23"><a href="#cb18-23"></a>                                                                  <span class="dt">plot.subtitle =</span> <span class="kw">element_text</span>(<span class="dt">size =</span> <span class="dv">8</span>))</span>
+<span id="cb18-24"><a href="#cb18-24"></a></span>
+<span id="cb18-25"><a href="#cb18-25"></a>p3 &lt;-<span class="st"> </span><span class="kw">ggplot</span>(df_<span class="dv">16882</span>_<span class="dv">2020</span>_<span class="dv">10</span>) <span class="op">+</span></span>
+<span id="cb18-26"><a href="#cb18-26"></a><span class="st">    </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(predicted), <span class="kw">as.numeric</span>(Flow), <span class="dt">color =</span> <span class="st">&quot;Rating curve prediction against measured flow&quot;</span>), <span class="dt">alpha =</span> <span class="fl">0.25</span>) <span class="op">+</span></span>
+<span id="cb18-27"><a href="#cb18-27"></a><span class="st">  </span><span class="kw">geom_abline</span>(<span class="kw">aes</span>(<span class="dt">slope =</span> <span class="dv">1</span>, <span class="dt">intercept =</span> <span class="dv">0</span>, <span class="dt">linetype =</span> <span class="st">&quot;1:1 line&quot;</span>)) <span class="op">+</span></span>
+<span id="cb18-28"><a href="#cb18-28"></a><span class="st">  </span><span class="kw">scale_x_continuous</span>(<span class="dt">name =</span> <span class="st">&quot;Rating curve flow estimate [cfs]&quot;</span>, <span class="dt">trans =</span> <span class="st">&quot;log10&quot;</span>) <span class="op">+</span></span>
+<span id="cb18-29"><a href="#cb18-29"></a><span class="st">  </span><span class="kw">scale_y_continuous</span>(<span class="dt">name =</span> <span class="st">&quot;Measured flow [cfs]&quot;</span>, <span class="dt">trans =</span> <span class="st">&quot;log10&quot;</span>) <span class="op">+</span></span>
+<span id="cb18-30"><a href="#cb18-30"></a><span class="st">  </span><span class="kw">theme_ms</span>() <span class="op">+</span><span class="st"> </span><span class="kw">labs</span>(<span class="dt">subtitle =</span> <span class="st">&quot;2020-10-23 : 2020-12-09&quot;</span>) <span class="op">+</span></span>
+<span id="cb18-31"><a href="#cb18-31"></a><span class="st">  </span><span class="kw">theme</span>(<span class="dt">legend.title =</span> <span class="kw">element_blank</span>(),</span>
+<span id="cb18-32"><a href="#cb18-32"></a>        <span class="dt">legend.position =</span> <span class="st">&quot;none&quot;</span>,</span>
+<span id="cb18-33"><a href="#cb18-33"></a>        <span class="dt">plot.subtitle =</span> <span class="kw">element_text</span>(<span class="dt">size =</span> <span class="dv">8</span>))</span>
+<span id="cb18-34"><a href="#cb18-34"></a></span>
+<span id="cb18-35"><a href="#cb18-35"></a>p4 &lt;-<span class="st"> </span><span class="kw">ggplot</span>(df_<span class="dv">16882</span>_<span class="dv">2020</span>_<span class="dv">10</span>) <span class="op">+</span></span>
+<span id="cb18-36"><a href="#cb18-36"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Flow), Depth, <span class="dt">color =</span> <span class="st">&quot;Measured&quot;</span>)) <span class="op">+</span></span>
+<span id="cb18-37"><a href="#cb18-37"></a><span class="st">  </span><span class="kw">geom_path</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Flow), Depth, <span class="dt">color =</span> <span class="st">&quot;Measured&quot;</span>, <span class="dt">linetype =</span> <span class="st">&quot;Measured&quot;</span>),</span>
 <span id="cb18-38"><a href="#cb18-38"></a>            <span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
-<span id="cb18-39"><a href="#cb18-39"></a><span class="st">  </span><span class="kw">scale_color_discrete</span>(<span class="st">&quot;&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">scale_linetype_discrete</span>(<span class="st">&quot;&quot;</span>) <span class="op">+</span></span>
-<span id="cb18-40"><a href="#cb18-40"></a><span class="st">  </span><span class="kw">scale_x_continuous</span>(<span class="st">&quot;Flow [cfs]&quot;</span>, <span class="dt">trans =</span> <span class="st">&quot;log10&quot;</span>) <span class="op">+</span></span>
-<span id="cb18-41"><a href="#cb18-41"></a><span class="st">  </span><span class="kw">labs</span>(<span class="dt">subtitle =</span> <span class="st">&quot;October-November&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">theme_ms</span>() <span class="op">+</span><span class="st"> </span><span class="kw">theme</span>(<span class="dt">legend.position =</span> <span class="st">&quot;none&quot;</span>)</span>
-<span id="cb18-42"><a href="#cb18-42"></a></span>
-<span id="cb18-43"><a href="#cb18-43"></a>p5 &lt;-<span class="st"> </span><span class="kw">ggplot</span>(df_<span class="dv">16882</span>_<span class="dv">2020</span>_<span class="dv">12</span>) <span class="op">+</span></span>
-<span id="cb18-44"><a href="#cb18-44"></a><span class="st">    </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(predicted), <span class="kw">as.numeric</span>(Flow), <span class="dt">color =</span> <span class="st">&quot;Rating curve prediction against measured flow&quot;</span>), <span class="dt">alpha =</span> <span class="fl">0.25</span>) <span class="op">+</span></span>
-<span id="cb18-45"><a href="#cb18-45"></a><span class="st">  </span><span class="kw">geom_abline</span>(<span class="kw">aes</span>(<span class="dt">slope =</span> <span class="dv">1</span>, <span class="dt">intercept =</span> <span class="dv">0</span>, <span class="dt">linetype =</span> <span class="st">&quot;1:1 line&quot;</span>)) <span class="op">+</span></span>
-<span id="cb18-46"><a href="#cb18-46"></a><span class="st">  </span><span class="kw">scale_x_continuous</span>(<span class="dt">name =</span> <span class="st">&quot;Rating curve flow estimate [cfs]&quot;</span>, <span class="dt">trans =</span> <span class="st">&quot;log10&quot;</span>) <span class="op">+</span></span>
-<span id="cb18-47"><a href="#cb18-47"></a><span class="st">  </span><span class="kw">scale_y_continuous</span>(<span class="dt">name =</span> <span class="st">&quot;Measured flow [cfs]&quot;</span>, <span class="dt">trans =</span> <span class="st">&quot;log10&quot;</span>) <span class="op">+</span></span>
-<span id="cb18-48"><a href="#cb18-48"></a><span class="st">  </span><span class="kw">theme_ms</span>() <span class="op">+</span><span class="st"> </span><span class="kw">labs</span>(<span class="dt">subtitle =</span> <span class="st">&quot;December-January&quot;</span>) <span class="op">+</span></span>
-<span id="cb18-49"><a href="#cb18-49"></a><span class="st">  </span><span class="kw">theme</span>(<span class="dt">legend.title =</span> <span class="kw">element_blank</span>())</span>
-<span id="cb18-50"><a href="#cb18-50"></a></span>
-<span id="cb18-51"><a href="#cb18-51"></a>p6 &lt;-<span class="st"> </span><span class="kw">ggplot</span>(df_<span class="dv">16882</span>_<span class="dv">2020</span>_<span class="dv">12</span>) <span class="op">+</span></span>
-<span id="cb18-52"><a href="#cb18-52"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Flow), Depth, <span class="dt">color =</span> <span class="st">&quot;Measured&quot;</span>)) <span class="op">+</span></span>
-<span id="cb18-53"><a href="#cb18-53"></a><span class="st">  </span><span class="kw">geom_path</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Flow), Depth, <span class="dt">color =</span> <span class="st">&quot;Measured&quot;</span>, <span class="dt">linetype =</span> <span class="st">&quot;Measured&quot;</span>),</span>
-<span id="cb18-54"><a href="#cb18-54"></a>            <span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
-<span id="cb18-55"><a href="#cb18-55"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(predicted), Depth, <span class="dt">color =</span> <span class="st">&quot;Predicted&quot;</span>)) <span class="op">+</span></span>
-<span id="cb18-56"><a href="#cb18-56"></a><span class="st">  </span><span class="kw">geom_path</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(predicted), Depth, <span class="dt">color =</span> <span class="st">&quot;Predicted&quot;</span>, <span class="dt">linetype =</span> <span class="st">&quot;Predicted&quot;</span>),</span>
-<span id="cb18-57"><a href="#cb18-57"></a>            <span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
-<span id="cb18-58"><a href="#cb18-58"></a><span class="st">  </span><span class="kw">scale_color_discrete</span>(<span class="st">&quot;&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">scale_linetype_discrete</span>(<span class="st">&quot;&quot;</span>) <span class="op">+</span></span>
-<span id="cb18-59"><a href="#cb18-59"></a><span class="st">  </span><span class="kw">scale_x_continuous</span>(<span class="st">&quot;Flow [cfs]&quot;</span>, <span class="dt">trans =</span> <span class="st">&quot;log10&quot;</span>) <span class="op">+</span></span>
-<span id="cb18-60"><a href="#cb18-60"></a><span class="st">  </span><span class="kw">labs</span>(<span class="dt">subtitle =</span> <span class="st">&quot;December-January&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">theme_ms</span>()</span>
-<span id="cb18-61"><a href="#cb18-61"></a></span>
-<span id="cb18-62"><a href="#cb18-62"></a>(p1 <span class="op">+</span><span class="st"> </span>p2) <span class="op">/</span><span class="st"> </span>(p3 <span class="op">+</span><span class="st"> </span>p4) <span class="op">/</span><span class="st"> </span>(p5 <span class="op">+</span><span class="st"> </span>p6) <span class="op">+</span><span class="st"> </span><span class="kw">plot_annotation</span>(<span class="dt">tag_levels =</span> <span class="st">&quot;A&quot;</span>)</span></code></pre></div>
+<span id="cb18-39"><a href="#cb18-39"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(predicted), Depth, <span class="dt">color =</span> <span class="st">&quot;Predicted&quot;</span>)) <span class="op">+</span></span>
+<span id="cb18-40"><a href="#cb18-40"></a><span class="st">  </span><span class="kw">geom_path</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(predicted), Depth, <span class="dt">color =</span> <span class="st">&quot;Predicted&quot;</span>, <span class="dt">linetype =</span> <span class="st">&quot;Predicted&quot;</span>),</span>
+<span id="cb18-41"><a href="#cb18-41"></a>            <span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
+<span id="cb18-42"><a href="#cb18-42"></a><span class="st">  </span><span class="kw">scale_color_discrete</span>(<span class="st">&quot;&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">scale_linetype_discrete</span>(<span class="st">&quot;&quot;</span>) <span class="op">+</span></span>
+<span id="cb18-43"><a href="#cb18-43"></a><span class="st">  </span><span class="kw">scale_x_continuous</span>(<span class="st">&quot;Flow [cfs]&quot;</span>, <span class="dt">trans =</span> <span class="st">&quot;log10&quot;</span>) <span class="op">+</span></span>
+<span id="cb18-44"><a href="#cb18-44"></a><span class="st">  </span><span class="kw">labs</span>(<span class="dt">subtitle =</span> <span class="st">&quot;2020-10-23 : 2020-12-09&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">theme_ms</span>() <span class="op">+</span><span class="st"> </span><span class="kw">theme</span>(<span class="dt">legend.position =</span> <span class="st">&quot;none&quot;</span>,</span>
+<span id="cb18-45"><a href="#cb18-45"></a>                                                                  <span class="dt">plot.subtitle =</span> <span class="kw">element_text</span>(<span class="dt">size =</span> <span class="dv">8</span>))</span>
+<span id="cb18-46"><a href="#cb18-46"></a></span>
+<span id="cb18-47"><a href="#cb18-47"></a>p5 &lt;-<span class="st"> </span><span class="kw">ggplot</span>(df_<span class="dv">16882</span>_<span class="dv">2020</span>_<span class="dv">12</span>) <span class="op">+</span></span>
+<span id="cb18-48"><a href="#cb18-48"></a><span class="st">    </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(predicted), <span class="kw">as.numeric</span>(Flow), <span class="dt">color =</span> <span class="st">&quot;Rating curve prediction against measured flow&quot;</span>), <span class="dt">alpha =</span> <span class="fl">0.25</span>) <span class="op">+</span></span>
+<span id="cb18-49"><a href="#cb18-49"></a><span class="st">  </span><span class="kw">geom_abline</span>(<span class="kw">aes</span>(<span class="dt">slope =</span> <span class="dv">1</span>, <span class="dt">intercept =</span> <span class="dv">0</span>, <span class="dt">linetype =</span> <span class="st">&quot;1:1 line&quot;</span>)) <span class="op">+</span></span>
+<span id="cb18-50"><a href="#cb18-50"></a><span class="st">  </span><span class="kw">scale_x_continuous</span>(<span class="dt">name =</span> <span class="st">&quot;Rating curve flow estimate [cfs]&quot;</span>, <span class="dt">trans =</span> <span class="st">&quot;log10&quot;</span>) <span class="op">+</span></span>
+<span id="cb18-51"><a href="#cb18-51"></a><span class="st">  </span><span class="kw">scale_y_continuous</span>(<span class="dt">name =</span> <span class="st">&quot;Measured flow [cfs]&quot;</span>, <span class="dt">trans =</span> <span class="st">&quot;log10&quot;</span>) <span class="op">+</span></span>
+<span id="cb18-52"><a href="#cb18-52"></a><span class="st">  </span><span class="kw">theme_ms</span>() <span class="op">+</span><span class="st"> </span><span class="kw">labs</span>(<span class="dt">subtitle =</span> <span class="st">&quot;2020-12-10 : 2021-01-14&quot;</span>) <span class="op">+</span></span>
+<span id="cb18-53"><a href="#cb18-53"></a><span class="st">  </span><span class="kw">theme</span>(<span class="dt">legend.title =</span> <span class="kw">element_blank</span>(),</span>
+<span id="cb18-54"><a href="#cb18-54"></a>        <span class="dt">plot.subtitle =</span> <span class="kw">element_text</span>(<span class="dt">size =</span> <span class="dv">8</span>))</span>
+<span id="cb18-55"><a href="#cb18-55"></a></span>
+<span id="cb18-56"><a href="#cb18-56"></a>p6 &lt;-<span class="st"> </span><span class="kw">ggplot</span>(df_<span class="dv">16882</span>_<span class="dv">2020</span>_<span class="dv">12</span>) <span class="op">+</span></span>
+<span id="cb18-57"><a href="#cb18-57"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Flow), Depth, <span class="dt">color =</span> <span class="st">&quot;Measured&quot;</span>)) <span class="op">+</span></span>
+<span id="cb18-58"><a href="#cb18-58"></a><span class="st">  </span><span class="kw">geom_path</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(Flow), Depth, <span class="dt">color =</span> <span class="st">&quot;Measured&quot;</span>, <span class="dt">linetype =</span> <span class="st">&quot;Measured&quot;</span>),</span>
+<span id="cb18-59"><a href="#cb18-59"></a>            <span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
+<span id="cb18-60"><a href="#cb18-60"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(predicted), Depth, <span class="dt">color =</span> <span class="st">&quot;Predicted&quot;</span>)) <span class="op">+</span></span>
+<span id="cb18-61"><a href="#cb18-61"></a><span class="st">  </span><span class="kw">geom_path</span>(<span class="kw">aes</span>(<span class="kw">as.numeric</span>(predicted), Depth, <span class="dt">color =</span> <span class="st">&quot;Predicted&quot;</span>, <span class="dt">linetype =</span> <span class="st">&quot;Predicted&quot;</span>),</span>
+<span id="cb18-62"><a href="#cb18-62"></a>            <span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
+<span id="cb18-63"><a href="#cb18-63"></a><span class="st">  </span><span class="kw">scale_color_discrete</span>(<span class="st">&quot;&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">scale_linetype_discrete</span>(<span class="st">&quot;&quot;</span>) <span class="op">+</span></span>
+<span id="cb18-64"><a href="#cb18-64"></a><span class="st">  </span><span class="kw">scale_x_continuous</span>(<span class="st">&quot;Flow [cfs]&quot;</span>, <span class="dt">trans =</span> <span class="st">&quot;log10&quot;</span>) <span class="op">+</span></span>
+<span id="cb18-65"><a href="#cb18-65"></a><span class="st">  </span><span class="kw">labs</span>(<span class="dt">subtitle =</span> <span class="st">&quot;2020-12-10 : 2021-01-14&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">theme_ms</span>() <span class="op">+</span></span>
+<span id="cb18-66"><a href="#cb18-66"></a><span class="st">  </span><span class="kw">theme</span>(<span class="dt">plot.subtitle =</span> <span class="kw">element_text</span>(<span class="dt">size =</span> <span class="dv">8</span>))</span>
+<span id="cb18-67"><a href="#cb18-67"></a></span>
+<span id="cb18-68"><a href="#cb18-68"></a>(p1 <span class="op">+</span><span class="st"> </span>p2) <span class="op">/</span><span class="st"> </span>(p3 <span class="op">+</span><span class="st"> </span>p4) <span class="op">/</span><span class="st"> </span>(p5 <span class="op">+</span><span class="st"> </span>p6) <span class="op">+</span><span class="st"> </span><span class="kw">plot_annotation</span>(<span class="dt">tag_levels =</span> <span class="st">&quot;A&quot;</span>)</span></code></pre></div>
 <div class="figure"><span id="fig:metricplot16882"></span>
 <img src="document_files/figure-html/metricplot16882-1.png" alt="Scatter plot of rating curve estimated flows against measured flows (A, C, E) and stage discharge predictions (B, D, F) for each rating curve period at station 16882." width="100%" />
 <p class="caption">
@@ -1857,7 +1877,7 @@ Figure 5: Scatter plot of rating curve estimated flows against measured flows (A
 <span id="cb19-3"><a href="#cb19-3"></a><span class="co"># aggregate to mean daily flows, report summary stats.</span></span>
 <span id="cb19-4"><a href="#cb19-4"></a></span>
 <span id="cb19-5"><a href="#cb19-5"></a>hobo_df <span class="op">%&gt;%</span></span>
-<span id="cb19-6"><a href="#cb19-6"></a><span class="st">  </span><span class="kw">select</span>(Site, <span class="dt">Depth =</span> Water_Level, Date_Time) <span class="op">%&gt;%</span></span>
+<span id="cb19-6"><a href="#cb19-6"></a><span class="st">  </span>dplyr<span class="op">::</span><span class="kw">select</span>(Site, <span class="dt">Depth =</span> Water_Level, Date_Time) <span class="op">%&gt;%</span></span>
 <span id="cb19-7"><a href="#cb19-7"></a><span class="st">  </span><span class="kw">group_split</span>(Site) <span class="op">%&gt;%</span></span>
 <span id="cb19-8"><a href="#cb19-8"></a><span class="st">  </span><span class="kw">map</span>(<span class="op">~</span><span class="kw">mutate</span>(.x,</span>
 <span id="cb19-9"><a href="#cb19-9"></a>              <span class="dt">time_lag =</span> <span class="kw">lag</span>(Date_Time, <span class="dt">default =</span> Date_Time[<span class="dv">1</span>]),</span>
@@ -1874,33 +1894,35 @@ Figure 5: Scatter plot of rating curve estimated flows against measured flows (A
 <span id="cb19-20"><a href="#cb19-20"></a>                                          rc_<span class="dv">16397</span>,</span>
 <span id="cb19-21"><a href="#cb19-21"></a>                                          rc_<span class="dv">16882</span>_<span class="dv">2020</span>_<span class="dv">03</span>, rc_<span class="dv">16882</span>_<span class="dv">2020</span>_<span class="dv">10</span>, rc_<span class="dv">16882</span>_<span class="dv">2020</span>_<span class="dv">12</span>),</span>
 <span id="cb19-22"><a href="#cb19-22"></a>       <span class="dt">data =</span> <span class="kw">list</span>(</span>
-<span id="cb19-23"><a href="#cb19-23"></a>         estimated_data <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">filter</span>(Site <span class="op">==</span><span class="st"> &quot;16396&quot;</span> <span class="op">&amp;</span><span class="st"> </span>Date_Time <span class="op">&lt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-12-01&quot;</span>, <span class="dt">tz =</span> <span class="st">&quot;Etc/GMT-6&quot;</span>)),</span>
-<span id="cb19-24"><a href="#cb19-24"></a>         estimated_data <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">filter</span>(Site <span class="op">==</span><span class="st"> &quot;16396&quot;</span> <span class="op">&amp;</span><span class="st"> </span>Date_Time <span class="op">&gt;=</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-12-01&quot;</span>, <span class="dt">tz =</span> <span class="st">&quot;Etc/GMT-6&quot;</span>) <span class="op">&amp;</span><span class="st"> </span>Date_Time <span class="op">&lt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2021-02-01&quot;</span>, <span class="dt">tz =</span> <span class="st">&quot;Etc/GMT-6&quot;</span>)),</span>
+<span id="cb19-23"><a href="#cb19-23"></a>         estimated_data <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">filter</span>(Site <span class="op">==</span><span class="st"> &quot;16396&quot;</span> <span class="op">&amp;</span><span class="st"> </span>Date_Time <span class="op">&lt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-12-14&quot;</span>, <span class="dt">tz =</span> <span class="st">&quot;Etc/GMT-6&quot;</span>)),</span>
+<span id="cb19-24"><a href="#cb19-24"></a>         estimated_data <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">filter</span>(Site <span class="op">==</span><span class="st"> &quot;16396&quot;</span> <span class="op">&amp;</span><span class="st"> </span>Date_Time <span class="op">&gt;=</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-12-14&quot;</span>, <span class="dt">tz =</span> <span class="st">&quot;Etc/GMT-6&quot;</span>) <span class="op">&amp;</span><span class="st"> </span>Date_Time <span class="op">&lt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2021-02-01&quot;</span>, <span class="dt">tz =</span> <span class="st">&quot;Etc/GMT-6&quot;</span>)),</span>
 <span id="cb19-25"><a href="#cb19-25"></a>         estimated_data <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">filter</span>(Site <span class="op">==</span><span class="st"> &quot;16397&quot;</span>),</span>
-<span id="cb19-26"><a href="#cb19-26"></a>         estimated_data <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">filter</span>(Site <span class="op">==</span><span class="st"> &quot;16882&quot;</span> <span class="op">&amp;</span><span class="st"> </span>Date_Time <span class="op">&lt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-10-01&quot;</span>, <span class="dt">tz =</span> <span class="st">&quot;Etc/GMT-6&quot;</span>)),</span>
-<span id="cb19-27"><a href="#cb19-27"></a>         estimated_data <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">filter</span>(Site <span class="op">==</span><span class="st"> &quot;16882&quot;</span> <span class="op">&amp;</span><span class="st"> </span>Date_Time <span class="op">&gt;=</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-10-01&quot;</span>, <span class="dt">tz =</span> <span class="st">&quot;Etc/GMT-6&quot;</span>) <span class="op">&amp;</span><span class="st"> </span>Date_Time <span class="op">&lt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-12-01&quot;</span>, <span class="dt">tz =</span> <span class="st">&quot;Etc/GMT-6&quot;</span>)),</span>
-<span id="cb19-28"><a href="#cb19-28"></a>         estimated_data <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">filter</span>(Site <span class="op">==</span><span class="st"> &quot;16882&quot;</span> <span class="op">&amp;</span><span class="st"> </span>Date_Time <span class="op">&gt;=</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-12-01&quot;</span>, <span class="dt">tz =</span> <span class="st">&quot;Etc/GMT-6&quot;</span>))</span>
+<span id="cb19-26"><a href="#cb19-26"></a>         estimated_data <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">filter</span>(Site <span class="op">==</span><span class="st"> &quot;16882&quot;</span> <span class="op">&amp;</span><span class="st"> </span>Date_Time <span class="op">&lt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-10-23&quot;</span>, <span class="dt">tz =</span> <span class="st">&quot;Etc/GMT-6&quot;</span>)),</span>
+<span id="cb19-27"><a href="#cb19-27"></a>         estimated_data <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">filter</span>(Site <span class="op">==</span><span class="st"> &quot;16882&quot;</span> <span class="op">&amp;</span><span class="st"> </span>Date_Time <span class="op">&gt;=</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-10-23&quot;</span>, <span class="dt">tz =</span> <span class="st">&quot;Etc/GMT-6&quot;</span>) <span class="op">&amp;</span><span class="st"> </span>Date_Time <span class="op">&lt;</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-12-10&quot;</span>, <span class="dt">tz =</span> <span class="st">&quot;Etc/GMT-6&quot;</span>)),</span>
+<span id="cb19-28"><a href="#cb19-28"></a>         estimated_data <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">filter</span>(Site <span class="op">==</span><span class="st"> &quot;16882&quot;</span> <span class="op">&amp;</span><span class="st"> </span>Date_Time <span class="op">&gt;=</span><span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="st">&quot;2020-12-10&quot;</span>, <span class="dt">tz =</span> <span class="st">&quot;Etc/GMT-6&quot;</span>))</span>
 <span id="cb19-29"><a href="#cb19-29"></a>       )</span>
 <span id="cb19-30"><a href="#cb19-30"></a>) <span class="op">%&gt;%</span></span>
 <span id="cb19-31"><a href="#cb19-31"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">predicted =</span> <span class="kw">map2</span>(rating_curve, data,</span>
 <span id="cb19-32"><a href="#cb19-32"></a>    <span class="op">~</span><span class="kw">exp</span>(<span class="kw">predict</span>(.x, <span class="dt">newdata =</span> .y))</span>
 <span id="cb19-33"><a href="#cb19-33"></a>  )) <span class="op">%&gt;%</span></span>
-<span id="cb19-34"><a href="#cb19-34"></a><span class="st">  </span>tidyr<span class="op">::</span><span class="kw">unnest</span>(<span class="kw">c</span>(data, predicted)) -&gt;<span class="st"> </span>estimated_data</span>
-<span id="cb19-35"><a href="#cb19-35"></a></span>
-<span id="cb19-36"><a href="#cb19-36"></a><span class="co">## plot the data</span></span>
-<span id="cb19-37"><a href="#cb19-37"></a><span class="kw">ggplot</span>() <span class="op">+</span></span>
-<span id="cb19-38"><a href="#cb19-38"></a><span class="st">  </span><span class="kw">geom_line</span>(<span class="dt">data =</span> estimated_data, <span class="kw">aes</span>(Date_Time, predicted, <span class="dt">color =</span> <span class="st">&quot;Rating curve estimate&quot;</span>)) <span class="op">+</span></span>
-<span id="cb19-39"><a href="#cb19-39"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="dt">data =</span> iqplus_df, <span class="kw">aes</span>(Date_Time, <span class="kw">as.numeric</span>(Flow), <span class="dt">color =</span> <span class="st">&quot;Measured streamflow&quot;</span>), <span class="dt">alpha =</span> <span class="fl">0.1</span>) <span class="op">+</span></span>
-<span id="cb19-40"><a href="#cb19-40"></a><span class="st">  </span><span class="kw">facet_wrap</span>(<span class="op">~</span>Site, <span class="dt">ncol =</span> <span class="dv">1</span>, <span class="dt">scales =</span> <span class="st">&quot;free_y&quot;</span>) <span class="op">+</span></span>
-<span id="cb19-41"><a href="#cb19-41"></a><span class="st">  </span><span class="kw">scale_y_continuous</span>(<span class="st">&quot;Flow [cfs]&quot;</span>) <span class="op">+</span></span>
-<span id="cb19-42"><a href="#cb19-42"></a><span class="st">  </span><span class="kw">scale_x_datetime</span>(<span class="st">&quot;Date&quot;</span>, <span class="dt">date_breaks =</span> <span class="st">&quot;1 month&quot;</span>,</span>
-<span id="cb19-43"><a href="#cb19-43"></a>                   <span class="dt">date_labels =</span> <span class="st">&quot;%F&quot;</span>) <span class="op">+</span></span>
-<span id="cb19-44"><a href="#cb19-44"></a><span class="st">  </span><span class="kw">guides</span>(<span class="dt">x =</span> <span class="kw">guide_axis</span>(<span class="dt">angle =</span> <span class="dv">90</span>),</span>
-<span id="cb19-45"><a href="#cb19-45"></a>         <span class="dt">color =</span> <span class="kw">guide_legend</span>(<span class="st">&quot;&quot;</span>, <span class="dt">override.aes =</span> <span class="kw">list</span>(<span class="dt">linetype =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>),</span>
-<span id="cb19-46"><a href="#cb19-46"></a>                                                  <span class="dt">shape =</span> <span class="kw">c</span>(<span class="dv">16</span>, <span class="ot">NA</span>),</span>
-<span id="cb19-47"><a href="#cb19-47"></a>                                                  <span class="dt">alpha =</span> <span class="dv">1</span>))) <span class="op">+</span></span>
-<span id="cb19-48"><a href="#cb19-48"></a><span class="st">  </span><span class="kw">theme_ms</span>() <span class="op">+</span></span>
-<span id="cb19-49"><a href="#cb19-49"></a><span class="st">  </span><span class="kw">theme</span>(<span class="dt">axis.text.x =</span> <span class="kw">element_text</span>(<span class="dt">size =</span> <span class="dv">8</span>))</span></code></pre></div>
+<span id="cb19-34"><a href="#cb19-34"></a><span class="st">  </span>tidyr<span class="op">::</span><span class="kw">unnest</span>(<span class="kw">c</span>(data, predicted)) <span class="op">%&gt;%</span></span>
+<span id="cb19-35"><a href="#cb19-35"></a><span class="st">  </span><span class="kw">as_tsibble</span>(<span class="dt">key =</span> Site, <span class="dt">index =</span> Date_Time) -&gt;<span class="st"> </span>estimated_data</span>
+<span id="cb19-36"><a href="#cb19-36"></a></span>
+<span id="cb19-37"><a href="#cb19-37"></a><span class="co">## plot the data</span></span>
+<span id="cb19-38"><a href="#cb19-38"></a></span>
+<span id="cb19-39"><a href="#cb19-39"></a><span class="kw">ggplot</span>() <span class="op">+</span></span>
+<span id="cb19-40"><a href="#cb19-40"></a><span class="st">  </span><span class="kw">geom_line</span>(<span class="dt">data =</span> estimated_data, <span class="kw">aes</span>(Date_Time, predicted, <span class="dt">color =</span> <span class="st">&quot;Rating curve estimate&quot;</span>)) <span class="op">+</span></span>
+<span id="cb19-41"><a href="#cb19-41"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="dt">data =</span> iqplus_df, <span class="kw">aes</span>(Date_Time, <span class="kw">as.numeric</span>(Flow), <span class="dt">color =</span> <span class="st">&quot;Measured streamflow&quot;</span>), <span class="dt">alpha =</span> <span class="fl">0.1</span>) <span class="op">+</span></span>
+<span id="cb19-42"><a href="#cb19-42"></a><span class="st">  </span><span class="kw">facet_wrap</span>(<span class="op">~</span>Site, <span class="dt">ncol =</span> <span class="dv">1</span>, <span class="dt">scales =</span> <span class="st">&quot;free_y&quot;</span>) <span class="op">+</span></span>
+<span id="cb19-43"><a href="#cb19-43"></a><span class="st">  </span><span class="kw">scale_y_continuous</span>(<span class="st">&quot;Flow [cfs]&quot;</span>) <span class="op">+</span></span>
+<span id="cb19-44"><a href="#cb19-44"></a><span class="st">  </span><span class="kw">scale_x_datetime</span>(<span class="st">&quot;Date&quot;</span>, <span class="dt">date_breaks =</span> <span class="st">&quot;1 month&quot;</span>,</span>
+<span id="cb19-45"><a href="#cb19-45"></a>                   <span class="dt">date_labels =</span> <span class="st">&quot;%F&quot;</span>) <span class="op">+</span></span>
+<span id="cb19-46"><a href="#cb19-46"></a><span class="st">  </span><span class="kw">guides</span>(<span class="dt">x =</span> <span class="kw">guide_axis</span>(<span class="dt">angle =</span> <span class="dv">90</span>),</span>
+<span id="cb19-47"><a href="#cb19-47"></a>         <span class="dt">color =</span> <span class="kw">guide_legend</span>(<span class="st">&quot;&quot;</span>, <span class="dt">override.aes =</span> <span class="kw">list</span>(<span class="dt">linetype =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>),</span>
+<span id="cb19-48"><a href="#cb19-48"></a>                                                  <span class="dt">shape =</span> <span class="kw">c</span>(<span class="dv">16</span>, <span class="ot">NA</span>),</span>
+<span id="cb19-49"><a href="#cb19-49"></a>                                                  <span class="dt">alpha =</span> <span class="dv">1</span>))) <span class="op">+</span></span>
+<span id="cb19-50"><a href="#cb19-50"></a><span class="st">  </span><span class="kw">theme_ms</span>() <span class="op">+</span></span>
+<span id="cb19-51"><a href="#cb19-51"></a><span class="st">  </span><span class="kw">theme</span>(<span class="dt">axis.text.x =</span> <span class="kw">element_text</span>(<span class="dt">size =</span> <span class="dv">8</span>))</span></code></pre></div>
 <div class="figure"><span id="fig:instantresults"></span>
 <img src="document_files/figure-html/instantresults-1.png" alt="Fifteen minute streamflow estimates with overlaid measured streamflow values" width="100%" />
 <p class="caption">
@@ -1909,24 +1931,23 @@ Figure 6: Fifteen minute streamflow estimates with overlaid measured streamflow 
 </div>
 <div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1"></a><span class="co">## calculate mean daily flows and report stats</span></span>
 <span id="cb20-2"><a href="#cb20-2"></a>estimated_data <span class="op">%&gt;%</span></span>
-<span id="cb20-3"><a href="#cb20-3"></a><span class="st">  </span><span class="kw">select</span>(Site, Date_Time, predicted) <span class="op">%&gt;%</span></span>
-<span id="cb20-4"><a href="#cb20-4"></a><span class="st">  </span><span class="kw">as_tsibble</span>(<span class="dt">key =</span> Site, <span class="dt">index =</span> Date_Time) <span class="op">%&gt;%</span></span>
-<span id="cb20-5"><a href="#cb20-5"></a><span class="st">  </span><span class="kw">group_by_key</span>() <span class="op">%&gt;%</span></span>
-<span id="cb20-6"><a href="#cb20-6"></a><span class="st">  </span><span class="kw">index_by</span>(<span class="dt">date =</span> <span class="op">~</span><span class="kw">as_date</span>(.)) <span class="op">%&gt;%</span></span>
-<span id="cb20-7"><a href="#cb20-7"></a><span class="st">  </span><span class="kw">summarise</span>(<span class="dt">mean_daily =</span> <span class="kw">mean</span>(predicted, <span class="dt">na.rm=</span><span class="ot">TRUE</span>)) -&gt;<span class="st"> </span>mean_daily_flow</span>
-<span id="cb20-8"><a href="#cb20-8"></a></span>
-<span id="cb20-9"><a href="#cb20-9"></a><span class="co">## report summary stats</span></span>
-<span id="cb20-10"><a href="#cb20-10"></a>mean_daily_flow <span class="op">%&gt;%</span><span class="st"> </span></span>
-<span id="cb20-11"><a href="#cb20-11"></a><span class="st">  </span><span class="kw">as_tibble</span>() <span class="op">%&gt;%</span></span>
-<span id="cb20-12"><a href="#cb20-12"></a><span class="st">  </span><span class="kw">select</span>(Site, mean_daily) <span class="op">%&gt;%</span></span>
-<span id="cb20-13"><a href="#cb20-13"></a><span class="st">  </span><span class="kw">tbl_summary</span>(<span class="dt">by =</span> Site, </span>
-<span id="cb20-14"><a href="#cb20-14"></a>              <span class="dt">label =</span> <span class="kw">list</span>(<span class="dt">mean_daily =</span> <span class="st">&quot;Mean Daily Flow (cfs)&quot;</span>),</span>
-<span id="cb20-15"><a href="#cb20-15"></a>              <span class="dt">digits =</span> <span class="kw">list</span>(<span class="dt">mean_daily =</span> <span class="dv">2</span>),</span>
-<span id="cb20-16"><a href="#cb20-16"></a>              <span class="dt">statistic =</span> <span class="kw">list</span>(<span class="kw">all_continuous</span>() <span class="op">~</span><span class="st"> &quot;{mean} ({sd})&quot;</span>)) <span class="op">%&gt;%</span></span>
-<span id="cb20-17"><a href="#cb20-17"></a><span class="st">  </span><span class="kw">modify_header</span>(<span class="dt">label =</span> <span class="st">&quot;**Variable**&quot;</span>) <span class="op">%&gt;%</span></span>
-<span id="cb20-18"><a href="#cb20-18"></a><span class="st">  </span><span class="kw">modify_spanning_header</span>(<span class="kw">all_stat_cols</span>() <span class="op">~</span><span class="st"> &quot;**Sites**&quot;</span>) <span class="op">%&gt;%</span></span>
-<span id="cb20-19"><a href="#cb20-19"></a><span class="st">  </span><span class="kw">modify_caption</span>(<span class="st">&quot;Summary statistics of mean daily flow estimates at each site.&quot;</span>) <span class="op">%&gt;%</span></span>
-<span id="cb20-20"><a href="#cb20-20"></a><span class="st">  </span><span class="kw">as_kable</span>()</span></code></pre></div>
+<span id="cb20-3"><a href="#cb20-3"></a><span class="st">  </span>dplyr<span class="op">::</span><span class="kw">select</span>(Site, Date_Time, predicted) <span class="op">%&gt;%</span></span>
+<span id="cb20-4"><a href="#cb20-4"></a><span class="st">  </span><span class="kw">group_by_key</span>() <span class="op">%&gt;%</span></span>
+<span id="cb20-5"><a href="#cb20-5"></a><span class="st">  </span><span class="kw">index_by</span>(<span class="dt">date =</span> <span class="op">~</span><span class="kw">as_date</span>(.)) <span class="op">%&gt;%</span></span>
+<span id="cb20-6"><a href="#cb20-6"></a><span class="st">  </span><span class="kw">summarise</span>(<span class="dt">mean_daily =</span> <span class="kw">mean</span>(predicted, <span class="dt">na.rm=</span><span class="ot">TRUE</span>)) -&gt;<span class="st"> </span>mean_daily_flow</span>
+<span id="cb20-7"><a href="#cb20-7"></a></span>
+<span id="cb20-8"><a href="#cb20-8"></a><span class="co">## report summary stats</span></span>
+<span id="cb20-9"><a href="#cb20-9"></a>mean_daily_flow <span class="op">%&gt;%</span><span class="st"> </span></span>
+<span id="cb20-10"><a href="#cb20-10"></a><span class="st">  </span><span class="kw">as_tibble</span>() <span class="op">%&gt;%</span></span>
+<span id="cb20-11"><a href="#cb20-11"></a><span class="st">  </span>dplyr<span class="op">::</span><span class="kw">select</span>(Site, mean_daily) <span class="op">%&gt;%</span></span>
+<span id="cb20-12"><a href="#cb20-12"></a><span class="st">  </span><span class="kw">tbl_summary</span>(<span class="dt">by =</span> Site, </span>
+<span id="cb20-13"><a href="#cb20-13"></a>              <span class="dt">label =</span> <span class="kw">list</span>(<span class="dt">mean_daily =</span> <span class="st">&quot;Mean Daily Flow (cfs)&quot;</span>),</span>
+<span id="cb20-14"><a href="#cb20-14"></a>              <span class="dt">digits =</span> <span class="kw">list</span>(<span class="dt">mean_daily =</span> <span class="dv">2</span>),</span>
+<span id="cb20-15"><a href="#cb20-15"></a>              <span class="dt">statistic =</span> <span class="kw">list</span>(<span class="kw">all_continuous</span>() <span class="op">~</span><span class="st"> &quot;{mean} ({sd})&quot;</span>)) <span class="op">%&gt;%</span></span>
+<span id="cb20-16"><a href="#cb20-16"></a><span class="st">  </span><span class="kw">modify_header</span>(<span class="dt">label =</span> <span class="st">&quot;**Variable**&quot;</span>) <span class="op">%&gt;%</span></span>
+<span id="cb20-17"><a href="#cb20-17"></a><span class="st">  </span><span class="kw">modify_spanning_header</span>(<span class="kw">all_stat_cols</span>() <span class="op">~</span><span class="st"> &quot;**Sites**&quot;</span>) <span class="op">%&gt;%</span></span>
+<span id="cb20-18"><a href="#cb20-18"></a><span class="st">  </span><span class="kw">modify_caption</span>(<span class="st">&quot;Summary statistics of mean daily flow estimates at each site.&quot;</span>) <span class="op">%&gt;%</span></span>
+<span id="cb20-19"><a href="#cb20-19"></a><span class="st">  </span><span class="kw">as_kable</span>()</span></code></pre></div>
 <table>
 <caption><span id="tab:unnamed-chunk-9">Table 5: </span>Summary statistics of mean daily flow estimates at each site.</caption>
 <thead>
@@ -1940,13 +1961,13 @@ Figure 6: Fifteen minute streamflow estimates with overlaid measured streamflow 
 <tbody>
 <tr class="odd">
 <td align="left">Mean Daily Flow (cfs)</td>
-<td align="left">19.65 (44.20)</td>
-<td align="left">1.69 (2.06)</td>
-<td align="left">3.10 (8.88)</td>
+<td align="left">19.60 (44.21)</td>
+<td align="left">1.69 (2.05)</td>
+<td align="left">3.10 (8.87)</td>
 </tr>
 </tbody>
 </table>
-<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1"></a><span class="kw">ggplot</span>(mean_daily_flow) <span class="op">+</span><span class="st"> </span></span>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1"></a><span class="kw">ggplot</span>(mean_daily_flow <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">fill_gaps</span>()) <span class="op">+</span><span class="st"> </span></span>
 <span id="cb21-2"><a href="#cb21-2"></a><span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(date, mean_daily)) <span class="op">+</span></span>
 <span id="cb21-3"><a href="#cb21-3"></a><span class="st">  </span><span class="kw">facet_wrap</span>(<span class="op">~</span>Site, <span class="dt">ncol =</span> <span class="dv">1</span>, <span class="dt">scales =</span> <span class="st">&quot;free_y&quot;</span>) <span class="op">+</span></span>
 <span id="cb21-4"><a href="#cb21-4"></a><span class="st">  </span><span class="kw">scale_x_date</span>(<span class="st">&quot;Date&quot;</span>, <span class="dt">date_breaks =</span> <span class="st">&quot;1 month&quot;</span>,</span>
@@ -1961,6 +1982,10 @@ Figure 6: Fifteen minute streamflow estimates with overlaid measured streamflow 
 Figure 7: Mean daily streamflow estimates.
 </p>
 </div>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1"></a><span class="co">## export data</span></span>
+<span id="cb22-2"><a href="#cb22-2"></a>mean_daily_flow <span class="op">%&gt;%</span></span>
+<span id="cb22-3"><a href="#cb22-3"></a><span class="st">  </span><span class="kw">fill_gaps</span>() <span class="op">%&gt;%</span></span>
+<span id="cb22-4"><a href="#cb22-4"></a><span class="st">  </span><span class="kw">write_csv</span>(<span class="st">&quot;Data/Out/model_df.csv&quot;</span>)</span></code></pre></div>
 </div>
 </div>
 <div id="references" class="section level2">
@@ -1971,7 +1996,7 @@ Figure 7: Mean daily streamflow estimates.
 <p>Asquith, William H., Meghan C. Roussel, and Joseph Vrabel. 2006. “Statewide Analysis of the Drainage-Area Ratio Method for 34 Streamflow Percentile Ranges in Texas.” 2006-5286. U.S. Geological Survey. <a href="https://pubs.usgs.gov/sir/2006/5286/pdf/sir2006-5286.pdf">https://pubs.usgs.gov/sir/2006/5286/pdf/sir2006-5286.pdf</a>.</p>
 </div>
 <div id="ref-padfield_2020">
-<p>Padfield, Daniel, and Granville Matheson. 2020. <em>Nls.multstart: Robust Non-Linear Regression Using Aic Scores</em>. <a href="https://CRAN.R-project.org/package=nls.multstart">https://CRAN.R-project.org/package=nls.multstart</a>.</p>
+<p>Padfield, Daniel, and Granville Matheson. 2020. <em>nls.multstart: Robust Non-Linear Regression using AIC Scores</em>. <a href="https://CRAN.R-project.org/package=nls.multstart">https://CRAN.R-project.org/package=nls.multstart</a>.</p>
 </div>
 <div id="ref-petersen2006modelling">
 <p>Petersen-Øverleir, Asgeir. 2006. “Modelling Looped Rating Curves.” In <em>Proc., Xxiv Nordic Hydrological Conf</em>, 139–46.</p>

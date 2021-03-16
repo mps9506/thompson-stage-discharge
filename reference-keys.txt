@@ -3,6 +3,7 @@ eq:Jonesformula
 eq:finitediff
 eq:sseformula
 eq:dar
+eq:linear
 tab:hoboimport
 fig:hoboplot
 fig:iqimport
