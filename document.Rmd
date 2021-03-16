@@ -10,7 +10,7 @@ link-citations: true
 ```{r setup, include=FALSE}
 library(knitr)
 knitr::opts_chunk$set(echo = TRUE,
-                      fig.retina = 2,
+                      dpi = 150,
                       dev = "ragg_png")
 ```
 
@@ -49,6 +49,8 @@ library(imputeTS)
 library(gtsummary)
 ## nls.multstart fits non-linear least squares using the Levenberg-Marquardt algorithm with multiple starting values.
 library(nls.multstart)
+##
+library(mgcv)
 
 ## set some options
 update_geom_font_defaults(font_rc)
@@ -368,89 +370,6 @@ iqplus_df %>%
   
 ```
 
-Two National Oceanic and Atmospheric Administration (NOAA) Global Historical Climatology Network (GHCN) locations provide daily precipitation data for the project area. GHCN daily summaries were downloaded for GHCND:USW00003904 (Easterfield Airport) and GHCND:US1TXBZS088 (Bryan 3.5 NNW, TX US) using the NOAA API services and the `rnoaa` package in R [@chamberlain_2019].
-
-```{r precipsum, fig.cap="Daily precipitation and marginal histograms of daily precipitation.", message=FALSE, warning=FALSE, out.width="100%"}
-easterfield_precip <- read_csv("Data/noaa_precip/easterfield.csv",
-                               col_types = cols(
-                                 date = col_datetime(format = ""),
-                                 datatype = col_character(),
-                                 station = col_character(),
-                                 value = col_double(),
-                                 fl_m = col_character(),
-                                 fl_q = col_character(),
-                                 fl_so = col_character(),
-                                 fl_t = col_character(),
-                                 units = col_character())) %>%
-  mutate(value =  set_units(value/10, "mm")) %>%
-  select(date, datatype, station, value)
-  
-
-bryan_precip <- read_csv("Data/noaa_precip/bryan3_5nnw.csv",
-                         col_types = cols(
-                           date = col_datetime(format = ""),
-                           datatype = col_character(),
-                           station = col_character(),
-                           value = col_double(),
-                           fl_m = col_character(),
-                           fl_q = col_character(),
-                           fl_so = col_character(),
-                           fl_t = col_character(),
-                           units = col_character())) %>%
-  mutate(value =  set_units(value/10, "mm")) %>%
-  select(date, datatype, station, value)
-
-easterfield_precip %>%
-  bind_rows(bryan_precip) %>%
-  mutate(date = as.Date(date),
-         value = as.numeric(value)) %>%
-  ggplot() +
-  geom_line(aes(date, value)) +
-  geom_point(aes(date, value), alpha = 0) +
-  labs(y = "Daily precipitation (mm)",
-       x = "Date") +
-  facet_wrap(~station, ncol = 1) +
-  theme_ms(plot.margin = margin(10,0,10,10),
-           panel.spacing = unit(0, "lines"),
-           panel.spacing.x = unit(0, "lines"),
-           panel.spacing.y = unit(2, "lines"),) -> p1
-
-  
-
-easterfield_precip %>%
-  bind_rows(bryan_precip) %>%
-  mutate(date = as.Date(date),
-         value = as.numeric(value)) %>%
-  ggplot() +
-  geom_histogram(aes(value), binwidth = 10) +
-  facet_wrap(~station, ncol = 1) +
-  coord_flip() +
-  theme_ms() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        panel.background = element_blank(),
-        panel.border = element_blank(),
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank(),
-        panel.grid.major.y = element_blank(),
-        panel.grid.minor.y = element_blank(),
-        plot.background = element_blank(),
-        plot.margin = margin(10,10,10,0),
-        panel.spacing = unit(0, "lines"),
-        panel.spacing.x = unit(0, "lines"),
-        panel.spacing.y = unit(2, "lines"),
-        strip.text = element_text(color="transparent")) -> p2
-
-
-plot_grid(p1,p2,align = "h", axis = "bt", rel_widths = c(2, 1))
-
-
-
-
-```
-
 
 
 
@@ -488,7 +407,7 @@ Based on exploratory analysis, two rating curves were developed for site 16396. 
 
 iqplus_df %>%
   filter(Site == "16396",
-         Date_Time < as.POSIXct("2020-12-01", tz = "Etc/GMT-6")) %>%
+         Date_Time < as.POSIXct("2020-12-14", tz = "Etc/GMT-6")) %>%
   arrange(Date_Time) %>%
   mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
          diff_time = as.numeric(difftime(Date_Time, time_lag, units = "hours"))) %>%
@@ -506,10 +425,10 @@ iqplus_df %>%
   filter(!is.na(diff_depth)) %>%
   mutate(J = as.numeric(diff_depth)/as.numeric(diff_time)) -> df_16396_2020_03
 
-## Make dataframe for site 16396 Dec 2020 through January 2021
+## Make dataframe for site 16396 Dec 14 2020 through January 2021
 iqplus_df %>%
   filter(Site == "16396",
-         Date_Time >= as.POSIXct("2020-12-01", tz = "Etc/GMT-6") &
+         Date_Time >= as.POSIXct("2020-12-14", tz = "Etc/GMT-6") &
             Date_Time < as.POSIXct("2021-02-01", tz = "Etc/GMT-6")) %>%
   arrange(Date_Time) %>%
   mutate(time_lag = lag(Date_Time, default = Date_Time[1]),
@@ -568,8 +487,8 @@ rc_16396_2020_12 <- nls_multstart(jones_form,
 ```{r}
 ## setup dataframe with parameter results. Will use this later to report parameters and GOF metrics
 df_results_16369 <- tibble(Site = c("16396","16396"),
-                           Period = c("2020-03-01 : 2020-11-30",
-                                      "2020-12-01 : 2021-01-31"),
+                           Period = c("2020-03-03 : 2020-12-13",
+                                      "2020-12-14 : 2021-01-31"),
                            K = c(coefficients(rc_16396_2020_03)[["K"]],
                                  coefficients(rc_16396_2020_12)[["K"]]),
                            a = c(coefficients(rc_16396_2020_03)[["a"]],
@@ -614,9 +533,10 @@ p1 <- ggplot(df_16396_2020_03) +
   geom_abline(aes(slope = 1, intercept = 0, linetype = "1:1 line")) +
   scale_x_continuous(name = "Rating curve flow estimate [cfs]", trans = "log10") +
   scale_y_continuous(name = "Measured flow [cfs]", trans = "log10") +
-  theme_ms() + labs(subtitle = "March-November") +
+  theme_ms() + labs(subtitle = "2020-03-03 through 2020-12-13") +
   theme(legend.title = element_blank(),
-        legend.position = "none")
+        legend.position = "none",
+        plot.subtitle = element_text(size = 8))
 
 p2 <- ggplot(df_16396_2020_03) +
   geom_point(aes(as.numeric(Flow), Depth, color = "Measured")) +
@@ -627,15 +547,18 @@ p2 <- ggplot(df_16396_2020_03) +
             alpha = 0.5) +
   scale_color_discrete("") + scale_linetype_discrete("") +
   scale_x_continuous("Flow [cfs]", trans = "log10") +
-  labs(subtitle = "March-November") + theme_ms() + theme(legend.position = "none")
+  labs(subtitle = "2020-03-03 through 2020-12-13") + theme_ms() + 
+  theme(legend.position = "none",
+        plot.subtitle = element_text(size = 8))
 
 p3 <- ggplot(df_16396_2020_12) +
     geom_point(aes(as.numeric(predicted), as.numeric(Flow), color = "Rating curve prediction against measured flow"), alpha = 0.25) +
   geom_abline(aes(slope = 1, intercept = 0, linetype = "1:1 line")) +
   scale_x_continuous(name = "Rating curve flow estimate [cfs]", trans = "log10") +
   scale_y_continuous(name = "Measured flow [cfs]", trans = "log10") +
-  theme_ms() + labs(subtitle = "December-January") +
-  theme(legend.title = element_blank())
+  theme_ms() + labs(subtitle = "2020-12-14 through 2021-01-14") +
+  theme(legend.title = element_blank(),
+        plot.subtitle = element_text(size = 8))
 
 p4 <- ggplot(df_16396_2020_12) +
   geom_point(aes(as.numeric(Flow), Depth, color = "Measured")) +
@@ -646,7 +569,8 @@ p4 <- ggplot(df_16396_2020_12) +
             alpha = 0.5) +
   scale_color_discrete("") + scale_linetype_discrete("") +
   scale_x_continuous("Flow [cfs]", trans = "log10") +
-  labs(subtitle = "December-January") + theme_ms()
+  labs(subtitle = "2020-12-14 through 2021-01-14") + theme_ms() +
+  theme(plot.subtitle = element_text(size = 8))
 
 (p1 + p2) / (p3 + p4) + plot_annotation(tag_levels = "A")
   
@@ -700,7 +624,7 @@ rc_16397 <- nls_multstart(power_form,
 ```{r}
 ## setup dataframe with parameter results. Will use this later to report parameters and GOF metrics
 df_results_16397 <- tibble(Site = c("16397"),
-                           Period = c("2020-03-01 : 2020-01-30"),
+                           Period = c("2020-03-03 : 2020-01-14"),
                            K = coefficients(rc_16397)[["K"]],
                            H_0 = coefficients(rc_16397)[["H_0"]],
                            Z = coefficients(rc_16397)[["Z"]])
@@ -867,9 +791,9 @@ rc_16882_2020_12 <- nls_multstart(jones_form,
 ```{r results16882}
 ## setup dataframe with parameter results. Will use this later to report parameters and GOF metrics
 df_results_16882 <- tibble(Site = c("16882", "16882", "16882"),
-                           Period = c("2020-03-01 : 2020-09-30",
-                                      "2020-10-01 : 2020-11-30",
-                                      "2020-12-01 : 2021-01-31"),
+                           Period = c("2020-03-03 : 2020-10-22",
+                                      "2020-10-23 : 2020-12-09",
+                                      "2020-12-10 : 2021-01-14"),
                            K = c(coefficients(rc_16882_2020_03)[["K"]],
                                  coefficients(rc_16882_2020_10)[["K"]],
                                  coefficients(rc_16882_2020_12)[["K"]]),
@@ -924,9 +848,10 @@ p1 <- ggplot(df_16882_2020_03) +
   geom_abline(aes(slope = 1, intercept = 0, linetype = "1:1 line")) +
   scale_x_continuous(name = "Rating curve flow estimate [cfs]", trans = "log10") +
   scale_y_continuous(name = "Measured flow [cfs]", trans = "log10") +
-  theme_ms() + labs(subtitle = "March-September") +
+  theme_ms() + labs(subtitle = "2020-03-03 : 2020-10-22") +
   theme(legend.title = element_blank(),
-        legend.position = "none")
+        legend.position = "none",
+        plot.subtitle = element_text(size = 8))
 
 p2 <- ggplot(df_16882_2020_03) +
   geom_point(aes(as.numeric(Flow), Depth, color = "Measured")) +
@@ -937,16 +862,18 @@ p2 <- ggplot(df_16882_2020_03) +
             alpha = 0.5) +
   scale_color_discrete("") + scale_linetype_discrete("") +
   scale_x_continuous("Flow [cfs]", trans = "log10") +
-  labs(subtitle = "March-September") + theme_ms() + theme(legend.position = "none")
+  labs(subtitle = "2020-03-03 : 2020-10-22") + theme_ms() + theme(legend.position = "none",
+                                                                  plot.subtitle = element_text(size = 8))
 
 p3 <- ggplot(df_16882_2020_10) +
     geom_point(aes(as.numeric(predicted), as.numeric(Flow), color = "Rating curve prediction against measured flow"), alpha = 0.25) +
   geom_abline(aes(slope = 1, intercept = 0, linetype = "1:1 line")) +
   scale_x_continuous(name = "Rating curve flow estimate [cfs]", trans = "log10") +
   scale_y_continuous(name = "Measured flow [cfs]", trans = "log10") +
-  theme_ms() + labs(subtitle = "October-November") +
+  theme_ms() + labs(subtitle = "2020-10-23 : 2020-12-09") +
   theme(legend.title = element_blank(),
-        legend.position = "none")
+        legend.position = "none",
+        plot.subtitle = element_text(size = 8))
 
 p4 <- ggplot(df_16882_2020_10) +
   geom_point(aes(as.numeric(Flow), Depth, color = "Measured")) +
@@ -957,15 +884,17 @@ p4 <- ggplot(df_16882_2020_10) +
             alpha = 0.5) +
   scale_color_discrete("") + scale_linetype_discrete("") +
   scale_x_continuous("Flow [cfs]", trans = "log10") +
-  labs(subtitle = "October-November") + theme_ms() + theme(legend.position = "none")
+  labs(subtitle = "2020-10-23 : 2020-12-09") + theme_ms() + theme(legend.position = "none",
+                                                                  plot.subtitle = element_text(size = 8))
 
 p5 <- ggplot(df_16882_2020_12) +
     geom_point(aes(as.numeric(predicted), as.numeric(Flow), color = "Rating curve prediction against measured flow"), alpha = 0.25) +
   geom_abline(aes(slope = 1, intercept = 0, linetype = "1:1 line")) +
   scale_x_continuous(name = "Rating curve flow estimate [cfs]", trans = "log10") +
   scale_y_continuous(name = "Measured flow [cfs]", trans = "log10") +
-  theme_ms() + labs(subtitle = "December-January") +
-  theme(legend.title = element_blank())
+  theme_ms() + labs(subtitle = "2020-12-10 : 2021-01-14") +
+  theme(legend.title = element_blank(),
+        plot.subtitle = element_text(size = 8))
 
 p6 <- ggplot(df_16882_2020_12) +
   geom_point(aes(as.numeric(Flow), Depth, color = "Measured")) +
@@ -976,7 +905,8 @@ p6 <- ggplot(df_16882_2020_12) +
             alpha = 0.5) +
   scale_color_discrete("") + scale_linetype_discrete("") +
   scale_x_continuous("Flow [cfs]", trans = "log10") +
-  labs(subtitle = "December-January") + theme_ms()
+  labs(subtitle = "2020-12-10 : 2021-01-14") + theme_ms() +
+  theme(plot.subtitle = element_text(size = 8))
 
 (p1 + p2) / (p3 + p4) / (p5 + p6) + plot_annotation(tag_levels = "A")
 
@@ -993,7 +923,7 @@ p6 <- ggplot(df_16882_2020_12) +
 # aggregate to mean daily flows, report summary stats.
 
 hobo_df %>%
-  select(Site, Depth = Water_Level, Date_Time) %>%
+  dplyr::select(Site, Depth = Water_Level, Date_Time) %>%
   group_split(Site) %>%
   map(~mutate(.x,
               time_lag = lag(Date_Time, default = Date_Time[1]),
@@ -1010,20 +940,22 @@ tibble(rating_curve = list(rc_16396_2020_03, rc_16396_2020_12,
                                           rc_16397,
                                           rc_16882_2020_03, rc_16882_2020_10, rc_16882_2020_12),
        data = list(
-         estimated_data %>% filter(Site == "16396" & Date_Time < as.POSIXct("2020-12-01", tz = "Etc/GMT-6")),
-         estimated_data %>% filter(Site == "16396" & Date_Time >= as.POSIXct("2020-12-01", tz = "Etc/GMT-6") & Date_Time < as.POSIXct("2021-02-01", tz = "Etc/GMT-6")),
+         estimated_data %>% filter(Site == "16396" & Date_Time < as.POSIXct("2020-12-14", tz = "Etc/GMT-6")),
+         estimated_data %>% filter(Site == "16396" & Date_Time >= as.POSIXct("2020-12-14", tz = "Etc/GMT-6") & Date_Time < as.POSIXct("2021-02-01", tz = "Etc/GMT-6")),
          estimated_data %>% filter(Site == "16397"),
-         estimated_data %>% filter(Site == "16882" & Date_Time < as.POSIXct("2020-10-01", tz = "Etc/GMT-6")),
-         estimated_data %>% filter(Site == "16882" & Date_Time >= as.POSIXct("2020-10-01", tz = "Etc/GMT-6") & Date_Time < as.POSIXct("2020-12-01", tz = "Etc/GMT-6")),
-         estimated_data %>% filter(Site == "16882" & Date_Time >= as.POSIXct("2020-12-01", tz = "Etc/GMT-6"))
+         estimated_data %>% filter(Site == "16882" & Date_Time < as.POSIXct("2020-10-23", tz = "Etc/GMT-6")),
+         estimated_data %>% filter(Site == "16882" & Date_Time >= as.POSIXct("2020-10-23", tz = "Etc/GMT-6") & Date_Time < as.POSIXct("2020-12-10", tz = "Etc/GMT-6")),
+         estimated_data %>% filter(Site == "16882" & Date_Time >= as.POSIXct("2020-12-10", tz = "Etc/GMT-6"))
        )
 ) %>%
   mutate(predicted = map2(rating_curve, data,
     ~exp(predict(.x, newdata = .y))
   )) %>%
-  tidyr::unnest(c(data, predicted)) -> estimated_data
+  tidyr::unnest(c(data, predicted)) %>%
+  as_tsibble(key = Site, index = Date_Time) -> estimated_data
 
 ## plot the data
+
 ggplot() +
   geom_line(data = estimated_data, aes(Date_Time, predicted, color = "Rating curve estimate")) +
   geom_point(data = iqplus_df, aes(Date_Time, as.numeric(Flow), color = "Measured streamflow"), alpha = 0.1) +
@@ -1043,8 +975,7 @@ ggplot() +
 ```{r}
 ## calculate mean daily flows and report stats
 estimated_data %>%
-  select(Site, Date_Time, predicted) %>%
-  as_tsibble(key = Site, index = Date_Time) %>%
+  dplyr::select(Site, Date_Time, predicted) %>%
   group_by_key() %>%
   index_by(date = ~as_date(.)) %>%
   summarise(mean_daily = mean(predicted, na.rm=TRUE)) -> mean_daily_flow
@@ -1052,7 +983,7 @@ estimated_data %>%
 ## report summary stats
 mean_daily_flow %>% 
   as_tibble() %>%
-  select(Site, mean_daily) %>%
+  dplyr::select(Site, mean_daily) %>%
   tbl_summary(by = Site, 
               label = list(mean_daily = "Mean Daily Flow (cfs)"),
               digits = list(mean_daily = 2),
@@ -1064,7 +995,7 @@ mean_daily_flow %>%
 ```
 
 ```{r meandailyresults, out.width="100%", fig.asp = 1, fig.cap="Mean daily streamflow estimates."}
-ggplot(mean_daily_flow) + 
+ggplot(mean_daily_flow %>% fill_gaps()) + 
   geom_line(aes(date, mean_daily)) +
   facet_wrap(~Site, ncol = 1, scales = "free_y") +
   scale_x_date("Date", date_breaks = "1 month",
@@ -1075,84 +1006,14 @@ ggplot(mean_daily_flow) +
   theme(axis.text.x = element_text(size = 8)) 
 ```
 
-```{r message=FALSE}
-read_csv("Data/USGS_Streamflow/08110100.csv") %>%
-  filter(datetime >= as.Date("2020-03-03") & datetime <= as.Date("2021-01-14")) %>%
-  rename(Flow = `135389_00060_00003`) -> mean_daily_08110100
 
-
-read_csv("Data/USGS_Streamflow/08109800.csv") %>%
-  filter(datetime >= as.Date("2020-03-03") & datetime <= as.Date("2021-01-14")) %>%
-  rename(Flow = `135356_00060_00003`) -> mean_daily_08109800
-
-
-read_csv("Data/USGS_Streamflow/08065800.csv") %>%
-  filter(datetime >= as.Date("2020-03-03") & datetime <= as.Date("2021-01-14")) %>%
-  rename(Flow = `133946_00060_00003`) -> mean_daily_08065800
-
-
+```{r}
+## export data
 mean_daily_flow %>%
-  as_tibble() %>%
-  filter(Site == "16396") %>%
-  left_join(mean_daily_08110100 %>% select(datetime, Flow_08110100 = Flow), by = c("date" = "datetime")) %>%
-  left_join(mean_daily_08109800 %>% select(datetime, Flow_08109800 = Flow), by = c("date" = "datetime")) %>%
-  left_join(mean_daily_08065800 %>% select(datetime, Flow_08065800 = Flow), by = c("date" = "datetime")) -> model_df
+  fill_gaps() %>%
+  write_csv("Data/Out/model_df.csv")
 ```
 
-
-```{r}
-####
-# next steps: calculate fdc for 2020 at each site
-# regress at selected quantiles using watershed characteristics
-# predict and linear interpolate to fill in. 
-# use transfer procedure from candidate gaage. 
-####
-# evaluate DAR procedure as below, looks like we don't have a great candidate
-# gage as the magnitude of the peaks are not in the correct order.
-####
-#evaluate a rainfall runoff mode? q~f(x,y) runoff is a function of precip and observed runoff?
-# precip data vailable through rnoaa at easterfield which is very close by.
-# 	GHCND:USW00003904
-####
-
-
-
-# ####
-# area_16396 <- 24 ## need to adjust this, not quite right
-# area_08110100 <- 195
-# area_08109800 <- 244
-# area_08065800 <- 321
-# dar16396 <- formula(mean_daily ~ (Flow_08110100 * (24/195)^phi + 
-#                       Flow_08109800 * (24/244)^upsilon +
-#                       Flow_08065800 * (24/321)^tau)/3)
-# 
-# ## some starting paremeters. nls_multstart will use multiple
-# ## starting parameters and model selection to find 
-# ## global minimum
-# start_lower <- list(phi = 0.1, upsilon = 0.1, tau = 0.1)
-# start_upper <- list(phi = 10, upsilon = 10, tau = 10)
-# ## fit nls
-# multidar <- nls_multstart(dar16396,
-#               data = model_df,
-#               iter = 1000,
-#               start_lower = start_lower,
-#               start_upper = start_upper,
-#               #convergence_count = FALSE,
-#               supp_errors = "Y")
-# 
-# model_df %>%
-#   mutate(fit = predict(multidar, newdata = .)) %>%
-#   ggplot() +
-#   geom_line(aes(date, mean_daily)) +
-#   geom_point(aes(date, fit))
-```
-
-
-```{r}
-### Use linear regression to estiamte streamflow response
-### Models: 
-### log(y) ~ easterwood + easterwood lag1 + bryan + bryan lag1;
-```
 
 
 
